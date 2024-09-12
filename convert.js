@@ -19,12 +19,19 @@ function readSpectrum(fileText) {
 	var lines = fileText.split('\n');
 	var time = parseInt(lines[2]);
 	var channelsCount = parseInt(lines[9]);
+	var calibration = parseInt(lines[10])
+
 	var index = 0;
 	var channels = [];
 	while (index < channelsCount) {
-		channels.push(parseInt(lines[14 + index]));
+		channels.push(parseInt(lines[11 + calibration + index]));
 		index++;
 	}
+
+	// filter out accidential spectrums from microphone input
+	//if ((channels.slice(0, 80).reduce((s, v) => s += v, 0)) > 3) {
+	//	channels = Array(channelsCount).fill(0);
+	//}
 
 	return {
 		timestamp: time,

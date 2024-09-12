@@ -86,22 +86,18 @@
 					ctx.fillRect(point.x + timestampWidth, point.y, 1, 1);
 				}
 			});
-			
-			let timestampsCount = Math.floor(waterfallData.height / timestampHeight);
-			waterfallData.timestamps.forEach((timestamp, index) => {
-				if (index % timestampsCount === 0) {
-					let y = (index / timestampsCount) * timestampHeight;
-				
-					ctx.textBaseline = 'top';
-					ctx.fillStyle = textColor;
-					ctx.fillText(new Date(timestamp).toISOString(), 0, y);
-					
-					for (let x = timestampWidth - timestampTickWidth; x < timestampWidth; x++) {
-						ctx.fillRect(x, y, 1, 1);
-					}
+
+			for (let tsIndex = 0; tsIndex < waterfallData.timestamps.length; tsIndex += timestampHeight) {
+				timestamp = waterfallData.timestamps[tsIndex];
+				ctx.textBaseline = 'top';
+				ctx.fillStyle = textColor;
+				ctx.fillText(new Date(timestamp).toISOString(), 0, tsIndex);
+
+				for (let x = timestampWidth - timestampTickWidth; x < timestampWidth; x++) {
+					ctx.fillRect(x, tsIndex, 1, 1);
 				}
-			});
-			
+			}
+
 			for (let x = timestampWidth; x < canvas.width; x += 100) {
 				ctx.textBaseline = 'top';
 				ctx.fillStyle = textColor;
