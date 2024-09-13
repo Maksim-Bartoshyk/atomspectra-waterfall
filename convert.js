@@ -42,7 +42,7 @@ function readSpectrum(fileText) {
 	let index = 0;
 	let channels = [];
 	while (index < channelsCount) {
-		channels.push(parseInt(lines[11 + calibration + index]));
+		channels.push(parseInt(lines[12 + calibration + index]));
 		index++;
 	}
 
