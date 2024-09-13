@@ -1,11 +1,29 @@
-var fs = require('fs');
-var path = require('path');
+let fs = require('fs');
+let path = require('path');
+let channelReduceFactor = 8;
+let spectrumReduceFactor = 1;
 
-function reduceChannelNumber(channels, factor) {
-	var reduced = [];
-	for (var i = 0; i < channels.length; i += factor) {
-		var summ = 0;
-		for (j = 0; j < factor; j++) {
+function reduceSpectrumCount(spectrums, factor) {
+	let reduced = [];
+	for (let i = 0; i < spectrums.length; i += factor) {
+		let summ = { ...spectrums[i] };
+		for (let j = 1; j < factor && (i + j) < spectrums.length; j++) {
+			for (let k = 0; k < summ.channels.length; k++) {
+				summ.channels[k] += spectrums[i + j].channels[k];
+			}
+		}
+
+		reduced.push(summ);
+	}
+
+	return reduced;
+}
+
+function reduceChannelCount(channels, factor) {
+	let reduced = [];
+	for (let i = 0; i < channels.length; i += factor) {
+		let summ = 0;
+		for (let j = 0; j < factor && (i + j) < channels.length; j++) {
 			summ += channels[i + j];
 		}
 
@@ -16,13 +34,13 @@ function reduceChannelNumber(channels, factor) {
 }
 
 function readSpectrum(fileText) {
-	var lines = fileText.split('\n');
-	var time = parseInt(lines[2]);
-	var channelsCount = parseInt(lines[9]);
-	var calibration = parseInt(lines[10])
+	let lines = fileText.split('\n');
+	let time = parseInt(lines[2]);
+	let channelsCount = parseInt(lines[9]);
+	let calibration = parseInt(lines[10])
 
-	var index = 0;
-	var channels = [];
+	let index = 0;
+	let channels = [];
 	while (index < channelsCount) {
 		channels.push(parseInt(lines[11 + calibration + index]));
 		index++;
@@ -35,12 +53,12 @@ function readSpectrum(fileText) {
 
 	return {
 		timestamp: time,
-		channels: reduceChannelNumber(channels, 8)
+		channels: reduceChannelCount(channels, channelReduceFactor)
 	};
 }
 
 function createWaterfall(spectrums) {
-	var waterfall = {
+	let waterfall = {
 		points: [],
 		min: 0,
 		max: 0,
@@ -67,11 +85,11 @@ function createWaterfall(spectrums) {
 }
 
 function convertFiles(dirname, onProgress, onError) {
-	var spectrums = [];
-	var filenames = fs.readdirSync(dirname);
+	let spectrums = [];
+	let filenames = fs.readdirSync(dirname);
 	filenames.forEach(function(filename) {
 		try {
-			var content = fs.readFileSync(path.join(dirname, filename), 'utf-8');
+			let content = fs.readFileSync(path.join(dirname, filename), 'utf-8');
 			spectrums.push(readSpectrum(content));
 			console.log('Read success for file ' + filename);
 		} catch (e) {
@@ -80,9 +98,9 @@ function convertFiles(dirname, onProgress, onError) {
 	});
 
 	spectrums.sort((s1, s2) => s1.timestamp < s2.timestamp ? 1 : -1);
-	var waterfall = createWaterfall(spectrums);
+	let waterfall = createWaterfall(reduceSpectrumCount(spectrums, spectrumReduceFactor));
 
-	var template = fs.readFileSync('waterfall-template.html', 'utf-8');
+	let template = fs.readFileSync('waterfall-template.html', 'utf-8');
 	fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
 }
 
