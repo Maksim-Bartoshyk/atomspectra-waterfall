@@ -2,6 +2,7 @@ let fs = require('fs');
 let path = require('path');
 let channelReduceFactor = 8;
 let spectrumReduceFactor = 1;
+let useCps = false;
 
 function reduceSpectrumCount(spectrums, factor) {
 	let reduced = [];
@@ -11,6 +12,8 @@ function reduceSpectrumCount(spectrums, factor) {
 			for (let k = 0; k < summ.channels.length; k++) {
 				summ.channels[k] += spectrums[i + j].channels[k];
 			}
+
+			summ.duration += spectrums[i + j].duration;
 		}
 
 		reduced.push(summ);
@@ -36,6 +39,7 @@ function reduceChannelCount(channels, factor) {
 function readSpectrum(fileText) {
 	let lines = fileText.split('\n');
 	let time = parseInt(lines[2]);
+	let duration = parseInt(lines[8]);
 	let channelsCount = parseInt(lines[9]);
 	let calibration = parseInt(lines[10])
 
@@ -53,6 +57,7 @@ function readSpectrum(fileText) {
 
 	return {
 		timestamp: time,
+		duration: duration,
 		channels: reduceChannelCount(channels, channelReduceFactor)
 	};
 }
@@ -71,11 +76,14 @@ function createWaterfall(spectrums) {
 
 		spectrum.channels.forEach((channelValue, channelIndex) => {
 			if (channelValue > 0) {
-				waterfall.max = Math.max(waterfall.max, channelValue);
+				let wfValue = useCps
+					? channelValue / spectrum.duration
+					: channelValue;
+				waterfall.max = Math.max(waterfall.max, wfValue);
 				waterfall.points.push({
 					x: channelIndex,
 					y: spectrumIndex,
-					value: channelValue
+					value: wfValue
 				});
 			}
 		});
@@ -104,10 +112,39 @@ function convertFiles(dirname, onProgress, onError) {
 	fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
 }
 
-if (!process.argv[2]) {
-	console.error('Provide source dir as a parameter');
-	return;
+function paramIsSet(paramName) {
+	return process.argv.indexOf(paramName) > 2;
 }
 
-convertFiles(process.argv[2]);
+function paramValue(paramName) {
+	let paramIndex = process.argv.indexOf(paramName);
+	if (paramIndex > 2) {
+		return process.argv[paramIndex + 1];
+	}
+}
+
+useCps = paramIsSet('--cps');
+
+if (paramIsSet('-rc')) {
+	let value = parseInt(paramValue('-rc'));
+	if (isNaN(value) || value < 1) {
+		console.error('invalid reduce channels factor, must be positive integer');
+		return;
+	} else {
+		channelReduceFactor = value;
+	}
+}
+
+if (paramIsSet('-rs')) {
+	let value = parseInt(paramValue('-rs'));
+	if (isNaN(value) || value < 1) {
+		console.error('invalid reduce spectrum factor, must be positive integer');
+		return;
+	} else {
+		spectrumReduceFactor = value;
+	}
+}
+
+let folder = process.argv[2]
+convertFiles(folder);
 console.log('DONE');
