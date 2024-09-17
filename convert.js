@@ -91,8 +91,8 @@ function createWaterfallData(spectrums) {
 		points: [],
 		min: 0,
 		max: 0,
-		width: spectrums[0].channels.length,
-		height: spectrums.length,
+		channelCount: spectrums[0].channels.length,
+		spectrumsCount: spectrums.length,
 		timestamps: [],
 		calibration: spectrums[0].calibration,
 	};

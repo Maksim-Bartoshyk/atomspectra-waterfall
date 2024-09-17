@@ -14,8 +14,8 @@
 			const channelAxisTickHeight = 4;
 			const textColor = 'lightgray';
 			let canvas = document.getElementById('waterfall');
-			canvas.width = waterfallData.width + timestampWidth;
-			canvas.height = waterfallData.height + channelAxisHeight;
+			canvas.width = waterfallData.channelCount + timestampWidth;
+			canvas.height = waterfallData.spectrumsCount + channelAxisHeight;
 
 			let ironPalette = [
 				"#00000a","#000014","#00001e","#000025","#00002a","#00002e","#000032","#000036",
@@ -99,19 +99,45 @@
 				}
 			}
 
-			// energy axis
-			for (let x = timestampWidth; x < canvas.width; x += 50) {
-				let channelNumber = x - timestampWidth;
+			// calculate energy for each channel
+			const allEnergies = [];
+			for (let i = 0; i < waterfallData.channelCount; i++) {
 				let energy = 0;
 				for (let order = 0; order < waterfallData.calibration.length; order++) {
-					energy += Math.pow(channelNumber, order) * waterfallData.calibration[order];
+					energy += Math.pow(i, order) * waterfallData.calibration[order];
 				}
-				ctx.textBaseline = 'top';
-				ctx.fillStyle = textColor;
-				ctx.fillText(Math.round(energy).toString(), x, waterfallData.height + channelAxisTickHeight);
+				allEnergies.push(energy);
+			}
 
-				for (let y = waterfallData.height; y < waterfallData.height + channelAxisTickHeight; y++) {
-					ctx.fillRect(x, y, 1, 1);
+			// calculate channels for 0, 100, 200, 300... enegries 
+			const renderEnergies = {};
+			for (let energy = 0, channel = 0; energy < allEnergies[allEnergies.length - 1]; energy += 100) {
+				while (allEnergies[channel] < energy) {
+					channel++;
+				}
+				renderEnergies[channel] = energy;
+			}
+			console.log(renderEnergies);
+
+			// energy axis render
+			for (let x = timestampWidth; x < canvas.width; x++) {
+				const channelNumber = x - timestampWidth;
+				const energy = renderEnergies[channelNumber];
+				if (energy === undefined) {
+					continue;
+				}
+
+				if (energy % 500 === 0) {
+					ctx.textBaseline = 'top';
+					ctx.fillStyle = textColor;
+					ctx.fillText(energy.toString(), x, waterfallData.spectrumsCount + channelAxisTickHeight);
+				}
+
+				if (energy % 100 === 0) {
+					const tickHeight = energy % 500 === 0 ? channelAxisTickHeight : channelAxisTickHeight / 2;
+					for (let y = waterfallData.spectrumsCount; y < waterfallData.spectrumsCount + tickHeight; y++) {
+						ctx.fillRect(x, y, 1, 1);
+					}
 				}
 			}
 		</script>
