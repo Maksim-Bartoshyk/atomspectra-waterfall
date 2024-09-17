@@ -112,7 +112,7 @@ function createRcspgData(spectrums) {
 	rcspgData += '\nSpectrum: ' +
 				/*int32 duration*/'00 00 00 00' + ' ' +
 				/*float A0*/'00 00 00 00' + ' ' +
-				/*float A1*/'00 00 00 00 ' + ' ' +
+				/*float A1*/'00 00 00 00' + ' ' +
 				/*float A2*/'00 00 00 00' + ' ' +
 				Array(1024).fill('00 00 00 00').join(' ');
 
