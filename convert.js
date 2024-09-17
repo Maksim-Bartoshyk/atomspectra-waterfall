@@ -108,12 +108,12 @@ function createRcspgData(spectrums) {
 					'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
 					'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
 
-	// base spectrum, zero duration, zero calibration, all zero channels
+	// base spectrum, zero duration, y=x calibration, all zero channels
 	rcspgData += '\nSpectrum: ' +
 				/*int32 duration*/'00 00 00 00' + ' ' +
-				/*float A0*/'00 00 00 00' + ' ' +
-				/*float A1*/'00 00 00 00' + ' ' +
-				/*float A2*/'00 00 00 00' + ' ' +
+				/*float(big endian) A0*/'00 00 00 00' + ' ' +
+				/*float(big endian) A1*/'00 00 80 3F' + ' ' +
+				/*float(big endian) A2*/'00 00 00 00' + ' ' +
 				Array(1024).fill('00 00 00 00').join(' ');
 
 	// deltas
