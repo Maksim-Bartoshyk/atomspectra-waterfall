@@ -122,18 +122,17 @@ function convertFiles(dirname, onProgress, onError) {
 						'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp - 1000) + // just in case to avoid any potential division by zero
 						'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
 						'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
-		// base spectrum, linear calibration, all zeros
+		// base spectrum, zero duration, zero calibration, all zero channels
 		rcspgData += '\nSpectrum: ' +
-					/*int32 base spectrum duration*/'00 00 00 01' + ' ' +
+					/*int32 duration*/'00 00 00 00' + ' ' +
 					/*float A0*/'00 00 00 00' + ' ' +
-					/*float A1*/'3F 80 00 00 ' + ' ' +
+					/*float A1*/'00 00 00 00 ' + ' ' +
 					/*float A2*/'00 00 00 00' + ' ' +
 					Array(1024).fill('00 00 00 00').join(' ');
 		// deltas
 		spectrums.forEach(spectrum => {
 			rcspgData += '\n' + filetimeFromJSTime(spectrum.timestamp);
 			rcspgData += '\t' + Math.round(spectrum.duration);
-			// no space optimization so far
 			spectrum.channels.forEach(channel => {
 				rcspgData += '\t' + channel;
 			});
