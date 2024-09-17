@@ -11,3 +11,9 @@ Usage:
 5) run ```node convert.js <spectrums folder>```, for example ```node convert.js "sample-data/nano-3"```
 6) open generated "waterfall.html" in browser
 7) right mouse click on specrtogram - save image as
+
+Parameters:
+1) ```--cps``` use cps to render waterfall data, counts used by default
+2) ```-rc X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```--rc 8``` makes 1024 channes from 8192
+3) ```-rs X``` reduce spectrum count (spectrogram height) by provided factor (X), i.e. ```--rc 2``` makes 100 spectrums from 200
+4) ```--rcspg``` outputs data in radiacode spectrogram format
