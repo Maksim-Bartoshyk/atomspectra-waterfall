@@ -111,6 +111,7 @@ function convertFiles(dirname, onProgress, onError) {
 	});
 
 	spectrums.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
+	spectrums = reduceSpectrumCount(spectrums, spectrumReduceFactor);
 
 	if (rcspg) {
 		let fromTimestamp = spectrums[0].timestamp;
@@ -139,7 +140,7 @@ function convertFiles(dirname, onProgress, onError) {
 		});
 		fs.writeFileSync('waterfall.rcspg', rcspgData);
 	} else {
-		let waterfall = createWaterfall(reduceSpectrumCount(spectrums, spectrumReduceFactor));
+		let waterfall = createWaterfall(spectrums);
 		let template = fs.readFileSync('waterfall-template.html', 'utf-8');
 		fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
 	}
