@@ -67,7 +67,7 @@ function readSpectrum(fileText) {
 	};
 }
 
-function createWaterfall(spectrums) {
+function createWaterfallData(spectrums) {
 	let waterfall = {
 		points: [],
 		min: 0,
@@ -97,49 +97,67 @@ function createWaterfall(spectrums) {
 	return waterfall;
 }
 
+function createRcspgData(spectrums) {
+	let fromTimestamp = spectrums[0].timestamp;
+	let toTimestamp = spectrums[spectrums.length - 1].timestamp;
+
+	// header
+	let rcspgData = 'Spectrogram: ' + new Date(fromTimestamp).toISOString() + 
+					'\tTime: ' + new Date(toTimestamp).toISOString() + 
+					'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp - 1000) + // just in case to avoid any potential division by zero
+					'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
+					'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
+
+	// base spectrum, zero duration, zero calibration, all zero channels
+	rcspgData += '\nSpectrum: ' +
+				/*int32 duration*/'00 00 00 00' + ' ' +
+				/*float A0*/'00 00 00 00' + ' ' +
+				/*float A1*/'00 00 00 00 ' + ' ' +
+				/*float A2*/'00 00 00 00' + ' ' +
+				Array(1024).fill('00 00 00 00').join(' ');
+
+	// deltas
+	spectrums.forEach(spectrum => {
+		rcspgData += '\n' + filetimeFromJSTime(spectrum.timestamp);
+		rcspgData += '\t' + Math.round(spectrum.duration);
+		spectrum.channels.forEach(channel => {
+			rcspgData += '\t' + channel;
+		});
+	});
+
+	return rcspgData;
+}
+
 function convertFiles(dirname, onProgress, onError) {
 	let spectrums = [];
-	let filenames = fs.readdirSync(dirname);
-	filenames.forEach(function(filename) {
+	let files = fs.readdirSync(dirname, { withFileTypes: true });
+	files.forEach(function(file) {
+		if (file.isDirectory() || !file.name.endsWith('auto.txt')) {
+			return;
+		}
+
 		try {
-			let content = fs.readFileSync(path.join(dirname, filename), 'utf-8');
+			let content = fs.readFileSync(path.join(dirname, file.name), 'utf-8');
 			spectrums.push(readSpectrum(content));
-			console.log('Read success for file ' + filename);
+			console.log('Read success for file ' + file.name);
 		} catch (e) {
-			console.error('FAILURE for ' + filename + ' error: ' + e.message);
+			console.error('FAILURE for ' + file.name + ' error: ' + e.message);
 		}
 	});
+
+	if (spectrums.length === 0) {
+		console.error('no spectrums found!');
+		return;
+	}
 
 	spectrums.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
 	spectrums = reduceSpectrumCount(spectrums, spectrumReduceFactor);
 
 	if (rcspg) {
-		let fromTimestamp = spectrums[0].timestamp;
-		let toTimestamp = spectrums[spectrums.length - 1].timestamp;
-		// header
-		let rcspgData = 'Spectrogram: ' + new Date(fromTimestamp).toISOString() + 
-						'\tTime: ' + new Date(toTimestamp).toISOString() + 
-						'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp - 1000) + // just in case to avoid any potential division by zero
-						'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
-						'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
-		// base spectrum, zero duration, zero calibration, all zero channels
-		rcspgData += '\nSpectrum: ' +
-					/*int32 duration*/'00 00 00 00' + ' ' +
-					/*float A0*/'00 00 00 00' + ' ' +
-					/*float A1*/'00 00 00 00 ' + ' ' +
-					/*float A2*/'00 00 00 00' + ' ' +
-					Array(1024).fill('00 00 00 00').join(' ');
-		// deltas
-		spectrums.forEach(spectrum => {
-			rcspgData += '\n' + filetimeFromJSTime(spectrum.timestamp);
-			rcspgData += '\t' + Math.round(spectrum.duration);
-			spectrum.channels.forEach(channel => {
-				rcspgData += '\t' + channel;
-			});
-		});
+		let rcspgData = createRcspgData(spectrums);
 		fs.writeFileSync('waterfall.rcspg', rcspgData);
 	} else {
-		let waterfall = createWaterfall(spectrums);
+		let waterfall = createWaterfallData(spectrums);
 		let template = fs.readFileSync('waterfall-template.html', 'utf-8');
 		fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
 	}
