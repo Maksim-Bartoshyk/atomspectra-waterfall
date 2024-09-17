@@ -63,7 +63,7 @@ function readSpectrum(fileText) {
 	let calibrationOrder = parseInt(lines[10]);
 	let calibration = [];
 	for (let i = 0; i < calibrationOrder + 1; i++) {
-		calibration.push(parseFloat(lines[11 + i]));
+		calibration.push(Math.pow(channelReduceFactor, i) * parseFloat(lines[11 + i]));
 	}
 
 	let index = 0;
@@ -93,7 +93,8 @@ function createWaterfallData(spectrums) {
 		max: 0,
 		width: spectrums[0].channels.length,
 		height: spectrums.length,
-		timestamps: []
+		timestamps: [],
+		calibration: spectrums[0].calibration,
 	};
 	spectrums.forEach((spectrum, spectrumIndex) => {
 		waterfall.timestamps.push(spectrum.timestamp);
@@ -134,12 +135,12 @@ function createRcspgData(spectrums) {
 	switch (spectrums[0].calibration.length) {
 		case 2:
 			a0 = spectrums[0].calibration[0];
-			a1 = spectrums[0].calibration[1] * channelReduceFactor;
+			a1 = spectrums[0].calibration[1];
 			break;
 		case 3:
 			a0 = spectrums[0].calibration[0];
-			a1 = spectrums[0].calibration[1] * channelReduceFactor;
-			a2 = spectrums[0].calibration[2] * channelReduceFactor * channelReduceFactor;
+			a1 = spectrums[0].calibration[1];
+			a2 = spectrums[0].calibration[2];
 			break;
 		default:
 			console.warn('calibration polynom order (' + spectrums[0].calibration.length + ') is not supported, y=x applied');

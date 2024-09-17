@@ -4,8 +4,8 @@
 			window.waterfallData = {waterfall_data};
 		</script>
 	</head>
-	<body>
-		<canvas id="waterfall"></canvas>
+	<body style="background: black;">
+		<canvas id="waterfall" style="border: 1px dashed #222222;"></canvas>
 		<script>
 			const timestampWidth = 132;
 			const timestampHeight = 16;
@@ -16,7 +16,7 @@
 			let canvas = document.getElementById('waterfall');
 			canvas.width = waterfallData.width + timestampWidth;
 			canvas.height = waterfallData.height + channelAxisHeight;
-			
+
 			let ironPalette = [
 				"#00000a","#000014","#00001e","#000025","#00002a","#00002e","#000032","#000036",
 				"#00003a","#00003e","#000042","#000046","#00004a","#00004f","#000052","#010055",
@@ -79,14 +79,15 @@
 			waterfallData.points.forEach(point => {
 				if (point.value > 0) {
 					let colorIndex = Math.round((point.value / waterfallData.max) * (ironPalette.length - 1));
-					
+
 					// non-linear color scale
-					colorIndex = Math.round((Math.sqrt(colorIndex + 1) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));					
+					colorIndex = Math.round((Math.sqrt(colorIndex + 1) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));
 					ctx.fillStyle = ironPalette[colorIndex];
 					ctx.fillRect(point.x + timestampWidth, point.y, 1, 1);
 				}
 			});
 
+			// time axis
 			for (let tsIndex = 0; tsIndex < waterfallData.timestamps.length; tsIndex += timestampHeight) {
 				timestamp = waterfallData.timestamps[tsIndex];
 				ctx.textBaseline = 'top';
@@ -98,11 +99,17 @@
 				}
 			}
 
-			for (let x = timestampWidth; x < canvas.width; x += 100) {
+			// energy axis
+			for (let x = timestampWidth; x < canvas.width; x += 50) {
+				let channelNumber = x - timestampWidth;
+				let energy = 0;
+				for (let order = 0; order < waterfallData.calibration.length; order++) {
+					energy += Math.pow(channelNumber, order) * waterfallData.calibration[order];
+				}
 				ctx.textBaseline = 'top';
 				ctx.fillStyle = textColor;
-				ctx.fillText((x - timestampWidth).toString(), x, waterfallData.height + channelAxisTickHeight);
-				
+				ctx.fillText(Math.round(energy).toString(), x, waterfallData.height + channelAxisTickHeight);
+
 				for (let y = waterfallData.height; y < waterfallData.height + channelAxisTickHeight; y++) {
 					ctx.fillRect(x, y, 1, 1);
 				}
