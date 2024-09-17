@@ -175,7 +175,7 @@ function convertFiles(dirname, onProgress, onError) {
 		try {
 			let content = fs.readFileSync(path.join(dirname, file.name), 'utf-8');
 			spectrums.push(readSpectrum(content));
-			console.log('Read success for file ' + file.name);
+			console.info('Read success for file ' + file.name);
 		} catch (e) {
 			console.error('FAILURE for ' + file.name + ' error: ' + e.message);
 		}
@@ -192,10 +192,12 @@ function convertFiles(dirname, onProgress, onError) {
 	if (rcspg) {
 		let rcspgData = createRcspgData(spectrums);
 		fs.writeFileSync('waterfall.rcspg', rcspgData);
+		console.info('waterfall.rcspg has been created');
 	} else {
 		let waterfall = createWaterfallData(spectrums);
 		let template = fs.readFileSync('waterfall-template.html', 'utf-8');
 		fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
+		console.info('waterfall.html has been created');
 	}
 }
 
@@ -244,4 +246,4 @@ if (paramIsSet('-rs')) {
 
 let folder = process.argv[2]
 convertFiles(folder);
-console.log('DONE');
+console.info('DONE');
