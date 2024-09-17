@@ -3,6 +3,11 @@ let path = require('path');
 let channelReduceFactor = 8;
 let spectrumReduceFactor = 1;
 let useCps = false;
+let rcspg = false;
+
+function filetimeFromJSTime(jsTime) {  
+	return jsTime * 1e4 + 116444736e9;
+}
 
 function reduceSpectrumCount(spectrums, factor) {
 	let reduced = [];
@@ -105,11 +110,39 @@ function convertFiles(dirname, onProgress, onError) {
 		}
 	});
 
-	spectrums.sort((s1, s2) => s1.timestamp < s2.timestamp ? 1 : -1);
-	let waterfall = createWaterfall(reduceSpectrumCount(spectrums, spectrumReduceFactor));
+	spectrums.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
 
-	let template = fs.readFileSync('waterfall-template.html', 'utf-8');
-	fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
+	if (rcspg) {
+		let fromTimestamp = spectrums[0].timestamp;
+		let toTimestamp = spectrums[spectrums.length - 1].timestamp;
+		// header
+		let rcspgData = 'Spectrogram: ' + new Date(fromTimestamp).toISOString() + 
+						'\tTime: ' + new Date(toTimestamp).toISOString() + 
+						'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp - 1000) + // just in case to avoid any potential division by zero
+						'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
+						'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
+		// base spectrum, linear calibration, all zeros
+		rcspgData += '\nSpectrum: ' +
+					/*int32 base spectrum duration*/'00 00 00 01' + ' ' +
+					/*float A0*/'00 00 00 00' + ' ' +
+					/*float A1*/'3F 80 00 00 ' + ' ' +
+					/*float A2*/'00 00 00 00' + ' ' +
+					Array(1024).fill('00 00 00 00').join(' ');
+		// deltas
+		spectrums.forEach(spectrum => {
+			rcspgData += '\n' + filetimeFromJSTime(spectrum.timestamp);
+			rcspgData += '\t' + Math.round(spectrum.duration);
+			// no space optimization so far
+			spectrum.channels.forEach(channel => {
+				rcspgData += '\t' + channel;
+			});
+		});
+		fs.writeFileSync('waterfall.rcspg', rcspgData);
+	} else {
+		let waterfall = createWaterfall(reduceSpectrumCount(spectrums, spectrumReduceFactor));
+		let template = fs.readFileSync('waterfall-template.html', 'utf-8');
+		fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
+	}
 }
 
 function paramIsSet(paramName) {
@@ -123,9 +156,19 @@ function paramValue(paramName) {
 	}
 }
 
+rcspg = paramIsSet('--rcspg');
 useCps = paramIsSet('--cps');
+if (rcspg && useCps) {
+	console.error('cps is not suported for rcspg export');
+	return;
+}
 
 if (paramIsSet('-rc')) {
+	if (rcspg) {
+		console.error('reduce channels param is not suported for rcspg export');
+		return;
+	}
+
 	let value = parseInt(paramValue('-rc'));
 	if (isNaN(value) || value < 1) {
 		console.error('invalid reduce channels factor, must be positive integer');
