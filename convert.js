@@ -5,6 +5,20 @@ let spectrumReduceFactor = 1;
 let useCps = false;
 let rcspg = false;
 
+function getBigEndianFloat(value) {
+	const getHex = i => ('00' + i.toString(16)).slice(-2);
+
+	var view = new DataView(new ArrayBuffer(4));
+	view.setFloat32(0, value);
+	const result = Array
+		.apply(null, { length: 4 })
+		.map((_, i) => getHex(view.getUint8(i)))
+		.reverse()
+		.join(' ');
+
+	return result;
+}
+
 function filetimeFromJSTime(jsTime) {  
 	return jsTime * 1e4 + 116444736e9;
 }
@@ -46,12 +60,16 @@ function readSpectrum(fileText) {
 	let time = parseInt(lines[2]);
 	let duration = parseInt(lines[8]);
 	let channelsCount = parseInt(lines[9]);
-	let calibration = parseInt(lines[10])
+	let calibrationOrder = parseInt(lines[10]);
+	let calibration = [];
+	for (let i = 0; i < calibrationOrder + 1; i++) {
+		calibration.push(parseFloat(lines[11 + i]));
+	}
 
 	let index = 0;
 	let channels = [];
 	while (index < channelsCount) {
-		channels.push(parseInt(lines[12 + calibration + index]));
+		channels.push(parseInt(lines[12 + calibrationOrder + index]));
 		index++;
 	}
 
@@ -63,6 +81,7 @@ function readSpectrum(fileText) {
 	return {
 		timestamp: time,
 		duration: duration,
+		calibration: calibration,
 		channels: reduceChannelCount(channels, channelReduceFactor)
 	};
 }
@@ -109,11 +128,27 @@ function createRcspgData(spectrums) {
 					'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
 
 	// base spectrum, zero duration, y=x calibration, all zero channels
+	let a0 = 0;
+	let a1 = 1;
+	let a2 = 0;
+	switch (spectrums[0].calibration.length) {
+		case 2:
+			a0 = spectrums[0].calibration[0];
+			a1 = spectrums[0].calibration[1] * channelReduceFactor;
+			break;
+		case 3:
+			a0 = spectrums[0].calibration[0];
+			a1 = spectrums[0].calibration[1] * channelReduceFactor;
+			a2 = spectrums[0].calibration[2] * channelReduceFactor * channelReduceFactor;
+			break;
+		default:
+			console.warn('calibration polynom order (' + spectrums[0].calibration.length + ') is not supported, y=x applied');
+	}
 	rcspgData += '\nSpectrum: ' +
 				/*int32 duration*/'00 00 00 00' + ' ' +
-				/*float(big endian) A0*/'00 00 00 00' + ' ' +
-				/*float(big endian) A1*/'00 00 80 3F' + ' ' +
-				/*float(big endian) A2*/'00 00 00 00' + ' ' +
+				/*float A0*/getBigEndianFloat(a0) + ' ' +
+				/*float A1*/getBigEndianFloat(a1) + ' ' +
+				/*float A2*/getBigEndianFloat(a2) + ' ' +
 				Array(1024).fill('00 00 00 00').join(' ');
 
 	// deltas
