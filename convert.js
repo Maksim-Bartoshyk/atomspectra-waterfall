@@ -58,7 +58,7 @@ function reduceChannelCount(channels, factor) {
 function readSpectrum(fileText) {
 	let lines = fileText.split('\n');
 	let time = parseInt(lines[2]);
-	let duration = parseInt(lines[8]);
+	let duration = parseFloat(lines[8]);
 	let channelsCount = parseInt(lines[9]);
 	let calibrationOrder = parseInt(lines[10]);
 	let calibration = [];
@@ -160,7 +160,7 @@ function createRcspgData(spectrums) {
 			rcspgData += '\t' + channel;
 		});
 	});
-
+0
 	return rcspgData;
 }
 
@@ -188,6 +188,33 @@ function convertFiles(dirname, onProgress, onError) {
 
 	spectrums.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
 	spectrums = reduceSpectrumCount(spectrums, spectrumReduceFactor);
+
+	const intervalsDict = {};
+	spectrums.forEach(spectrum => {
+		const rounded  = spectrum.duration.toFixed(1);
+		if (intervalsDict[rounded] === undefined) {
+			intervalsDict[rounded] = 1;
+		} else {
+			intervalsDict[rounded]++;
+		}
+	});
+
+	
+	console.info('intervals:');
+	Object.keys(intervalsDict)
+		.map(k => [k, intervalsDict[k]])
+		.sort((i1, i2) => i1[1] < i2[1] ? 1 : -1)
+		.forEach(interval => {
+		console.info(interval[0] + ' sec: ' + interval[1] + ' spectrums');
+	});
+	console.info('---------');
+	Object.keys(intervalsDict)
+		.map(k => [k, intervalsDict[k]])
+		.sort((i1, i2) => i1[0] > i2[0] ? 1 : -1)
+		.forEach(interval => {
+		console.info(interval[0] + ' sec: ' + interval[1] + ' spectrums');
+	});
+	console.info('\n');
 
 	if (rcspg) {
 		let rcspgData = createRcspgData(spectrums);
