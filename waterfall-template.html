@@ -31,7 +31,7 @@
 				const timestampWidth = 132;
 				const timestampHeight = 16;
 				const timestampTickWidth = 8;
-				const channelAxisHeight = 16;
+				const channelAxisHeight = 32;
 				const channelAxisTickHeight = 4;
 				const textColor = 'lightgray';
 				let canvas = document.getElementById('waterfall');
@@ -154,22 +154,38 @@
 				}
 
 				// energy axis render
+				const energyAxisBaseline = waterfallData.spectrumsCount;
+				const channelAxisBaseline = waterfallData.spectrumsCount + channelAxisHeight / 2;
+				let kevRendered = false;
 				for (let x = timestampWidth; x < canvas.width; x++) {
 					const channelNumber = x - timestampWidth;
 					const energy = renderEnergies[channelNumber];
-					if (energy === undefined) {
-						continue;
-					}
 
-					if (energy % 500 === 0) {
+					if (energy != undefined && energy % 500 === 0) {
 						ctx.textBaseline = 'top';
 						ctx.fillStyle = textColor;
-						ctx.fillText(energy.toString(), x, waterfallData.spectrumsCount + channelAxisTickHeight);
+						const label = kevRendered ? energy.toString() : energy + ' keV';
+						ctx.fillText(label, x, energyAxisBaseline + channelAxisTickHeight);
+						kevRendered = true;
 					}
 
-					if (energy % 100 === 0) {
+					if (energy != undefined && energy % 100 === 0) {
 						const tickHeight = energy % 500 === 0 ? channelAxisTickHeight : channelAxisTickHeight / 2;
-						for (let y = waterfallData.spectrumsCount; y < waterfallData.spectrumsCount + tickHeight; y++) {
+						for (let y = energyAxisBaseline; y < energyAxisBaseline + tickHeight; y++) {
+							ctx.fillRect(x, y, 1, 1);
+						}
+					}
+
+					if (channelNumber % 100 === 0) {
+						ctx.textBaseline = 'top';
+						ctx.fillStyle = textColor;
+						const label = channelNumber === 0 ? channelNumber + ' channel' : channelNumber.toString();
+						ctx.fillText(label, x, channelAxisBaseline + channelAxisTickHeight);
+					}
+
+					if (channelNumber % 10 === 0) {
+						const tickHeight = channelNumber % 50 === 0 ? channelAxisTickHeight : channelAxisTickHeight / 2;
+						for (let y = channelAxisBaseline; y < channelAxisBaseline + tickHeight; y++) {
 							ctx.fillRect(x, y, 1, 1);
 						}
 					}
