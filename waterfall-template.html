@@ -97,25 +97,29 @@
 				let ctx = canvas.getContext("2d");
 				ctx.fillStyle = 'black';
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				let maxCps = 0;
 				waterfallData.points.forEach(point => {
-					if (point.value > 0) {
-						let linearColorIndex = Math.round((point.value / waterfallData.max) * (ironPalette.length - 1));
-						let colorIndex;
+					const cps = point.cnt / waterfallData.durations[point.si];
+					maxCps = Math.max(maxCps, cps);
+				});
+				waterfallData.points.forEach(point => {
+					const cps = point.cnt / waterfallData.durations[point.si];
+					const linearColorIndex = Math.round((cps / maxCps) * (ironPalette.length - 1));
+					let colorIndex;
 
-						switch (scale) {
-							case 'log':
-								colorIndex = Math.round((Math.log(linearColorIndex + 1) / Math.log(ironPalette.length)) * (ironPalette.length - 1));
-								break;
-							case 'sqrt':
-								colorIndex = Math.round((Math.sqrt(linearColorIndex + 1) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));
-								break;
-							default:
-								colorIndex = linearColorIndex;
-						}
-
-						ctx.fillStyle = ironPalette[colorIndex];
-						ctx.fillRect(point.x + timestampWidth, point.y, 1, 1);
+					switch (scale) {
+						case 'log':
+							colorIndex = Math.round((Math.log(linearColorIndex + 1) / Math.log(ironPalette.length)) * (ironPalette.length - 1));
+							break;
+						case 'sqrt':
+							colorIndex = Math.round((Math.sqrt(linearColorIndex + 1) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));
+							break;
+						default:
+							colorIndex = linearColorIndex;
 					}
+
+					ctx.fillStyle = ironPalette[colorIndex];
+					ctx.fillRect(point.ci + timestampWidth, point.si, 1, 1);
 				});
 
 				// time axis

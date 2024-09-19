@@ -2,7 +2,6 @@ let fs = require('fs');
 let path = require('path');
 let channelReduceFactor = 8;
 let spectrumReduceFactor = 1;
-let useCps = false;
 let rcspg = false;
 
 function getBigEndianFloat(value) {
@@ -89,26 +88,22 @@ function readSpectrum(fileText) {
 function createWaterfallData(spectrums) {
 	let waterfall = {
 		points: [],
-		min: 0,
-		max: 0,
 		channelCount: spectrums[0].channels.length,
 		spectrumsCount: spectrums.length,
 		timestamps: [],
+		durations: [],
 		calibration: spectrums[0].calibration,
 	};
 	spectrums.forEach((spectrum, spectrumIndex) => {
 		waterfall.timestamps.push(spectrum.timestamp);
+		waterfall.durations.push(spectrum.duration);
 
 		spectrum.channels.forEach((channelValue, channelIndex) => {
 			if (channelValue > 0) {
-				let wfValue = useCps
-					? channelValue / spectrum.duration
-					: channelValue;
-				waterfall.max = Math.max(waterfall.max, wfValue);
 				waterfall.points.push({
-					x: channelIndex,
-					y: spectrumIndex,
-					value: wfValue
+					ci: channelIndex,
+					si: spectrumIndex,
+					cnt: channelValue
 				});
 			}
 		});
@@ -160,8 +155,36 @@ function createRcspgData(spectrums) {
 			rcspgData += '\t' + channel;
 		});
 	});
-0
+
 	return rcspgData;
+}
+
+function printItervalsStats(spectrums) {
+	const intervalsDict = {};
+	spectrums.forEach(spectrum => {
+		const rounded  = spectrum.duration.toFixed(1);
+		if (intervalsDict[rounded] === undefined) {
+			intervalsDict[rounded] = 1;
+		} else {
+			intervalsDict[rounded]++;
+		}
+	});
+
+	console.info('intervals:');
+	Object.keys(intervalsDict)
+		.map(k => [k, intervalsDict[k]])
+		.sort((i1, i2) => i1[1] < i2[1] ? 1 : -1)
+		.forEach(interval => {
+		console.info(interval[0] + ' sec: ' + interval[1] + ' spectrums');
+	});
+	console.info('---------');
+	Object.keys(intervalsDict)
+		.map(k => [k, intervalsDict[k]])
+		.sort((i1, i2) => i1[0] > i2[0] ? 1 : -1)
+		.forEach(interval => {
+		console.info(interval[0] + ' sec: ' + interval[1] + ' spectrums');
+	});
+	console.info('\n');
 }
 
 function convertFiles(dirname, onProgress, onError) {
@@ -188,33 +211,7 @@ function convertFiles(dirname, onProgress, onError) {
 
 	spectrums.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
 	spectrums = reduceSpectrumCount(spectrums, spectrumReduceFactor);
-
-	const intervalsDict = {};
-	spectrums.forEach(spectrum => {
-		const rounded  = spectrum.duration.toFixed(1);
-		if (intervalsDict[rounded] === undefined) {
-			intervalsDict[rounded] = 1;
-		} else {
-			intervalsDict[rounded]++;
-		}
-	});
-
-	
-	console.info('intervals:');
-	Object.keys(intervalsDict)
-		.map(k => [k, intervalsDict[k]])
-		.sort((i1, i2) => i1[1] < i2[1] ? 1 : -1)
-		.forEach(interval => {
-		console.info(interval[0] + ' sec: ' + interval[1] + ' spectrums');
-	});
-	console.info('---------');
-	Object.keys(intervalsDict)
-		.map(k => [k, intervalsDict[k]])
-		.sort((i1, i2) => i1[0] > i2[0] ? 1 : -1)
-		.forEach(interval => {
-		console.info(interval[0] + ' sec: ' + interval[1] + ' spectrums');
-	});
-	console.info('\n');
+	printItervalsStats(spectrums);
 
 	if (rcspg) {
 		let rcspgData = createRcspgData(spectrums);
@@ -240,11 +237,6 @@ function paramValue(paramName) {
 }
 
 rcspg = paramIsSet('--rcspg');
-useCps = paramIsSet('--cps');
-if (rcspg && useCps) {
-	console.error('cps is not suported for rcspg export');
-	return;
-}
 
 if (paramIsSet('-rc')) {
 	if (rcspg) {
