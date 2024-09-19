@@ -6,10 +6,12 @@
 				color: lightgray;
 			}
 			.scale-switch, .cps-control {
+				margin: 4px;
 				width: 100%;
 			}
 			.waterfall, .cps-trend {
 				border: 1px dashed #333333;
+				margin: 4px;
 			}
 		</style>
 		<script>
@@ -27,7 +29,10 @@
 		</div>
 		<canvas id="waterfall" class="waterfall"></canvas>
 		<div class="cps-control">
-			<button onclick="renderCps()">CPS trend in channel range:</button> <input id="from-channel" type="number"/>-<input id="to-channel" type="number"/>
+			<button onclick="renderCps()">CPS trend in channel range:</button> 
+			<input id="from-channel" type="number"/>-<input id="to-channel" type="number"/>
+			<input id="dotted-trend" name="dotted-trend" type="checkbox"/>
+			<label for="dotted-trend">Dotted</label>
 		</div>
 		<canvas id="cps-trend" class="cps-trend" width="0" height="0"></canvas>
 		<script>
@@ -201,11 +206,13 @@
 		<script>
 			const fromChannelInput = document.getElementById('from-channel');
 			const toChannelInput = document.getElementById('to-channel');
+			const dottedCheckbox = document.getElementById('dotted-trend');
 			fromChannelInput.value = 0;
 			toChannelInput.value = waterfallData.channelCount - 1;
 			renderCps();
 
 			function renderCps() {
+				const textColor = 'lightgray';
 				const fromChannel = parseInt(fromChannelInput.value);
 				const toChannel = parseInt(toChannelInput.value);
 				if (isNaN(fromChannel) || isNaN(toChannel) || fromChannel > toChannel) {
@@ -242,20 +249,51 @@
 					minCps = Math.min(minCps, cps);
 				}
 
-				const range = maxCps - minCps;
-				if (range === 0) {
-					range = 0.2 * maxCps;
-				}
-				for (let x = 0; x < waterfallData.spectrumsCount; x++) {
-					if (countsInRange[x] === undefined) {
-						continue;
-					}
+				let range = maxCps - minCps;
+				maxCps += 0.1 * (range === 0 ? maxCps : range);
+				minCps -= 0.1 * (range === 0 ? maxCps : range);
+				range = maxCps - minCps;
 
-					const cps = countsInRange[x] / waterfallData.durations[x];
-					const y = canvas.height - (cps - 0.8 * minCps) / (1.2 * range) * canvas.height;
+				if (dottedCheckbox.checked) {
+					// only points
 					ctx.fillStyle = 'white';
-					ctx.fillRect(x, y, 1, 1);
+					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
+						if (countsInRange[x] === undefined) {
+							continue;
+						}
+
+						const cps = countsInRange[x] / waterfallData.durations[x];
+						const y = canvas.height - ((cps - minCps) / range) * canvas.height;
+						ctx.fillRect(x, y, 1, 1);
+					}
+				} else {
+					// lines
+					ctx.beginPath();
+					ctx.strokeStyle = 'lightgray';
+					let firstMove = true;
+					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
+						if (countsInRange[x] === undefined) {
+							continue;
+						}
+
+						const cps = countsInRange[x] / waterfallData.durations[x];
+						const y = canvas.height - ((cps - minCps) / range) * canvas.height;
+						if (firstMove) {
+							ctx.moveTo(x, y);
+							firstMove = false;
+						} else {
+							ctx.lineTo(x, y);
+							ctx.moveTo(x, y);
+						}
+					}
+					ctx.stroke();
 				}
+
+				ctx.textBaseline = 'top';
+				ctx.fillStyle = textColor;
+				ctx.fillText(maxCps.toFixed(range < 0.01 ? 4 : 2), 0, 0);
+				ctx.textBaseline = 'bottom';
+				ctx.fillText(minCps.toFixed(range < 0.01 ? 4 : 2), 0, canvas.height);
 			}
 		</script>
 	</body>
