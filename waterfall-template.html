@@ -5,11 +5,11 @@
 				background: black;
 				color: lightgray;
 			}
-			.scale-switch {
+			.scale-switch, .cps-control {
 				width: 100%;
 			}
-			.waterfall {
-				border: 1px dashed #222222;
+			.waterfall, .cps-trend {
+				border: 1px dashed #333333;
 			}
 		</style>
 		<script>
@@ -26,6 +26,10 @@
 			<label for="log">LOG</label>
 		</div>
 		<canvas id="waterfall" class="waterfall"></canvas>
+		<div class="cps-control">
+			<button onclick="renderCps()">CPS trend in channel range:</button> <input id="from-channel" type="number"/>-<input id="to-channel" type="number"/>
+		</div>
+		<canvas id="cps-trend" class="cps-trend" width="0" height="0"></canvas>
 		<script>
 			function renderWaterfallImage(scale) {
 				const timestampWidth = 132;
@@ -34,11 +38,11 @@
 				const channelAxisHeight = 32;
 				const channelAxisTickHeight = 4;
 				const textColor = 'lightgray';
-				let canvas = document.getElementById('waterfall');
+				const canvas = document.getElementById('waterfall');
 				canvas.width = waterfallData.channelCount + timestampWidth;
 				canvas.height = waterfallData.spectrumsCount + channelAxisHeight;
 
-				let ironPalette = [
+				const ironPalette = [
 					"#00000a","#000014","#00001e","#000025","#00002a","#00002e","#000032","#000036",
 					"#00003a","#00003e","#000042","#000046","#00004a","#00004f","#000052","#010055",
 					"#010057","#020059","#02005c","#03005e","#040061","#040063","#050065","#060067",
@@ -94,7 +98,7 @@
 					"#fff8c4","#fff9c7","#fff9ca","#fff9cd","#fffad1","#fffad4","#fffbd8","#fffcdb",
 					"#fffcdf","#fffde2","#fffde5","#fffde8","#fffeeb","#fffeee","#fffef1","#fffef4",
 					"#fffff6"];
-				let ctx = canvas.getContext("2d");
+				const ctx = canvas.getContext("2d");
 				ctx.fillStyle = 'black';
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 				let maxCps = 0;
@@ -193,6 +197,66 @@
 			}
 
 			renderWaterfallImage('sqrt');
+		</script>
+		<script>
+			const fromChannelInput = document.getElementById('from-channel');
+			const toChannelInput = document.getElementById('to-channel');
+			fromChannelInput.value = 0;
+			toChannelInput.value = waterfallData.channelCount - 1;
+			renderCps();
+
+			function renderCps() {
+				const fromChannel = parseInt(fromChannelInput.value);
+				const toChannel = parseInt(toChannelInput.value);
+				if (isNaN(fromChannel) || isNaN(toChannel) || fromChannel > toChannel) {
+					return;
+				}
+
+				const countsInRange = {};
+				waterfallData.points.forEach(point => {
+					if (point.ci >= fromChannel && point.ci <= toChannel) {
+						if (countsInRange[point.si] === undefined) {
+							countsInRange[point.si] = point.cnt;
+						} else {
+							countsInRange[point.si] += point.cnt;
+						}
+					}
+				});
+				const canvas = document.getElementById('cps-trend');
+				canvas.width = waterfallData.spectrumsCount;
+				canvas.height = 200;
+
+				const ctx = canvas.getContext("2d");
+				ctx.fillStyle = 'black';
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+				let maxCps = 0;
+				let minCps = Infinity;
+				for (let i = 0; i < waterfallData.spectrumsCount; i++) {
+					if (countsInRange[i] === undefined) {
+						continue;
+					}
+
+					const cps = countsInRange[i] / waterfallData.durations[i];
+					maxCps = Math.max(maxCps, cps);
+					minCps = Math.min(minCps, cps);
+				}
+
+				const range = maxCps - minCps;
+				if (range === 0) {
+					range = 0.2 * maxCps;
+				}
+				for (let x = 0; x < waterfallData.spectrumsCount; x++) {
+					if (countsInRange[x] === undefined) {
+						continue;
+					}
+
+					const cps = countsInRange[x] / waterfallData.durations[x];
+					const y = canvas.height - (cps - 0.8 * minCps) / (1.2 * range) * canvas.height;
+					ctx.fillStyle = 'white';
+					ctx.fillRect(x, y, 1, 1);
+				}
+			}
 		</script>
 	</body>
 </html>
