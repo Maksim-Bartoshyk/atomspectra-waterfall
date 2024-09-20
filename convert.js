@@ -170,6 +170,8 @@ function printItervalsStats(spectrums) {
 		}
 	});
 
+	console.info('');
+	console.info('spectrums to render:', spectrums.length);
 	console.info('intervals:');
 	Object.keys(intervalsDict)
 		.map(k => [k, intervalsDict[k]])

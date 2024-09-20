@@ -4,14 +4,38 @@
 			body {
 				background: black;
 				color: lightgray;
+				padding: 8px;
 			}
 			.scale-switch, .cps-control {
-				margin: 4px;
 				width: 100%;
+				margin: 4px 0;
 			}
-			.waterfall, .cps-trend {
-				border: 1px dashed #333333;
-				margin: 4px;
+			.plot-container {
+				position: relative;
+				width: fit-content;
+			}
+			.plot {
+				border: 1px dashed #444;
+			}
+			.horizontal-cursor, .vertical-cursor {
+				display: none;
+				position: absolute;
+			}
+			.horizontal-cursor {
+				border-top: 1px dotted #777;
+				height: 0;
+				right: 0;
+				width: calc(100% - 132px);
+			}
+			.vertical-cursor {
+				border-left: 1px dotted #777;
+				height: 100%;
+				top: 0;
+				width: 0;
+			}
+			.cps-left-column {
+				display: inline-block;
+				width: 240px;
 			}
 		</style>
 		<script>
@@ -27,25 +51,48 @@
 			<input type="radio" id="log" name="scale" value="log" onchange="renderWaterfallImage(this.value)">
 			<label for="log">LOG</label>
 		</div>
-		<canvas id="waterfall" class="waterfall"></canvas>
+		<div class="plot-container">
+			<canvas id="waterfall-plot" class="plot"></canvas>
+			<div id="horizontal-cursor" class="horizontal-cursor"></div>
+			<div id="vertical-cursor" class="vertical-cursor"></div>
+		</div>
 		<div class="cps-control">
-			<button onclick="renderCps()">CPS trend in channel range:</button> 
+			<button class="cps-left-column" onclick="renderCps()">CPS trend in channel range:</button> 
 			<input id="from-channel" type="number"/>-<input id="to-channel" type="number"/>
 			<input id="dotted-trend" name="dotted-trend" type="checkbox"/>
 			<label for="dotted-trend">Dotted</label>
+			<br />
+			<div class="cps-left-column">
+				<input id="subtract-range" name="subtract-range" type="checkbox"/>
+				<label for="subtract-range">Subtract CPS in channel range:</label>
+			</div>
+			<input id="subtract-from-channel" type="number"/>-<input id="subtract-to-channel" type="number"/>
 		</div>
-		<canvas id="cps-trend" class="cps-trend" width="0" height="0"></canvas>
+		<div class="plot-container">
+			<canvas id="cps-plot" class="plot"></canvas>
+			<div id="cps-vertical-cursor" class="vertical-cursor"></div>
+		</div>
 		<script>
+			window.constants = {
+				timestampWidth: 132,
+				timestampHeight: 16,
+				timestampTickWidth: 8,
+				channelAxisHeight: 32,
+				channelAxisTickHeight: 4,
+				backgroundColor: 'black',
+				textColor: 'lightgray',
+				lineColor: 'lightgray',
+				dotColor: 'white',
+				cpsPlotHeight: 200,
+				cpsExtendRange: 0.1
+			};
+		</script>
+		<script>
+			// waterfall plot render
 			function renderWaterfallImage(scale) {
-				const timestampWidth = 132;
-				const timestampHeight = 16;
-				const timestampTickWidth = 8;
-				const channelAxisHeight = 32;
-				const channelAxisTickHeight = 4;
-				const textColor = 'lightgray';
-				const canvas = document.getElementById('waterfall');
-				canvas.width = waterfallData.channelCount + timestampWidth;
-				canvas.height = waterfallData.spectrumsCount + channelAxisHeight;
+				const canvas = document.getElementById('waterfall-plot');
+				canvas.width = waterfallData.channelCount + constants.timestampWidth;
+				canvas.height = waterfallData.spectrumsCount + constants.channelAxisHeight;
 
 				const ironPalette = [
 					"#00000a","#000014","#00001e","#000025","#00002a","#00002e","#000032","#000036",
@@ -104,7 +151,7 @@
 					"#fffcdf","#fffde2","#fffde5","#fffde8","#fffeeb","#fffeee","#fffef1","#fffef4",
 					"#fffff6"];
 				const ctx = canvas.getContext("2d");
-				ctx.fillStyle = 'black';
+				ctx.fillStyle = constants.backgroundColor;
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 				let maxCps = 0;
 				waterfallData.points.forEach(point => {
@@ -128,17 +175,17 @@
 					}
 
 					ctx.fillStyle = ironPalette[colorIndex];
-					ctx.fillRect(point.ci + timestampWidth, point.si, 1, 1);
+					ctx.fillRect(point.ci + constants.timestampWidth, point.si, 1, 1);
 				});
 
 				// time axis
-				for (let tsIndex = 0; tsIndex < waterfallData.timestamps.length; tsIndex += timestampHeight) {
+				for (let tsIndex = 0; tsIndex < waterfallData.timestamps.length; tsIndex += constants.timestampHeight) {
 					timestamp = waterfallData.timestamps[tsIndex];
 					ctx.textBaseline = 'top';
-					ctx.fillStyle = textColor;
+					ctx.fillStyle = constants.textColor;
 					ctx.fillText(new Date(timestamp).toISOString(), 0, tsIndex);
 
-					for (let x = timestampWidth - timestampTickWidth; x < timestampWidth; x++) {
+					for (let x = constants.timestampWidth - constants.timestampTickWidth; x < constants.timestampWidth; x++) {
 						ctx.fillRect(x, tsIndex, 1, 1);
 					}
 				}
@@ -164,22 +211,22 @@
 
 				// energy axis render
 				const energyAxisBaseline = waterfallData.spectrumsCount;
-				const channelAxisBaseline = waterfallData.spectrumsCount + channelAxisHeight / 2;
+				const channelAxisBaseline = waterfallData.spectrumsCount + constants.channelAxisHeight / 2;
 				let kevRendered = false;
-				for (let x = timestampWidth; x < canvas.width; x++) {
-					const channelNumber = x - timestampWidth;
+				for (let x = constants.timestampWidth; x < canvas.width; x++) {
+					const channelNumber = x - constants.timestampWidth;
 					const energy = renderEnergies[channelNumber];
 
 					if (energy != undefined && energy % 500 === 0) {
 						ctx.textBaseline = 'top';
-						ctx.fillStyle = textColor;
+						ctx.fillStyle = constants.textColor;
 						const label = kevRendered ? energy.toString() : energy + ' keV';
-						ctx.fillText(label, x, energyAxisBaseline + channelAxisTickHeight);
+						ctx.fillText(label, x, energyAxisBaseline + constants.channelAxisTickHeight);
 						kevRendered = true;
 					}
 
 					if (energy != undefined && energy % 100 === 0) {
-						const tickHeight = energy % 500 === 0 ? channelAxisTickHeight : channelAxisTickHeight / 2;
+						const tickHeight = energy % 500 === 0 ? constants.channelAxisTickHeight : constants.channelAxisTickHeight / 2;
 						for (let y = energyAxisBaseline; y < energyAxisBaseline + tickHeight; y++) {
 							ctx.fillRect(x, y, 1, 1);
 						}
@@ -187,13 +234,13 @@
 
 					if (channelNumber % 100 === 0) {
 						ctx.textBaseline = 'top';
-						ctx.fillStyle = textColor;
+						ctx.fillStyle = constants.textColor;
 						const label = channelNumber === 0 ? channelNumber + ' channel' : channelNumber.toString();
-						ctx.fillText(label, x, channelAxisBaseline + channelAxisTickHeight);
+						ctx.fillText(label, x, channelAxisBaseline + constants.channelAxisTickHeight);
 					}
 
 					if (channelNumber % 10 === 0) {
-						const tickHeight = channelNumber % 50 === 0 ? channelAxisTickHeight : channelAxisTickHeight / 2;
+						const tickHeight = channelNumber % 50 === 0 ? constants.channelAxisTickHeight : constants.channelAxisTickHeight / 2;
 						for (let y = channelAxisBaseline; y < channelAxisBaseline + tickHeight; y++) {
 							ctx.fillRect(x, y, 1, 1);
 						}
@@ -204,18 +251,35 @@
 			renderWaterfallImage('sqrt');
 		</script>
 		<script>
+			// cps plot render
 			const fromChannelInput = document.getElementById('from-channel');
 			const toChannelInput = document.getElementById('to-channel');
 			const dottedCheckbox = document.getElementById('dotted-trend');
+			const subFromChannelInput = document.getElementById('subtract-from-channel');
+			const subToChannelInput = document.getElementById('subtract-to-channel');
+			const subCheckbox = document.getElementById('subtract-range');
 			fromChannelInput.value = 0;
 			toChannelInput.value = waterfallData.channelCount - 1;
+			subFromChannelInput.value = 0;
+			subToChannelInput.value = waterfallData.channelCount - 1;
 			renderCps();
 
 			function renderCps() {
-				const textColor = 'lightgray';
+				const cpsCanvas = document.getElementById('cps-plot');
+				cpsCanvas.width = waterfallData.spectrumsCount;
+				cpsCanvas.height = constants.cpsPlotHeight;
+			
 				const fromChannel = parseInt(fromChannelInput.value);
 				const toChannel = parseInt(toChannelInput.value);
 				if (isNaN(fromChannel) || isNaN(toChannel) || fromChannel > toChannel) {
+					renderCpsData(cpsCanvas, 0, 0, {});
+					return;
+				}
+				
+				const subFromChannel = parseInt(subFromChannelInput.value);
+				const subToChannel = parseInt(subToChannelInput.value);
+				if (subCheckbox.checked && (isNaN(subFromChannel) || isNaN(subToChannel) || subFromChannel > subToChannel)) {
+					renderCpsData(cpsCanvas, 0, 0, {});
 					return;
 				}
 
@@ -228,15 +292,16 @@
 							countsInRange[point.si] += point.cnt;
 						}
 					}
+					
+					if (subCheckbox.checked && point.ci >= subFromChannel && point.ci <= subToChannel) {
+						if (countsInRange[point.si] === undefined) {
+							countsInRange[point.si] = -point.cnt;
+						} else {
+							countsInRange[point.si] -= point.cnt;
+						}
+					}
 				});
-				const canvas = document.getElementById('cps-trend');
-				canvas.width = waterfallData.spectrumsCount;
-				canvas.height = 200;
-
-				const ctx = canvas.getContext("2d");
-				ctx.fillStyle = 'black';
-				ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+				
 				let maxCps = 0;
 				let minCps = Infinity;
 				for (let i = 0; i < waterfallData.spectrumsCount; i++) {
@@ -249,14 +314,27 @@
 					minCps = Math.min(minCps, cps);
 				}
 
-				let range = maxCps - minCps;
-				maxCps += 0.1 * (range === 0 ? maxCps : range);
-				minCps -= 0.1 * (range === 0 ? maxCps : range);
-				range = maxCps - minCps;
+				if (maxCps === 0 && minCps === 0) {
+					maxCps = 1;
+					minCps = -1;
+				}
+				const range = maxCps - minCps;
+				maxCps += constants.cpsExtendRange * (range === 0 ? maxCps : range);
+				minCps -= constants.cpsExtendRange * (range === 0 ? maxCps : range);
+
+				renderCpsData(cpsCanvas, maxCps, minCps, countsInRange);
+			}
+
+			function renderCpsData(canvas, maxCps, minCps, countsInRange) {
+				const range = maxCps - minCps;
+
+				const ctx = canvas.getContext("2d");
+				ctx.fillStyle = constants.backgroundColor;
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 				if (dottedCheckbox.checked) {
 					// only points
-					ctx.fillStyle = 'white';
+					ctx.fillStyle = constants.dotColor;
 					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
 						if (countsInRange[x] === undefined) {
 							continue;
@@ -269,7 +347,7 @@
 				} else {
 					// lines
 					ctx.beginPath();
-					ctx.strokeStyle = 'lightgray';
+					ctx.strokeStyle = constants.lineColor;
 					let firstMove = true;
 					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
 						if (countsInRange[x] === undefined) {
@@ -278,6 +356,7 @@
 
 						const cps = countsInRange[x] / waterfallData.durations[x];
 						const y = canvas.height - ((cps - minCps) / range) * canvas.height;
+
 						if (firstMove) {
 							ctx.moveTo(x, y);
 							firstMove = false;
@@ -289,11 +368,91 @@
 					ctx.stroke();
 				}
 
+				ctx.fillStyle = constants.textColor;
 				ctx.textBaseline = 'top';
-				ctx.fillStyle = textColor;
 				ctx.fillText(maxCps.toFixed(range < 0.01 ? 4 : 2), 0, 0);
 				ctx.textBaseline = 'bottom';
 				ctx.fillText(minCps.toFixed(range < 0.01 ? 4 : 2), 0, canvas.height);
+			}
+		</script>
+		<script>
+			// mouse cursor render
+			const waterfallPlot = document.getElementById('waterfall-plot');
+			const cpsPlot = document.getElementById('cps-plot');
+			const horizontal = document.getElementById('horizontal-cursor');
+			const vertical = document.getElementById('vertical-cursor');
+			const cpsVertical = document.getElementById('cps-vertical-cursor')
+			waterfallPlot.parentElement.addEventListener('mouseenter', waterfallOnEnter);
+			waterfallPlot.parentElement.addEventListener('mouseleave', plotOnLeave);
+			waterfallPlot.parentElement.addEventListener('mousemove', waterfallOnMove);
+			cpsPlot.parentElement.addEventListener('mouseenter', cpsOnEnter);
+			cpsPlot.parentElement.addEventListener('mouseleave', plotOnLeave);
+			cpsPlot.parentElement.addEventListener('mousemove', cpsOnMove);
+			horizontal.addEventListener('mousemove', horizontalOnMove);
+			vertical.addEventListener('mousemove', verticalOnMove);
+
+			function waterfallOnEnter() {
+				horizontal.style.display = 'block';
+				vertical.style.display = 'block';
+				cpsVertical.style.display = 'block';
+			}
+
+			function cpsOnEnter() {
+				horizontal.style.display = 'block';
+				vertical.style.display = 'none';
+				cpsVertical.style.display = 'block';
+			}
+
+			function plotOnLeave(e) {
+				if (isCursor(e.target)) {
+					return;
+				}
+
+				horizontal.style.display = 'none';
+				vertical.style.display = 'none';
+				cpsVertical.style.display = 'none';
+			}
+
+			function waterfallOnMove(e) {
+				if (isCursor(e.target)) {
+					return;
+				}
+
+				horizontalOnMove(e, true);
+				verticalOnMove(e);
+			}
+
+			function cpsOnMove(e) {
+				if (isCursor(e.target)) {
+					return;
+				}
+
+				horizontal.style.top = e.offsetX;
+				cpsVertical.style.left = e.offsetX;
+			}
+
+			function horizontalOnMove(e, validOffset) {
+				const offsetX = validOffset ? e.offsetX : e.offsetX + constants.timestampWidth;
+
+				if (offsetX < constants.timestampWidth) {
+					vertical.style.left = constants.timestampWidth;
+				} else {
+					vertical.style.left = offsetX;
+				}
+			}
+
+			function verticalOnMove(e) {
+				if (e.offsetY > waterfallData.spectrumsCount) {
+					horizontal.style.top = waterfallData.spectrumsCount;
+					cpsVertical.style.left = waterfallData.spectrumsCount;
+				} else {
+					horizontal.style.top = e.offsetY;
+					cpsVertical.style.left = e.offsetY;
+				}
+			}
+
+			function isCursor(target) {
+				return target === horizontal || target === vertical || target === cpsVertical;
 			}
 		</script>
 	</body>
