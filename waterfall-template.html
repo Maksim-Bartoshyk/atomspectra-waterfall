@@ -63,10 +63,10 @@
 			<label for="dotted-trend">Dotted</label>
 			<br />
 			<div class="cps-left-column">
-				<input id="subtract-range" name="subtract-range" type="checkbox"/>
-				<label for="subtract-range">Subtract CPS in channel range:</label>
+				<input id="cps-ratio" name="cps-ratio" type="checkbox"/>
+				<label for="cps-ratio">Ratio to CPS in channel range:</label>
 			</div>
-			<input id="subtract-from-channel" type="number"/>-<input id="subtract-to-channel" type="number"/>
+			<input id="from-channel-2" type="number"/>-<input id="to-channel-2" type="number"/>
 		</div>
 		<div class="plot-container">
 			<canvas id="cps-plot" class="plot"></canvas>
@@ -255,13 +255,13 @@
 			const fromChannelInput = document.getElementById('from-channel');
 			const toChannelInput = document.getElementById('to-channel');
 			const dottedCheckbox = document.getElementById('dotted-trend');
-			const subFromChannelInput = document.getElementById('subtract-from-channel');
-			const subToChannelInput = document.getElementById('subtract-to-channel');
-			const subCheckbox = document.getElementById('subtract-range');
+			const fromChannelInput2 = document.getElementById('from-channel-2');
+			const toChannelInput2 = document.getElementById('to-channel-2');
+			const ratioCheckbox = document.getElementById('cps-ratio');
 			fromChannelInput.value = 0;
 			toChannelInput.value = waterfallData.channelCount - 1;
-			subFromChannelInput.value = 0;
-			subToChannelInput.value = waterfallData.channelCount - 1;
+			fromChannelInput2.value = 0;
+			toChannelInput2.value = waterfallData.channelCount - 1;
 			renderCps();
 
 			function renderCps() {
@@ -276,14 +276,16 @@
 					return;
 				}
 				
-				const subFromChannel = parseInt(subFromChannelInput.value);
-				const subToChannel = parseInt(subToChannelInput.value);
-				if (subCheckbox.checked && (isNaN(subFromChannel) || isNaN(subToChannel) || subFromChannel > subToChannel)) {
+				const fromChannel2 = parseInt(fromChannelInput2.value);
+				const toChannel2 = parseInt(toChannelInput2.value);
+				if (ratioCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
 					renderCpsData(cpsCanvas, 0, 0, {});
 					return;
 				}
 
 				const countsInRange = {};
+				const countsInRange2 = {};
+				// TODO: refactor duplicated code
 				waterfallData.points.forEach(point => {
 					if (point.ci >= fromChannel && point.ci <= toChannel) {
 						if (countsInRange[point.si] === undefined) {
@@ -293,11 +295,11 @@
 						}
 					}
 					
-					if (subCheckbox.checked && point.ci >= subFromChannel && point.ci <= subToChannel) {
-						if (countsInRange[point.si] === undefined) {
-							countsInRange[point.si] = -point.cnt;
+					if (ratioCheckbox.checked && point.ci >= fromChannel2 && point.ci <= toChannel2) {
+						if (countsInRange2[point.si] === undefined) {
+							countsInRange2[point.si] = point.cnt;
 						} else {
-							countsInRange[point.si] -= point.cnt;
+							countsInRange2[point.si] += point.cnt;
 						}
 					}
 				});
@@ -309,7 +311,13 @@
 						continue;
 					}
 
-					const cps = countsInRange[i] / waterfallData.durations[i];
+					if (ratioCheckbox.checked && !countsInRange2[i]) {
+						continue;
+					}
+
+					const cps = ratioCheckbox.checked 
+						? countsInRange[i] / countsInRange2[i]
+						: countsInRange[i] / waterfallData.durations[i];
 					maxCps = Math.max(maxCps, cps);
 					minCps = Math.min(minCps, cps);
 				}
@@ -322,16 +330,17 @@
 				maxCps += constants.cpsExtendRange * (range === 0 ? maxCps : range);
 				minCps -= constants.cpsExtendRange * (range === 0 ? maxCps : range);
 
-				renderCpsData(cpsCanvas, maxCps, minCps, countsInRange);
+				renderCpsData(cpsCanvas, maxCps, minCps, countsInRange, countsInRange2);
 			}
 
-			function renderCpsData(canvas, maxCps, minCps, countsInRange) {
+			function renderCpsData(canvas, maxCps, minCps, countsInRange, countsInRange2) {
 				const range = maxCps - minCps;
 
 				const ctx = canvas.getContext("2d");
 				ctx.fillStyle = constants.backgroundColor;
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+				// TODO: refactor duplicated code
 				if (dottedCheckbox.checked) {
 					// only points
 					ctx.fillStyle = constants.dotColor;
@@ -340,7 +349,13 @@
 							continue;
 						}
 
-						const cps = countsInRange[x] / waterfallData.durations[x];
+						if (ratioCheckbox.checked && !countsInRange2[x]) {
+							continue;
+						}
+
+						const cps = ratioCheckbox.checked 
+							? countsInRange[x] / countsInRange2[x]
+							: countsInRange[x] / waterfallData.durations[x];
 						const y = canvas.height - ((cps - minCps) / range) * canvas.height;
 						ctx.fillRect(x, y, 1, 1);
 					}
@@ -354,7 +369,13 @@
 							continue;
 						}
 
-						const cps = countsInRange[x] / waterfallData.durations[x];
+						if (ratioCheckbox.checked && !countsInRange2[x]) {
+							continue;
+						}
+
+						const cps = ratioCheckbox.checked 
+							? countsInRange[x] / countsInRange2[x]
+							: countsInRange[x] / waterfallData.durations[x];
 						const y = canvas.height - ((cps - minCps) / range) * canvas.height;
 
 						if (firstMove) {
