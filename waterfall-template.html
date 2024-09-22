@@ -84,8 +84,8 @@
 				lineColor: 'lightgray',
 				separatorLineColor: '#777',
 				dotColor: 'white',
-				cpsPlotHeight: 210,
-				cpsExtendRange: 0.2
+				cpsPlotHeight: 200,
+				cpsExtendRange: 0.1
 			};
 		</script>
 		<script>
@@ -349,10 +349,11 @@
 						}
 					}
 
-					const height = cpsCanvas.height / 3;
-					renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, height, 'range 1 cps');
-					renderCpsData(cpsCanvas, getRenderData(cpsInRange2), height, height, 'range 2 cps');
-					renderCpsData(cpsCanvas, getRenderData(ratio), height * 2, height, 'range 1 / range 2');
+					const plotHeight = constants.cpsPlotHeight;
+					cpsCanvas.height = plotHeight * 3;
+					renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, plotHeight, 'range 1 cps');
+					renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range 2 cps');
+					renderCpsData(cpsCanvas, getRenderData(ratio), plotHeight * 2, plotHeight, 'range 1 / range 2');
 				} else {
 					const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
 					const cpsInRange1 = countsToCps(countsInRange1);
