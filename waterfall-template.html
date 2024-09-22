@@ -35,7 +35,7 @@
 			}
 			.cps-left-column {
 				display: inline-block;
-				width: 240px;
+				width: 250px;
 			}
 		</style>
 		<script>
@@ -58,13 +58,13 @@
 		</div>
 		<div class="cps-control">
 			<button class="cps-left-column" onclick="renderCps()">CPS trend in channel range:</button> 
-			<input id="from-channel" type="number"/>-<input id="to-channel" type="number"/>
+			<input id="from-channel-1" type="number"/>-<input id="to-channel-1" type="number"/>
 			<input id="dotted-trend" name="dotted-trend" type="checkbox"/>
 			<label for="dotted-trend">Dotted</label>
 			<br />
 			<div class="cps-left-column">
-				<input id="cps-ratio" name="cps-ratio" type="checkbox"/>
-				<label for="cps-ratio">Ratio to CPS in channel range:</label>
+				<input id="cps-comparison" name="cps-comparison" type="checkbox"/>
+				<label for="cps-comparison">Compare to CPS in channel range:</label>
 			</div>
 			<input id="from-channel-2" type="number"/>-<input id="to-channel-2" type="number"/>
 		</div>
@@ -82,9 +82,10 @@
 				backgroundColor: 'black',
 				textColor: 'lightgray',
 				lineColor: 'lightgray',
+				separatorLineColor: '#777',
 				dotColor: 'white',
-				cpsPlotHeight: 200,
-				cpsExtendRange: 0.1
+				cpsPlotHeight: 210,
+				cpsExtendRange: 0.2
 			};
 		</script>
 		<script>
@@ -183,7 +184,9 @@
 					timestamp = waterfallData.timestamps[tsIndex];
 					ctx.textBaseline = 'top';
 					ctx.fillStyle = constants.textColor;
-					ctx.fillText(new Date(timestamp).toISOString(), 0, tsIndex);
+					const utcISO = new Date(timestamp).toISOString();
+					const label = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+					ctx.fillText(label, 0, tsIndex);
 
 					for (let x = constants.timestampWidth - constants.timestampTickWidth; x < constants.timestampWidth; x++) {
 						ctx.fillRect(x, tsIndex, 1, 1);
@@ -252,131 +255,144 @@
 		</script>
 		<script>
 			// cps plot render
-			const fromChannelInput = document.getElementById('from-channel');
-			const toChannelInput = document.getElementById('to-channel');
+			const fromChannelInput1 = document.getElementById('from-channel-1');
+			const toChannelInput1 = document.getElementById('to-channel-1');
 			const dottedCheckbox = document.getElementById('dotted-trend');
 			const fromChannelInput2 = document.getElementById('from-channel-2');
 			const toChannelInput2 = document.getElementById('to-channel-2');
-			const ratioCheckbox = document.getElementById('cps-ratio');
-			fromChannelInput.value = 0;
-			toChannelInput.value = waterfallData.channelCount - 1;
+			const compareCheckbox = document.getElementById('cps-comparison');
+			fromChannelInput1.value = 0;
+			toChannelInput1.value = waterfallData.channelCount - 1;
 			fromChannelInput2.value = 0;
 			toChannelInput2.value = waterfallData.channelCount - 1;
 			renderCps();
 
-			function renderCps() {
-				const cpsCanvas = document.getElementById('cps-plot');
-				cpsCanvas.width = waterfallData.spectrumsCount;
-				cpsCanvas.height = constants.cpsPlotHeight;
-			
-				const fromChannel = parseInt(fromChannelInput.value);
-				const toChannel = parseInt(toChannelInput.value);
-				if (isNaN(fromChannel) || isNaN(toChannel) || fromChannel > toChannel) {
-					renderCpsData(cpsCanvas, 0, 0, {});
-					return;
-				}
-				
-				const fromChannel2 = parseInt(fromChannelInput2.value);
-				const toChannel2 = parseInt(toChannelInput2.value);
-				if (ratioCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
-					renderCpsData(cpsCanvas, 0, 0, {});
-					return;
-				}
-
+			function getCountsInRange(from, to) {
 				const countsInRange = {};
-				const countsInRange2 = {};
-				// TODO: refactor duplicated code
 				waterfallData.points.forEach(point => {
-					if (point.ci >= fromChannel && point.ci <= toChannel) {
+					if (point.ci >= from && point.ci <= to) {
 						if (countsInRange[point.si] === undefined) {
 							countsInRange[point.si] = point.cnt;
 						} else {
 							countsInRange[point.si] += point.cnt;
 						}
 					}
-					
-					if (ratioCheckbox.checked && point.ci >= fromChannel2 && point.ci <= toChannel2) {
-						if (countsInRange2[point.si] === undefined) {
-							countsInRange2[point.si] = point.cnt;
-						} else {
-							countsInRange2[point.si] += point.cnt;
-						}
-					}
 				});
 				
-				let maxCps = 0;
-				let minCps = Infinity;
+				return countsInRange;
+			}
+			
+			function countsToCps(countsInRange) {
+				const cpsInRange = {};
+				Object.keys(countsInRange).forEach(index => {
+					cpsInRange[index] = countsInRange[index] / waterfallData.durations[index];
+				});
+				
+				return cpsInRange;
+			}
+			
+			function getRenderData(valuesInRange) {
+				let max = 0;
+				let min = Infinity;
 				for (let i = 0; i < waterfallData.spectrumsCount; i++) {
-					if (countsInRange[i] === undefined) {
+					if (valuesInRange[i] === undefined) {
 						continue;
 					}
 
-					if (ratioCheckbox.checked && !countsInRange2[i]) {
-						continue;
-					}
-
-					const cps = ratioCheckbox.checked 
-						? countsInRange[i] / countsInRange2[i]
-						: countsInRange[i] / waterfallData.durations[i];
-					maxCps = Math.max(maxCps, cps);
-					minCps = Math.min(minCps, cps);
+					max = Math.max(max, valuesInRange[i]);
+					min = Math.min(min, valuesInRange[i]);
 				}
 
-				if (maxCps === 0 && minCps === 0) {
-					maxCps = 1;
-					minCps = -1;
+				if (max === 0 && min === 0) {
+					max = 1;
+					min = -1;
 				}
-				const range = maxCps - minCps;
-				maxCps += constants.cpsExtendRange * (range === 0 ? maxCps : range);
-				minCps -= constants.cpsExtendRange * (range === 0 ? maxCps : range);
-
-				renderCpsData(cpsCanvas, maxCps, minCps, countsInRange, countsInRange2);
+				const range = max - min;
+				max += constants.cpsExtendRange * (range === 0 ? max : range);
+				min -= constants.cpsExtendRange * (range === 0 ? max : range);
+			
+				return {
+					values: valuesInRange,
+					max: max,
+					min: min
+				}
 			}
 
-			function renderCpsData(canvas, maxCps, minCps, countsInRange, countsInRange2) {
-				const range = maxCps - minCps;
+			function renderCps() {
+				const cpsCanvas = document.getElementById('cps-plot');
+				cpsCanvas.width = waterfallData.spectrumsCount;
+				cpsCanvas.height = constants.cpsPlotHeight;
+			
+				const fromChannel1 = parseInt(fromChannelInput1.value);
+				const toChannel1 = parseInt(toChannelInput1.value);
+				if (isNaN(fromChannel1) || isNaN(toChannel1) || fromChannel1 > toChannel1) {
+					renderCpsData(cpsCanvas, 0, 0, {});
+					return;
+				}
+				
+				const fromChannel2 = parseInt(fromChannelInput2.value);
+				const toChannel2 = parseInt(toChannelInput2.value);
+				if (compareCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
+					renderCpsData(cpsCanvas, 0, 0, {});
+					return;
+				}
+
+				if (compareCheckbox.checked) {
+					const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
+					const cpsInRange1 = countsToCps(countsInRange1);
+					const countsInRange2 = getCountsInRange(fromChannel2, toChannel2);
+					const cpsInRange2 = countsToCps(countsInRange2);
+					const ratio = {};
+					for (let i = 0; i < waterfallData.spectrumsCount; i++) {
+						if (cpsInRange1[i] !== undefined && cpsInRange2[i] > 0) {
+							ratio[i] = cpsInRange1[i] / cpsInRange2[i];
+						}
+					}
+
+					const height = cpsCanvas.height / 3;
+					renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, height, 'range 1 cps');
+					renderCpsData(cpsCanvas, getRenderData(cpsInRange2), height, height, 'range 2 cps');
+					renderCpsData(cpsCanvas, getRenderData(ratio), height * 2, height, 'range 1 / range 2');
+				} else {
+					const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
+					const cpsInRange1 = countsToCps(countsInRange1);
+					const renderData = getRenderData(cpsInRange1);
+
+					renderCpsData(cpsCanvas, renderData, 0, cpsCanvas.height, 'range 1 cps');
+				}
+			}
+
+			function renderCpsData(canvas, data, offset, height, label) {
+				const range = data.max - data.min;
 
 				const ctx = canvas.getContext("2d");
 				ctx.fillStyle = constants.backgroundColor;
-				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				ctx.fillRect(0, offset, canvas.width, height);
 
-				// TODO: refactor duplicated code
 				if (dottedCheckbox.checked) {
-					// only points
+					// points
 					ctx.fillStyle = constants.dotColor;
 					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
-						if (countsInRange[x] === undefined) {
+						if (data.values[x] === undefined) {
 							continue;
 						}
 
-						if (ratioCheckbox.checked && !countsInRange2[x]) {
-							continue;
-						}
-
-						const cps = ratioCheckbox.checked 
-							? countsInRange[x] / countsInRange2[x]
-							: countsInRange[x] / waterfallData.durations[x];
-						const y = canvas.height - ((cps - minCps) / range) * canvas.height;
+						const y = height - ((data.values[x] - data.min) / range) * height + offset;
 						ctx.fillRect(x, y, 1, 1);
 					}
 				} else {
 					// lines
 					ctx.beginPath();
+					ctx.lineWidth = 1;
+					ctx.setLineDash([1, 0]);
 					ctx.strokeStyle = constants.lineColor;
 					let firstMove = true;
 					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
-						if (countsInRange[x] === undefined) {
+						if (data.values[x] === undefined) {
 							continue;
 						}
 
-						if (ratioCheckbox.checked && !countsInRange2[x]) {
-							continue;
-						}
-
-						const cps = ratioCheckbox.checked 
-							? countsInRange[x] / countsInRange2[x]
-							: countsInRange[x] / waterfallData.durations[x];
-						const y = canvas.height - ((cps - minCps) / range) * canvas.height;
+						const y = height - ((data.values[x] - data.min) / range) * height + offset;
 
 						if (firstMove) {
 							ctx.moveTo(x, y);
@@ -389,11 +405,25 @@
 					ctx.stroke();
 				}
 
+				// separator line
+				if (offset > 0) {
+					ctx.beginPath();
+					ctx.lineWidth = 1;
+					ctx.setLineDash([2, 2]);
+					ctx.strokeStyle = constants.separatorLineColor;
+					ctx.moveTo(0, offset - 0.5);
+					ctx.lineTo(canvas.width, offset - 0.5);
+					ctx.stroke();
+				}
+
+				// labels
 				ctx.fillStyle = constants.textColor;
 				ctx.textBaseline = 'top';
-				ctx.fillText(maxCps.toFixed(range < 0.01 ? 4 : 2), 0, 0);
+				ctx.fillText(data.max.toFixed(range < 0.01 ? 4 : 2), 0, offset);
 				ctx.textBaseline = 'bottom';
-				ctx.fillText(minCps.toFixed(range < 0.01 ? 4 : 2), 0, canvas.height);
+				ctx.fillText(data.min.toFixed(range < 0.01 ? 4 : 2), 0, offset + height);
+				ctx.textBaseline = 'top';
+				ctx.fillText(label, canvas.width / 2 - label.length * 2, offset);
 			}
 		</script>
 		<script>
