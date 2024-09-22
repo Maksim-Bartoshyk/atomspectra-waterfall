@@ -55,18 +55,19 @@ function reduceChannelCount(channels, factor) {
 }
 
 function readSpectrum(fileText) {
-	let lines = fileText.split('\n');
-	let time = parseInt(lines[2]);
-	let duration = parseFloat(lines[8]);
-	let channelsCount = parseInt(lines[9]);
-	let calibrationOrder = parseInt(lines[10]);
-	let calibration = [];
+	const lines = fileText.split('\n');
+	const time = parseInt(lines[2]);
+	const name = lines[6];
+	const duration = parseFloat(lines[8]);
+	const channelsCount = parseInt(lines[9]);
+	const calibrationOrder = parseInt(lines[10]);
+	const calibration = [];
 	for (let i = 0; i < calibrationOrder + 1; i++) {
 		calibration.push(Math.pow(channelReduceFactor, i) * parseFloat(lines[11 + i]));
 	}
 
 	let index = 0;
-	let channels = [];
+	const channels = [];
 	while (index < channelsCount) {
 		channels.push(parseInt(lines[12 + calibrationOrder + index]));
 		index++;
@@ -78,6 +79,7 @@ function readSpectrum(fileText) {
 	//}
 
 	return {
+		name: name,
 		timestamp: time,
 		duration: duration,
 		calibration: calibration,
@@ -113,13 +115,17 @@ function createWaterfallData(spectrums) {
 }
 
 function createRcspgData(spectrums) {
-	let fromTimestamp = spectrums[0].timestamp;
-	let toTimestamp = spectrums[spectrums.length - 1].timestamp;
+	const fromTimestamp = spectrums[0].timestamp;
+	const toTimestamp = spectrums[spectrums.length - 1].timestamp;
 
 	// header
-	let rcspgData = 'Spectrogram: ' + new Date(fromTimestamp).toISOString() + 
-					'\tTime: ' + new Date(toTimestamp).toISOString() + 
-					'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp - 1000) + // just in case to avoid any potential division by zero
+	const utcISO = new Date(fromTimestamp).toISOString();
+	const formattedUTC = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+	const spgName = spectrums[0].name;
+	const spgTime = formattedUTC;
+	let rcspgData = 'Spectrogram: ' + spgName + 
+					'\tTime: ' + spgTime + 
+					'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp) + // just in case to avoid any potential division by zero
 					'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
 					'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
 
