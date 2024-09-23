@@ -479,8 +479,8 @@
 					return;
 				}
 
-				horizontal.style.top = e.offsetX;
-				cpsVertical.style.left = e.offsetX;
+				horizontal.style.top = e.offsetX - 1;
+				cpsVertical.style.left = e.offsetX - 1;
 			}
 
 			function horizontalOnMove(e, validOffset) {
@@ -489,7 +489,7 @@
 				if (offsetX < constants.timestampWidth) {
 					vertical.style.left = constants.timestampWidth;
 				} else {
-					vertical.style.left = offsetX;
+					vertical.style.left = offsetX - 1;
 				}
 			}
 
@@ -498,8 +498,8 @@
 					horizontal.style.top = waterfallData.spectrumsCount;
 					cpsVertical.style.left = waterfallData.spectrumsCount;
 				} else {
-					horizontal.style.top = e.offsetY;
-					cpsVertical.style.left = e.offsetY;
+					horizontal.style.top = e.offsetY - 1;
+					cpsVertical.style.left = e.offsetY - 1;
 				}
 			}
 
