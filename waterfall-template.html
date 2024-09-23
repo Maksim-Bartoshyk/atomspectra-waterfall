@@ -434,14 +434,14 @@
 			const horizontal = document.getElementById('horizontal-cursor');
 			const vertical = document.getElementById('vertical-cursor');
 			const cpsVertical = document.getElementById('cps-vertical-cursor')
-			waterfallPlot.parentElement.addEventListener('mouseenter', waterfallOnEnter);
-			waterfallPlot.parentElement.addEventListener('mouseleave', plotOnLeave);
-			waterfallPlot.parentElement.addEventListener('mousemove', waterfallOnMove);
-			cpsPlot.parentElement.addEventListener('mouseenter', cpsOnEnter);
-			cpsPlot.parentElement.addEventListener('mouseleave', plotOnLeave);
-			cpsPlot.parentElement.addEventListener('mousemove', cpsOnMove);
-			horizontal.addEventListener('mousemove', horizontalOnMove);
-			vertical.addEventListener('mousemove', verticalOnMove);
+			waterfallPlot.parentElement.addEventListener('mouseenter', e => waterfallOnEnter(e));
+			waterfallPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave());
+			waterfallPlot.parentElement.addEventListener('mousemove', e => waterfallOnMove(e));
+			cpsPlot.parentElement.addEventListener('mouseenter', e => cpsOnEnter(e));
+			cpsPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave(e));
+			cpsPlot.parentElement.addEventListener('mousemove', e => cpsOnMove(e));
+			horizontal.addEventListener('mousemove', e => onHorizontalWfMove(e, true));
+			vertical.addEventListener('mousemove', e => onVerticalWfMove(e));
 
 			function waterfallOnEnter() {
 				horizontal.style.display = 'block';
@@ -470,8 +470,8 @@
 					return;
 				}
 
-				horizontalOnMove(e, true);
-				verticalOnMove(e);
+				onHorizontalWfMove(e, false);
+				onVerticalWfMove(e);
 			}
 
 			function cpsOnMove(e) {
@@ -479,27 +479,43 @@
 					return;
 				}
 
-				horizontal.style.top = e.offsetX - 1;
-				cpsVertical.style.left = e.offsetX - 1;
+				// spectrum index
+				let offsetX = e.offsetX;
+				if (offsetX > 0) {
+					offsetX--;
+				}
+
+				horizontal.style.top = offsetX;
+				cpsVertical.style.left = offsetX;
 			}
 
-			function horizontalOnMove(e, validOffset) {
-				const offsetX = validOffset ? e.offsetX : e.offsetX + constants.timestampWidth;
+			function onHorizontalWfMove(e, cursorDivOffset) {
+				// channel index
+				let offsetX = cursorDivOffset
+					? e.offsetX + constants.timestampWidth
+					: e.offsetX;
+				offsetX--;
 
 				if (offsetX < constants.timestampWidth) {
 					vertical.style.left = constants.timestampWidth;
 				} else {
-					vertical.style.left = offsetX - 1;
+					vertical.style.left = offsetX;
 				}
 			}
 
-			function verticalOnMove(e) {
+			function onVerticalWfMove(e) {
+				// spectrum index
+				let offsetY = e.offsetY;
+				if (offsetY > 0) {
+					offsetY--;
+				}
+
 				if (e.offsetY > waterfallData.spectrumsCount) {
 					horizontal.style.top = waterfallData.spectrumsCount;
 					cpsVertical.style.left = waterfallData.spectrumsCount;
 				} else {
-					horizontal.style.top = e.offsetY - 1;
-					cpsVertical.style.left = e.offsetY - 1;
+					horizontal.style.top = offsetY;
+					cpsVertical.style.left = offsetY;
 				}
 			}
 
