@@ -16,3 +16,8 @@ Parameters:
 1) ```-rc X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```--rc 8``` makes 1024 channes from 8192
 2) ```-rs X``` reduce spectrum count (spectrogram height) by provided factor (X), i.e. ```--rc 2``` makes 100 spectrums from 200
 3) ```--rcspg``` outputs data in radiacode spectrogram format
+
+Combining spectrums into single one (if you want to examine some part of spectrogram in becqmoni, for instance):
+run ```node combine.js <spectrums folder>```, for example ```node combine.js "sample-data/nano-3" -from-index 198 -to-index 205```
+
+Important: from and to indices when -rc parameter is 1, channel count is unchanged

@@ -1,4 +1,4 @@
-exports.readSpectrum = function(fileText, channelReduceFactor) {
+exports.deserializeSpectrum = function(fileText, channelReduceFactor) {
 	if (!fileText) {
 		throw new Error('spectrum file text is empty');
 	}
@@ -8,8 +8,14 @@ exports.readSpectrum = function(fileText, channelReduceFactor) {
 	}
 
 	const lines = fileText.split('\n');
+	const format = lines[0];
+	const note = lines[1];
 	const time = parseInt(lines[2]);
+	const time2 = parseInt(lines[3]);
+	const latStr = lines[4];
+	const lonStr = lines[5];
 	const name = lines[6];
+	const foundIsotopes = lines[7];
 	const duration = parseFloat(lines[8]);
 	const channelsCount = parseInt(lines[9]);
 	const calibrationOrder = parseInt(lines[10]);
@@ -19,19 +25,57 @@ exports.readSpectrum = function(fileText, channelReduceFactor) {
 	}
 
 	let index = 0;
-	const channels = [];
+	let channels = [];
 	while (index < channelsCount) {
 		channels.push(parseInt(lines[12 + calibrationOrder + index]));
 		index++;
 	}
 
+	channels = this.reduceChannelCount(channels, channelReduceFactor);
+
 	return {
-		name: name,
+		format: format,
+		note: note,
 		timestamp: time,
+		timestamp2: time2,
+		latStr: latStr,
+		lonStr: lonStr,
+		name: name,
+		foundIsotopes: foundIsotopes,
 		duration: duration,
+		channelCount: channels.length,
 		calibration: calibration,
-		channels: this.reduceChannelCount(channels, channelReduceFactor)
+		channels: channels
 	};
+}
+
+exports.serializeSpectrum = function(spectrum) {
+	if (!spectrum) {
+		throw new Error('spectrum is not provided');
+	}
+
+	let text = spectrum.format + '\n';
+	text += spectrum.note + '\n';
+	text += spectrum.timestamp + '\n';
+	text += spectrum.timestamp2 + '\n';
+	text += spectrum.latStr + '\n';
+	text += spectrum.lonStr + '\n';
+	text += spectrum.name + '\n';
+	text += spectrum.foundIsotopes + '\n';
+	text += spectrum.duration + '\n';
+	text += spectrum.channelCount + '\n';
+	text += (spectrum.calibration.length - 1) + '\n';
+	for (let i = 0; i < spectrum.calibration.length; i++) {
+		text += spectrum.calibration[i] + '\n';
+	}
+
+	let index = 0;
+	while (index < spectrum.channelCount) {
+		text += spectrum.channels[index] + '\n';
+		index++;
+	}
+
+	return text;
 }
 
 exports.reduceSpectrumCount = function(spectrums, factor) {

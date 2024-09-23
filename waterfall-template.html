@@ -442,7 +442,7 @@
 			const vertical = document.getElementById('vertical-cursor');
 			const cpsVertical = document.getElementById('cps-vertical-cursor')
 			waterfallPlot.parentElement.addEventListener('mouseenter', e => waterfallOnEnter(e));
-			waterfallPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave());
+			waterfallPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave(e));
 			waterfallPlot.parentElement.addEventListener('mousemove', e => waterfallOnMove(e));
 			cpsPlot.parentElement.addEventListener('mouseenter', e => cpsOnEnter(e));
 			cpsPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave(e));

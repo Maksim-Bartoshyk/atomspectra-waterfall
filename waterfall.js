@@ -74,7 +74,7 @@ function convertFiles(dirname, onProgress, onError) {
 
 		try {
 			let content = fs.readFileSync(path.join(dirname, file.name), 'utf-8');
-			spectrums.push(sp.readSpectrum(content, channelReduceFactor));
+			spectrums.push(sp.deserializeSpectrum(content, channelReduceFactor));
 			console.info('Read success for file ' + file.name);
 		} catch (e) {
 			console.error('FAILURE for ' + file.name + ' error: ' + e.message);
