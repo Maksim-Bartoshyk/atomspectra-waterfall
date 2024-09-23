@@ -8,7 +8,7 @@ Usage:
 2) download repository
 3) save all delta-spectrum files in a single folder
 4) open folder containing convert.js in console
-5) run ```node convert.js <spectrums folder>```, for example ```node convert.js "sample-data/nano-3"```
+5) run ```node waterfall.js <spectrums folder>```, for example ```node waterfall.js "sample-data/nano-3"```
 6) open generated "waterfall.html" in browser
 7) right mouse click on specrtogram - save image as
 
