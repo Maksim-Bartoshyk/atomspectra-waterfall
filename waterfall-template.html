@@ -25,7 +25,7 @@
 				border-top: 1px dotted #777;
 				height: 0;
 				right: 0;
-				width: calc(100% - 132px);
+				width: calc(100% - 150px);
 			}
 			.vertical-cursor {
 				border-left: 1px dotted #777;
@@ -74,9 +74,9 @@
 		</div>
 		<script>
 			window.constants = {
-				timestampWidth: 132,
-				timestampHeight: 16,
-				timestampTickWidth: 8,
+				timestampWidth: 150, // note: the same in css
+				timestampHeight: 20,
+				timestampTickWidth: 10,
 				channelAxisHeight: 32,
 				channelAxisTickHeight: 4,
 				backgroundColor: 'black',
@@ -185,10 +185,17 @@
 					ctx.textBaseline = 'top';
 					ctx.fillStyle = constants.textColor;
 					const utcISO = new Date(timestamp).toISOString();
-					const label = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+					let label = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+					if (tsIndex % 100 === 0) {
+						label += ': ' + tsIndex;
+					}
 					ctx.fillText(label, 0, tsIndex);
 
-					for (let x = constants.timestampWidth - constants.timestampTickWidth; x < constants.timestampWidth; x++) {
+					// label tick
+					const tickWidth = tsIndex % 100 === 0
+						? constants.timestampTickWidth
+						: constants.timestampTickWidth / 2;
+					for (let x = constants.timestampWidth - tickWidth; x < constants.timestampWidth; x++) {
 						ctx.fillRect(x, tsIndex, 1, 1);
 					}
 				}

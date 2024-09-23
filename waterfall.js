@@ -117,16 +117,15 @@ rcspg = paramIsSet('--rcspg');
 
 if (paramIsSet('-rc')) {
 	if (rcspg) {
-		console.error('reduce channels param is not suported for rcspg export');
-		return;
-	}
-
-	let value = parseInt(paramValue('-rc'));
-	if (isNaN(value) || value < 1) {
-		console.error('invalid reduce channels factor, must be positive integer');
-		return;
+		console.warn('reduce channels param is not suported for rcspg export');
 	} else {
-		channelReduceFactor = value;
+		let value = parseInt(paramValue('-rc'));
+		if (isNaN(value) || value < 1) {
+			console.error('invalid reduce channels factor, must be positive integer');
+			return;
+		} else {
+			channelReduceFactor = value;
+		}
 	}
 }
 
