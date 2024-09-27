@@ -39,17 +39,41 @@
 			}
 		</style>
 		<script>
-			window.waterfallData = {waterfall_data};
+			window.originalWaterfallData = {waterfall_data};
+			window.waterfallData = { ...originalWaterfallData };
 		</script>
 	</head>
 	<body>
 		<div class="scale-switch">
-			<input type="radio" id="lin" name="scale" value="lin" onchange="renderWaterfallImage(this.value)">
+			<input type="radio" id="lin" name="scale" value="lin" onchange="onWaterfallScaleChange(this.value)">
 			<label for="lin">LIN</label>
-			<input type="radio" id="sqrt" name="scale" value="sqrt" checked onchange="renderWaterfallImage(this.value)">
+			<input type="radio" id="sqrt" name="scale" value="sqrt" checked onchange="onWaterfallScaleChange(this.value)">
 			<label for="sqrt">SQRT</label>
-			<input type="radio" id="log" name="scale" value="log" onchange="renderWaterfallImage(this.value)">
+			<input type="radio" id="log" name="scale" value="log" onchange="onWaterfallScaleChange(this.value)">
 			<label for="log">LOG</label>
+			<br/>
+			<label for="spectrum-binning">Spectrum binning:</label>
+			<select name="spectrum-binning" id="spectrum-binning" onchange="onSpectrumBinningChange(this.value)">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+			</select>
+			<label for="channel-binning">Channel binning:</label>
+			<select name="channel-binning" id="channel-binning" onchange="onChannelBinningChange(this.value)">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="4">4</option>
+				<option value="8">8</option>
+				<option value="16">16</option>
+				<option value="32">32</option>
+			</select>
 		</div>
 		<div class="plot-container">
 			<canvas id="waterfall-plot" class="plot"></canvas>
@@ -87,10 +111,15 @@
 				cpsPlotHeight: 200,
 				cpsExtendRange: 0.1
 			};
+			window.waterfallState = {
+				scale: 'sqrt',
+				spectrumBinning: 1,
+				channelBinning: 1
+			}
 		</script>
 		<script>
 			// waterfall plot render
-			function renderWaterfallImage(scale) {
+			function renderWaterfallImage() {
 				const canvas = document.getElementById('waterfall-plot');
 				canvas.width = waterfallData.channelCount + constants.timestampWidth;
 				canvas.height = waterfallData.spectrumsCount + constants.channelAxisHeight;
@@ -177,7 +206,7 @@
 						const linearColorIndex = Math.round((cps / maxCps) * (ironPalette.length - 1));
 						let colorIndex;
 
-						switch (scale) {
+						switch (waterfallState.scale) {
 							case 'log':
 								colorIndex = Math.round((Math.log(linearColorIndex + 1) / Math.log(ironPalette.length)) * (ironPalette.length - 1));
 								break;
@@ -542,6 +571,117 @@
 
 			function isCursor(target) {
 				return target === horizontal || target === vertical || target === cpsVertical;
+			}
+		</script>
+		<script>
+			// waterfall control
+			function onWaterfallScaleChange(value) {
+				waterfallState.scale = value;
+				renderWaterfallImage();
+			}
+
+			function onSpectrumBinningChange(value) {
+				const newBin = parseInt(value);
+				waterfallState.spectrumBinning = newBin;
+
+				applyBinning();
+				renderWaterfallImage();
+				renderCps();
+			}
+
+			function onChannelBinningChange(value) {
+				const newBin = parseInt(value);
+				const prevBin = waterfallState.channelBinning;
+				waterfallState.channelBinning = newBin;
+
+				applyBinning();
+				renderWaterfallImage();
+
+				// TODO: refactor duplicated code
+				const fromChannelInput1 = document.getElementById('from-channel-1');
+				const toChannelInput1 = document.getElementById('to-channel-1');
+				const fromChannelInput2 = document.getElementById('from-channel-2');
+				const toChannelInput2 = document.getElementById('to-channel-2');
+
+				updateInputChannelValue(fromChannelInput1, newBin, prevBin);
+				updateInputChannelValue(toChannelInput1, newBin, prevBin);
+				updateInputChannelValue(fromChannelInput2, newBin, prevBin);
+				updateInputChannelValue(toChannelInput2, newBin, prevBin);
+
+				renderCps();
+			}
+			
+			function updateInputChannelValue(input, newBin, prevBin) {
+				
+				const prevVal = parseInt(input.value);
+				if (!isNaN(prevVal)) {
+					let newVal = Math.round((prevVal / newBin) * prevBin);
+					if (newVal < 0) {
+						newVal = 0;
+					}
+					if (newVal > waterfallData.channelCount - 1) {
+						newVal = waterfallData.channelCount - 1;
+					}
+					input.value = newVal;
+				}
+			}
+
+			function applyBinning() {
+				// spectrums
+				waterfallData.spectrums = [];
+				waterfallData.timestamps = [];
+				waterfallData.durations = [];
+				for (let i = 0; i < originalWaterfallData.spectrums.length; i += waterfallState.spectrumBinning) {
+					const summSpectrum = [...originalWaterfallData.spectrums[i]];
+					const summTimestamp = originalWaterfallData.timestamps[i];
+					let summDuration = originalWaterfallData.durations[i];
+					for (let j = 1; j < waterfallState.spectrumBinning && (i + j) < originalWaterfallData.spectrums.length; j++) {
+						for (let k = 0; k < summSpectrum.length; k++) {
+							summSpectrum[k] += originalWaterfallData.spectrums[i + j][k];
+						}
+
+						summDuration += originalWaterfallData.durations[i + j];
+					}
+
+					waterfallData.spectrums.push(summSpectrum);
+					waterfallData.durations.push(summDuration);
+					waterfallData.timestamps.push(summTimestamp);
+				}
+				waterfallData.spectrumsCount = waterfallData.spectrums.length;
+
+				// channels
+				for (let i = 0; i < waterfallData.spectrums.length; i++) {
+					waterfallData.spectrums[i] = reduceChannelCount(waterfallData.spectrums[i], waterfallState.channelBinning);
+				}
+				waterfallData.channelCount = waterfallData.spectrums[0].length;
+
+				// calibration
+				waterfallData.calibration = [];
+				for (let i = 0; i < originalWaterfallData.calibration.length; i++) {
+					waterfallData.calibration.push(Math.pow(waterfallState.channelBinning, i) * originalWaterfallData.calibration[i]);
+				}
+			}
+
+			function reduceChannelCount(channels, factor) {
+				if (factor < 1) {
+					throw new Error('invalid factor: ' + factor);
+				}
+
+				if (!channels || !channels.length) {
+					throw new Error('no channels provided');
+				}
+
+				let reduced = [];
+				for (let i = 0; i < channels.length; i += factor) {
+					let summ = 0;
+					for (let j = 0; j < factor && (i + j) < channels.length; j++) {
+						summ += channels[i + j];
+					}
+
+					reduced.push(summ);
+				}
+
+				return reduced;
 			}
 		</script>
 	</body>
