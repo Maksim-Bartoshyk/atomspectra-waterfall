@@ -9,9 +9,9 @@ let rcspg = false;
 
 function createWaterfallData(spectrums) {
 	let waterfall = {
-		points: [],
-		channelCount: spectrums[0].channels.length,
+		spectrums: [],
 		spectrumsCount: spectrums.length,
+		channelCount: spectrums[0].channels.length,
 		timestamps: [],
 		durations: [],
 		calibration: spectrums[0].calibration,
@@ -20,15 +20,11 @@ function createWaterfallData(spectrums) {
 		waterfall.timestamps.push(spectrum.timestamp);
 		waterfall.durations.push(spectrum.duration);
 
+		const wfSpectrum = [];
 		spectrum.channels.forEach((channelValue, channelIndex) => {
-			if (channelValue > 0) {
-				waterfall.points.push({
-					ci: channelIndex,
-					si: spectrumIndex,
-					cnt: channelValue
-				});
-			}
+			wfSpectrum.push(channelValue);
 		});
+		waterfall.spectrums.push(wfSpectrum);
 	});
 
 	return waterfall;

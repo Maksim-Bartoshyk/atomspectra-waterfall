@@ -155,28 +155,42 @@
 				ctx.fillStyle = constants.backgroundColor;
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 				let maxCps = 0;
-				waterfallData.points.forEach(point => {
-					const cps = point.cnt / waterfallData.durations[point.si];
-					maxCps = Math.max(maxCps, cps);
+				waterfallData.spectrums.forEach((spectrum, spectrumIndex) => {
+					spectrum.forEach(channelValue => {
+						if (!channelValue) {
+							return;
+						}
+
+						const cps = channelValue / waterfallData.durations[spectrumIndex];
+						maxCps = Math.max(maxCps, cps);
+					});
 				});
-				waterfallData.points.forEach(point => {
-					const cps = point.cnt / waterfallData.durations[point.si];
-					const linearColorIndex = Math.round((cps / maxCps) * (ironPalette.length - 1));
-					let colorIndex;
 
-					switch (scale) {
-						case 'log':
-							colorIndex = Math.round((Math.log(linearColorIndex + 1) / Math.log(ironPalette.length)) * (ironPalette.length - 1));
-							break;
-						case 'sqrt':
-							colorIndex = Math.round((Math.sqrt(linearColorIndex + 1) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));
-							break;
-						default:
-							colorIndex = linearColorIndex;
-					}
+				// waterfall render
+				waterfallData.spectrums.forEach((spectrum, spectrumIndex) => {
+					spectrum.forEach((channelValue, channelIndex) => {
+						if (!channelValue) {
+							return;
+						}
 
-					ctx.fillStyle = ironPalette[colorIndex];
-					ctx.fillRect(point.ci + constants.timestampWidth, point.si, 1, 1);
+						const cps = channelValue / waterfallData.durations[spectrumIndex];
+						const linearColorIndex = Math.round((cps / maxCps) * (ironPalette.length - 1));
+						let colorIndex;
+
+						switch (scale) {
+							case 'log':
+								colorIndex = Math.round((Math.log(linearColorIndex + 1) / Math.log(ironPalette.length)) * (ironPalette.length - 1));
+								break;
+							case 'sqrt':
+								colorIndex = Math.round((Math.sqrt(linearColorIndex + 1) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));
+								break;
+							default:
+								colorIndex = linearColorIndex;
+						}
+
+						ctx.fillStyle = ironPalette[colorIndex];
+						ctx.fillRect(channelIndex + constants.timestampWidth, spectrumIndex, 1, 1);
+					});
 				});
 
 				// time axis
@@ -276,12 +290,12 @@
 
 			function getCountsInRange(from, to) {
 				const countsInRange = {};
-				waterfallData.points.forEach(point => {
-					if (point.ci >= from && point.ci <= to) {
-						if (countsInRange[point.si] === undefined) {
-							countsInRange[point.si] = point.cnt;
+				waterfallData.spectrums.forEach((spectrum, spectrumIndex) => {
+					for (let ci = from; ci <= to; ci++) {
+						if (countsInRange[spectrumIndex] === undefined) {
+							countsInRange[spectrumIndex] = spectrum[ci];
 						} else {
-							countsInRange[point.si] += point.cnt;
+							countsInRange[spectrumIndex] += spectrum[ci];
 						}
 					}
 				});
