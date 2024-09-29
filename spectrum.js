@@ -1,10 +1,6 @@
-exports.deserializeSpectrum = function(fileText, channelReduceFactor) {
+exports.deserializeSpectrum = function(fileText) {
 	if (!fileText) {
 		throw new Error('spectrum file text is empty');
-	}
-
-	if (channelReduceFactor < 1) {
-		throw new Error('invalid factor: ' + factor);
 	}
 
 	const lines = fileText.split('\n');
@@ -21,17 +17,15 @@ exports.deserializeSpectrum = function(fileText, channelReduceFactor) {
 	const calibrationOrder = parseInt(lines[10]);
 	const calibration = [];
 	for (let i = 0; i < calibrationOrder + 1; i++) {
-		calibration.push(Math.pow(channelReduceFactor, i) * parseFloat(lines[11 + i]));
+		calibration.push(parseFloat(lines[11 + i]));
 	}
 
 	let index = 0;
-	let channels = [];
+	const channels = [];
 	while (index < channelsCount) {
 		channels.push(parseInt(lines[12 + calibrationOrder + index]));
 		index++;
 	}
-
-	channels = this.reduceChannelCount(channels, channelReduceFactor);
 
 	return {
 		format: format,
@@ -76,6 +70,26 @@ exports.serializeSpectrum = function(spectrum) {
 	}
 
 	return text;
+}
+
+exports.deserializeDeltas = function(fileText, baseSpectrum) {
+	if (!fileText) {
+		throw new Error('spectrum file text is empty');
+	}
+
+	const lines = fileText.split('\n');
+	const deltaLinesCount = 5;
+	const deltas = [];
+	let deltaIndex = baseSpectrum.calibration.length + baseSpectrum.channelCount + 11; // skip base spectrum
+	while (deltaIndex <= lines.length - deltaLinesCount) {
+		const delta = readNextDelta(lines, deltaIndex, baseSpectrum.channelCount);
+		deltas.push(delta);
+		deltaIndex += deltaLinesCount;
+	}
+
+	return {
+		deltas: deltas
+	};
 }
 
 exports.reduceSpectrumCount = function(spectrums, factor) {
@@ -124,4 +138,32 @@ exports.reduceChannelCount = function(channels, factor) {
 	}
 
 	return reduced;
+}
+
+exports.getCalibration = function (calibration, channelReduceFactor) {
+	const newCalibration = [];
+	for (let i = 0; i < calibration.length; i++) {
+		newCalibration.push(Math.pow(channelReduceFactor, i) * calibration[i]);
+	}
+
+	return newCalibration;
+}
+
+function readNextDelta(lines, fromIndex, channelCount) {
+	const timestamp = parseInt(lines[fromIndex]);
+	const lat = parseFloat(lines[fromIndex + 1]);
+	const lon = parseFloat(lines[fromIndex + 2]);
+	const duration = parseFloat(lines[fromIndex + 3]);
+	const channels = lines[fromIndex + 4]
+		.split('\t')
+		.slice(0, channelCount)
+		.map(str => parseInt(str));
+
+	return {
+		timestamp: timestamp,
+		duration: duration,
+		lat: lat,
+		lon: lon,
+		channels: channels
+	}
 }

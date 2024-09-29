@@ -208,10 +208,10 @@
 
 						switch (waterfallState.scale) {
 							case 'log':
-								colorIndex = Math.round((Math.log(linearColorIndex + 1) / Math.log(ironPalette.length)) * (ironPalette.length - 1));
+								colorIndex = Math.round((Math.log(linearColorIndex + 2) / Math.log(ironPalette.length)) * (ironPalette.length - 1));
 								break;
 							case 'sqrt':
-								colorIndex = Math.round((Math.sqrt(linearColorIndex + 1) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));
+								colorIndex = Math.round((Math.sqrt(linearColorIndex + 2) / Math.sqrt(ironPalette.length)) * (ironPalette.length - 1));
 								break;
 							default:
 								colorIndex = linearColorIndex;

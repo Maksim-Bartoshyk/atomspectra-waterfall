@@ -7,33 +7,32 @@ let channelReduceFactor = 8;
 let spectrumReduceFactor = 1;
 let rcspg = false;
 
-function createWaterfallData(spectrums) {
+function createWaterfallData(baseSpectrum, deltas) {
+	const baseChannels = sp.reduceChannelCount(baseSpectrum.channels, channelReduceFactor);
 	let waterfall = {
 		spectrums: [],
-		spectrumsCount: spectrums.length,
-		channelCount: spectrums[0].channels.length,
+		spectrumsCount: deltas.length,
+		channelCount: baseChannels.length,
 		timestamps: [],
 		durations: [],
-		calibration: spectrums[0].calibration,
+		calibration: sp.getCalibration(baseSpectrum.calibration, channelReduceFactor),
+		baseSpectrum: baseChannels
 	};
-	spectrums.forEach((spectrum, spectrumIndex) => {
-		waterfall.timestamps.push(spectrum.timestamp);
-		waterfall.durations.push(spectrum.duration);
+	deltas.forEach(delta => {
+		waterfall.timestamps.push(delta.timestamp);
+		waterfall.durations.push(delta.duration);
 
-		const wfSpectrum = [];
-		spectrum.channels.forEach((channelValue, channelIndex) => {
-			wfSpectrum.push(channelValue);
-		});
+		const wfSpectrum = sp.reduceChannelCount(delta.channels, channelReduceFactor);
 		waterfall.spectrums.push(wfSpectrum);
 	});
 
 	return waterfall;
 }
 
-function printItervalsStats(spectrums) {
+function printItervalsStats(deltas) {
 	const intervalsDict = {};
-	spectrums.forEach(spectrum => {
-		const rounded  = spectrum.duration.toFixed(1);
+	deltas.forEach(delta => {
+		const rounded  = delta.duration.toFixed(1);
 		if (intervalsDict[rounded] === undefined) {
 			intervalsDict[rounded] = 1;
 		} else {
@@ -42,7 +41,7 @@ function printItervalsStats(spectrums) {
 	});
 
 	console.info('');
-	console.info('spectrums to render:', spectrums.length);
+	console.info('spectrums to render:', deltas.length);
 	console.info('intervals:');
 	Object.keys(intervalsDict)
 		.map(k => [k, intervalsDict[k]])
@@ -60,41 +59,41 @@ function printItervalsStats(spectrums) {
 	console.info('\n');
 }
 
-function convertFiles(dirname, onProgress, onError) {
-	let spectrums = [];
-	let files = fs.readdirSync(dirname, { withFileTypes: true });
-	files.forEach(function(file) {
-		if (file.isDirectory() || !file.name.endsWith('auto.txt')) {
-			return;
-		}
+function convertFiles(filepath) {
+	const filestat = fs.lstatSync(filepath);
+	if (!filestat.isFile()) {
+		throw new Error('path "' + filepath + '" is not a file');
+	}
+	const basename = path.basename(filepath);
+	if (basename.split('.')[1] !== 'txt') {
+		throw new Error('txt file expected');
+	}
 
-		try {
-			let content = fs.readFileSync(path.join(dirname, file.name), 'utf-8');
-			spectrums.push(sp.deserializeSpectrum(content, channelReduceFactor));
-			console.info('Read success for file ' + file.name);
-		} catch (e) {
-			console.error('FAILURE for ' + file.name + ' error: ' + e.message);
-		}
-	});
+	const content = fs.readFileSync(filepath, 'utf-8');
+	const baseSpectrum = sp.deserializeSpectrum(content);
+	const deltaInfo = sp.deserializeDeltas(content, baseSpectrum);
+	console.info('Read success for file ' + filepath);
 
-	if (spectrums.length === 0) {
-		console.error('no spectrums found!');
+	if (deltaInfo.deltas.length === 0) {
+		console.error('no deltas found!');
 		return;
 	}
 
-	spectrums.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
-	spectrums = sp.reduceSpectrumCount(spectrums, spectrumReduceFactor);
-	printItervalsStats(spectrums);
+	let deltas = deltaInfo.deltas;
+	deltas.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
+	deltas = sp.reduceSpectrumCount(deltas, spectrumReduceFactor);
+	printItervalsStats(deltas);
 
+	const resultFilename = basename.split('.')[0];
 	if (rcspg) {
-		let rcspgData = rc.createRcspgData(spectrums);
-		fs.writeFileSync('waterfall.rcspg', rcspgData);
-		console.info('waterfall.rcspg has been created');
+		const rcspgData = rc.createRcspgData(baseSpectrum, deltas);
+		fs.writeFileSync(resultFilename + '.rcspg', rcspgData);
+		console.info(resultFilename + '.rcspg has been created');
 	} else {
-		let waterfall = createWaterfallData(spectrums);
-		let template = fs.readFileSync('waterfall-template.html', 'utf-8');
-		fs.writeFileSync('waterfall.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
-		console.info('waterfall.html has been created');
+		const waterfall = createWaterfallData(baseSpectrum, deltas);
+		const template = fs.readFileSync('waterfall-template.html', 'utf-8');
+		fs.writeFileSync(resultFilename + '.html', template.replace('{waterfall_data}', JSON.stringify(waterfall)));
+		console.info(resultFilename + '.html has been created');
 	}
 }
 
@@ -135,6 +134,6 @@ if (paramIsSet('-rs')) {
 	}
 }
 
-let folder = process.argv[2]
-convertFiles(folder);
+const filepath = process.argv[2]
+convertFiles(filepath);
 console.info('DONE');

@@ -1,15 +1,17 @@
-exports.createRcspgData = function(spectrums) {
-	if (!spectrums || spectrums.length === 0) {
-		throw new Error('no spectrums provided for rcspg convertion')
+const sp = require('./spectrum.js');
+
+exports.createRcspgData = function(baseSpectrum, deltas) {
+	if (!baseSpectrum || !deltas || deltas.length === 0) {
+		throw new Error('no deltas provided for rcspg convertion')
 	}
 
-	const fromTimestamp = spectrums[0].timestamp;
-	const toTimestamp = spectrums[spectrums.length - 1].timestamp;
+	const fromTimestamp = deltas[0].timestamp;
+	const toTimestamp = deltas[deltas.length - 1].timestamp;
 
 	// header
 	const utcISO = new Date(fromTimestamp).toISOString();
 	const formattedUTC = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
-	const spgName = spectrums[0].name;
+	const spgName = baseSpectrum.name;
 	const spgTime = formattedUTC;
 	let rcspgData = 'Spectrogram: ' + spgName + 
 					'\tTime: ' + spgTime + 
@@ -17,24 +19,26 @@ exports.createRcspgData = function(spectrums) {
 					'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
 					'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
 
+	const calibration = sp.getCalibration(baseSpectrum.calibration, 8);
 	// base spectrum, zero duration, y=x calibration, all zero channels
 	let a0 = 0;
 	let a1 = 1;
 	let a2 = 0;
-	switch (spectrums[0].calibration.length) {
+	switch (calibration.length) {
 		case 2:
-			a0 = spectrums[0].calibration[0];
-			a1 = spectrums[0].calibration[1];
+			a0 = calibration[0];
+			a1 = calibration[1];
 			break;
 		case 3:
-			a0 = spectrums[0].calibration[0];
-			a1 = spectrums[0].calibration[1];
-			a2 = spectrums[0].calibration[2];
+			a0 = calibration[0];
+			a1 = calibration[1];
+			a2 = calibration[2];
 			break;
 		default:
-			console.warn('calibration polynom order (' + spectrums[0].calibration.length + ') is not supported, y=x applied');
+			console.warn('calibration polynom order (' + calibration.length + ') is not supported, y=x applied');
 	}
 
+	// TODO: write base spectrum
 	rcspgData += '\nSpectrum: ' +
 				/*int32 duration*/'00 00 00 00' + ' ' +
 				/*float A0*/getBigEndianFloat(a0) + ' ' +
@@ -43,11 +47,12 @@ exports.createRcspgData = function(spectrums) {
 				Array(1024).fill('00 00 00 00').join(' ');
 
 	// deltas
-	spectrums.forEach(spectrum => {
-		rcspgData += '\n' + filetimeFromJSTime(spectrum.timestamp);
-		rcspgData += '\t' + Math.round(spectrum.duration);
-		spectrum.channels.forEach(channel => {
-			rcspgData += '\t' + channel;
+	deltas.forEach(delta => {
+		const channels = sp.reduceChannelCount(delta.channels, 8);
+		rcspgData += '\n' + filetimeFromJSTime(delta.timestamp);
+		rcspgData += '\t' + Math.round(delta.duration);
+		channels.forEach(channel => {
+		rcspgData += '\t' + channel;
 		});
 	});
 
