@@ -11,6 +11,7 @@ Usage (simple, might work on mobile device as well):
 4) upload delta-spectrum file
 5) apply binning
 6) right mouse click on spectrogram - save image as
+7) for radiacode spectrogram conversion use ```rcspg.html```
 
 Usage (advanced, mostly for large spectrograms):
 1) install nodejs - https://nodejs.org/
