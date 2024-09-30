@@ -258,7 +258,7 @@
 		</script>
 	</head>
 	<body>
-		<input id="upload" type="file" accept=".txt" name="files" onchange="onFileChange(this)">
+		<input id="upload" type="file" accept=".txt" name="files" onchange="onFileChange(this)" style="width: 100%; height: 100%;">
 		<script>
 			window.onerror = (e) => {
 				alert(e);
@@ -267,6 +267,9 @@
 			// file upload
 			function onFileChange(input) {
 				const file = input.files[0];
+				if (!file) {
+					return;
+				}
 				const reader = new FileReader();
 				reader.onload = (e) => {
 					const fileText = e.target.result;
@@ -276,14 +279,13 @@
 
 					const rcspgData = exports.createRcspgData(baseSpectrum, deltas);
 					saveRcspg(file.name.split('.')[0] + '.rcspg', rcspgData);
-					alert('Done.');
 				};
 
 				reader.readAsText(file);
 			}
 
 			function saveRcspg(filename, data) {
-				const blob = new Blob([data], {type: 'text/plain'});
+				const blob = new Blob([data], { type: 'text/rcspg' }); // invalid mime type to force android save it as .rcspg
 				const elem = window.document.createElement('a');
 				elem.href = window.URL.createObjectURL(blob);
 				elem.download = filename;
