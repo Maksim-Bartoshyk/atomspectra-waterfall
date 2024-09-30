@@ -37,13 +37,23 @@
 				display: inline-block;
 				width: 250px;
 			}
+			.upload-controls {
+				margin-bottom: 24px;
+			}
 		</style>
 		<script>
-			window.originalWaterfallData = {waterfall_data};
-			window.waterfallData = { ...originalWaterfallData };
+			window.originalWaterfallData = 'waterfall-data-placeholder';
+			window.exports = {}; // hack to re-use nodejs modules
+			window.require = () => window.exports;
 		</script>
+		<script src="./spectrum.js"></script>
+		<script src="./waterfall-data.js"></script>
 	</head>
 	<body>
+		<div id="upload-controls" class="upload-controls">
+			<span>Select atomspectra file to render:</span>
+			<input id="file-input" type="file" accept=".txt" name="files" onchange="onFileChange(this)">
+		</div>
 		<div class="scale-switch">
 			<input type="radio" id="lin" name="scale" value="lin" onchange="onWaterfallScaleChange(this.value)">
 			<label for="lin">LIN</label>
@@ -80,7 +90,7 @@
 			</select>
 		</div>
 		<div class="plot-container">
-			<canvas id="waterfall-plot" class="plot"></canvas>
+			<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
 			<div id="horizontal-cursor" class="horizontal-cursor"></div>
 			<div id="vertical-cursor" class="vertical-cursor"></div>
 		</div>
@@ -97,10 +107,11 @@
 			<input type="number" id="from-channel-2"/>-<input type="number" id="to-channel-2"/>
 		</div>
 		<div class="plot-container">
-			<canvas id="cps-plot" class="plot"></canvas>
+			<canvas id="cps-plot" class="plot" width="0" height="0"></canvas>
 			<div id="cps-vertical-cursor" class="vertical-cursor"></div>
 		</div>
 		<script>
+			// display configuration/state
 			window.constants = {
 				timestampWidth: 150, // note: the same in css
 				timestampHeight: 20,
@@ -136,7 +147,7 @@
 				} else {
 					return "rgb(" + r + ", " + g + ", " + b + ")";
 				}
-			}
+			}		
 
 			function renderWaterfallImage() {
 				const canvas = document.getElementById('waterfall-plot');
@@ -345,8 +356,6 @@
 					}
 				}
 			}
-
-			renderWaterfallImage('sqrt');
 		</script>
 		<script>
 			// cps plot render
@@ -356,11 +365,13 @@
 			const fromChannelInput2 = document.getElementById('from-channel-2');
 			const toChannelInput2 = document.getElementById('to-channel-2');
 			const compareCheckbox = document.getElementById('cps-comparison');
-			fromChannelInput1.value = 0;
-			toChannelInput1.value = waterfallData.channelCount - 1;
-			fromChannelInput2.value = 0;
-			toChannelInput2.value = waterfallData.channelCount - 1;
-			renderCps();
+			
+			function initCpsControls() {
+				fromChannelInput1.value = 0;
+				toChannelInput1.value = waterfallData.channelCount - 1;
+				fromChannelInput2.value = 0;
+				toChannelInput2.value = waterfallData.channelCount - 1;
+			}
 
 			function getCountsInRange(from, to) {
 				const countsInRange = {};
@@ -620,6 +631,13 @@
 		</script>
 		<script>
 			// waterfall control
+			function resetWaterfallBinning() {
+				document.getElementById('spectrum-binning').value = 1;
+				document.getElementById('channel-binning').value = 1;
+				waterfallState.channelBinning = 1;
+				waterfallState.spectrumBinning = 1;
+			}
+
 			function onWaterfallScaleChange(value) {
 				waterfallState.scale = value;
 				renderWaterfallImage();
@@ -737,6 +755,45 @@
 				}
 
 				return reduced;
+			}
+		</script>
+		<script>
+			// startup - check if we have to run with nodejs prepared data or user loads it in browser
+			const uploadControls = document.getElementById('upload-controls');
+
+			if (window.originalWaterfallData === 'waterfall-data-placeholder') {
+				uploadControls.style.display = 'block';
+			} else {
+				uploadControls.style.display = 'none';
+				window.waterfallData = { ...originalWaterfallData };
+				renderWaterfallImage();
+				initCpsControls();
+				renderCps();
+			}
+
+			function onFileChange(input) {
+				const file = input.files[0];
+				if (!file) {
+					return;
+				}
+
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					const fileText = e.target.result;
+					const baseSpectrum = exports.deserializeSpectrum(fileText);
+					const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
+					const deltas = deltaInfo.deltas;
+
+					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, 1);
+					window.waterfallData = { ...originalWaterfallData };
+
+					resetWaterfallBinning();
+					renderWaterfallImage();
+					initCpsControls();
+					renderCps();
+				};
+
+				reader.readAsText(file);
 			}
 		</script>
 	</body>

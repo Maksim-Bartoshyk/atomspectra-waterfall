@@ -1,0 +1,77 @@
+<html>
+	<head>
+		<style>
+		</style>
+		<script>
+			window.exports = {};
+		</script>
+		<script src="./spectrum.js">
+		</script>
+		<script>
+			// hack to run radiacode.js
+			window.require = function (path) {
+				switch (path) {
+					case './spectrum.js':
+						return window.exports;
+					default:
+						throw new Error('unexpected require call');
+				}
+			}
+		</script>
+		<script src="./radiacode.js"></script>
+	</head>
+	<body>
+		<span>Select atomspectra file to convert to .rcspg format:</span>
+		<input id="file-input" type="file" accept=".txt" name="files" onchange="onFileChange(this)">
+		<br/>
+		<br/>
+		<button id="convert-button" onclick="convertClick()" style="display: none;">Click and check downloads</button>
+		<script>
+			const convertBtn = document.getElementById('convert-button');
+			const fileInput = document.getElementById('file-input');
+
+			window.onerror = (e) => {
+				alert(e);
+			};
+
+			function onFileChange(input) {
+				const file = input.files[0];
+				if (!file) {
+					convertBtn.style.display = 'none';
+				} else {
+					convertBtn.style.display = 'inline';
+				}
+			}
+
+			function convertClick() {
+				const file = fileInput.files[0];
+				if (!file) {
+					throw new Error('no file to convert!');
+				}
+
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					const fileText = e.target.result;
+					const baseSpectrum = exports.deserializeSpectrum(fileText);
+					const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
+					const deltas = deltaInfo.deltas;
+
+					const rcspgData = exports.createRcspgData(baseSpectrum, deltas);
+					saveRcspg(file.name.split('.')[0] + '.rcspg', rcspgData);
+				};
+
+				reader.readAsText(file);
+			}
+
+			function saveRcspg(filename, data) {
+				const blob = new Blob([data], { type: 'text/rcspg' }); // invalid mime type to force android save it as .rcspg
+				const elem = window.document.createElement('a');
+				elem.href = window.URL.createObjectURL(blob);
+				elem.download = filename;
+				document.body.appendChild(elem);
+				elem.click();
+				document.body.removeChild(elem);
+			}
+		</script>
+	</body>
+</html>

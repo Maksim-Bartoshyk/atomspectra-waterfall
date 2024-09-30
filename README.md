@@ -4,7 +4,15 @@ Simplest waterfall image creator for atom spectra delta file (starting from atom
 
 Provided as is, use at your own risk.
 
-Usage:
+Usage (simple, might work on mobile device as well):
+1) download repository
+2) save delta-spectrum file on computer
+3) open ```waterfall.html``` file in browser
+4) upload delta-spectrum file
+5) apply binning
+6) right mouse click on spectrogram - save image as
+
+Usage (advanced, mostly for large spectrograms):
 1) install nodejs - https://nodejs.org/
 2) download repository
 3) save delta-spectrum file on computer
