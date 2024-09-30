@@ -16,7 +16,8 @@ function createWaterfallData(baseSpectrum, deltas) {
 		timestamps: [],
 		durations: [],
 		calibration: sp.getCalibration(baseSpectrum.calibration, channelReduceFactor),
-		baseSpectrum: baseChannels
+		baseSpectrum: baseChannels,
+		baseSpectrumDuration: baseSpectrum.duration
 	};
 	deltas.forEach(delta => {
 		waterfall.timestamps.push(delta.timestamp);
