@@ -91,6 +91,15 @@
 				<option value="16">16</option>
 				<option value="32">32</option>
 			</select>
+			<label for="moving-average">Moving average:</label>
+			<select name="moving-average" id="moving-average" onchange="onMovingAverageChange(this.value)">
+				<option value="0">0</option>
+				<option value="2">2</option>
+				<option value="4">4</option>
+				<option value="8">8</option>
+				<option value="16">16</option>
+				<option value="32">32</option>
+			</select>
 		</div>
 		<div class="plot-container">
 			<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
@@ -136,6 +145,7 @@
 				channelBinning: 1,
 				blur: false,
 				substractBase: false,
+				movingAverage: 0,
 			}
 		</script>
 		<script>
@@ -663,6 +673,7 @@
 				applyBinning();
 				renderWaterfallImage();
 				renderCps();
+				resetMovingAverage();
 			}
 
 			function onChannelBinningChange(value) {
@@ -685,6 +696,7 @@
 				updateInputChannelValue(toChannelInput2, newBin, prevBin);
 
 				renderCps();
+				resetMovingAverage();
 			}
 			
 			function updateInputChannelValue(input, newBin, prevBin) {
@@ -759,6 +771,84 @@
 				}
 
 				return reduced;
+			}
+		</script>
+		<script>
+			function resetMovingAverage() {
+				waterfallState.movingAverage = 0;
+				document.getElementById('moving-average').value = 0;
+			}
+
+			function onMovingAverageChange(value) {
+				const windowSize = parseInt(value);
+				if (windowSize === waterfallState.movingAverage) {
+					return;
+				}
+				waterfallState.movingAverage = windowSize;
+
+				applyBinning();
+
+				// horizontal average
+				let avgSpectrums = [];
+				for (let i = 0; i < waterfallData.spectrums.length; i++) {
+					const avgSpectrum = [];
+					for (let j = 0; j < waterfallData.spectrums[i].length; j++) {
+						avgSpectrum.push(waterfallData.spectrums[i][j]);
+						let appliedSize = 0;
+						// before
+						for (let k = j - windowSize / 2; k < j; k++) {
+							if (k < 0) {
+								continue;
+							}
+							avgSpectrum[j] += waterfallData.spectrums[i][k];
+							appliedSize++;
+						}
+						// after
+						for (let k = j + 1; k <= j + windowSize / 2; k++) {
+							if (k >= waterfallData.spectrums[i].length) {
+								break;
+							}
+							avgSpectrum[j] += waterfallData.spectrums[i][k];
+							appliedSize++;
+						}
+						avgSpectrum[j] /= appliedSize + 1;
+					}
+
+					avgSpectrums.push(avgSpectrum);
+				}
+				waterfallData.spectrums = avgSpectrums;
+
+				// vertical average
+				avgSpectrums = [];
+				for (let i = 0; i < waterfallData.spectrums.length; i++) {
+					const avgSpectrum = [...waterfallData.spectrums[i]];
+					for (let j = 0; j < avgSpectrum.length; j++) {
+						let appliedSize = 0;
+						// before
+						for (let k = i - windowSize / 2; k < i; k++) {
+							if (k < 0) {
+								continue;
+							}
+							avgSpectrum[j] += waterfallData.spectrums[k][j];
+							appliedSize++;
+						}
+						// after
+						for (let k = i + 1; k <= i + windowSize / 2; k++) {
+							if (k >= waterfallData.spectrums.length) {
+								break;
+							}
+							avgSpectrum[j] += waterfallData.spectrums[k][j];
+							appliedSize++;
+						}
+						avgSpectrum[j] /= appliedSize + 1;
+					}
+
+					avgSpectrums.push(avgSpectrum);
+				}
+
+				waterfallData.spectrums = avgSpectrums;
+				renderWaterfallImage();
+				renderCps();
 			}
 		</script>
 		<script>
