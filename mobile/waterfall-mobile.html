@@ -1087,9 +1087,14 @@
 					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, 1);
 					window.waterfallData = { ...originalWaterfallData };
 
+					resetMovingAverage();
 					resetWaterfallBinning();
-					renderWaterfallImage();
+					waterfallState.channelBinning = 8;
+					document.getElementById('channel-binning').value = waterfallState.channelBinning;
+
+					applyBinning();
 					initCpsControls();
+					renderWaterfallImage();
 					renderCps();
 				};
 
