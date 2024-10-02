@@ -59,6 +59,39 @@ exports.createRcspgData = function(baseSpectrum, deltas) {
 	return rcspgData;
 }
 
+exports.getRctrkData = function(name, deltas, range1, range2, channelBin) {
+	let rctrkData = 'Track: ' + name + '\tAtom Spectra spectrogram\t \tEC\n';
+	rctrkData += 'Timestamp\tTime\tLatitude\tLongitude\tAccuracy\tDoseRate\tCountRate\tComment\n';
+	deltas.forEach(delta8k => {
+		const channels = sp.reduceChannelCount(delta8k.channels, channelBin);
+		let newLine = '';
+		// ex: '133594869443100000	2024-05-06 16:35:44	60.0006352	30.3515997	6.79	13.3	9.98	 '
+		newLine += filetimeFromJSTime(delta8k.timestamp).toString() + '\t';
+		newLine += formatDate(delta8k.timestamp) + '\t';
+		newLine += delta8k.lat.toFixed(8) + '\t';
+		newLine += delta8k.lon.toFixed(8) + '\t';
+		newLine += '0.0\t'; // accuracy
+		newLine += '0.0\t'; // doserate
+		let cps = cpsInRange(channels, delta8k.duration, range1);
+		if (range2) {
+			let cps2 = cpsInRange(channels, delta8k.duration, range2);
+			if (cps2 > 0) {
+				cps /= cps2;
+			} else {
+				cps = 0;
+			}
+		} 
+		newLine += cps.toFixed(4) + '\t'; // cps
+		newLine += ' \n'; // comment
+
+		if (cps > 0) {
+			rctrkData += newLine;
+		}
+	});
+
+	return rctrkData;
+}
+
 function getBigEndianFloat(value) {
 	const getHex = i => ('00' + i.toString(16)).slice(-2);
 
@@ -75,4 +108,14 @@ function getBigEndianFloat(value) {
 
 function filetimeFromJSTime(jsTime) {  
 	return jsTime * 1e4 + 116444736e9;
+}
+
+function formatDate(ts) {
+	const splitDate = new Date(ts).toISOString().split('T');
+
+	return splitDate[0] + ' ' + splitDate[1].split('.')[0];
+}
+
+function cpsInRange(channels, duration, range) {
+	return channels.slice(range[0], range[1] + 1).reduce((a, v) => a + v, 0) / duration;
 }
