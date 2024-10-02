@@ -336,14 +336,14 @@
 				dotColor: 'white',
 				cpsPlotHeight: 200,
 				cpsExtendRange: 0.1,
-				blurOpacity: 0.2
+				blurOpacity: 0.25
 			};
 			window.waterfallState = {
 				scale: 'sqrt',
 				spectrumBinning: 1,
 				channelBinning: 1,
 				blur: false,
-				substractBase: false,
+				subtractBase: false,
 				movingAverage: 0,
 			}
 		</script>
@@ -434,7 +434,7 @@
 
 						let cps = channelValue / waterfallData.durations[spectrumIndex];
 						// TODO: duplicated code
-						if (waterfallState.substractBase) {
+						if (waterfallState.subtractBase) {
 							const baseCps = waterfallData.baseSpectrum[channelIndex] / waterfallData.baseSpectrumDuration;
 							cps -= baseCps;
 							if (cps < 0) {
@@ -454,7 +454,8 @@
 						}
 
 						let cps = channelValue / waterfallData.durations[spectrumIndex];
-						if (waterfallState.substractBase) {
+						// TODO: duplicated code
+						if (waterfallState.subtractBase) {
 							const baseCps = waterfallData.baseSpectrum[channelIndex] / waterfallData.baseSpectrumDuration;
 							cps -= baseCps;
 							if (cps < 0) {
@@ -594,6 +595,14 @@
 						} else {
 							countsInRange[spectrumIndex] += spectrum[ci];
 						}
+
+						if (waterfallState.subtractBase) {
+							countsInRange[spectrumIndex] -= waterfallData.baseSpectrum[ci] * (waterfallData.durations[spectrumIndex] / waterfallData.baseSpectrumDuration);
+						}
+					}
+
+					if (countsInRange[spectrumIndex] < 0) {
+						countsInRange[spectrumIndex] = 0;
 					}
 				});
 				
@@ -602,8 +611,8 @@
 			
 			function countsToCps(countsInRange) {
 				const cpsInRange = {};
-				Object.keys(countsInRange).forEach(index => {
-					cpsInRange[index] = countsInRange[index] / waterfallData.durations[index];
+				Object.keys(countsInRange).forEach(spectrumIndex => {
+					cpsInRange[spectrumIndex] = countsInRange[spectrumIndex] / waterfallData.durations[spectrumIndex];
 				});
 				
 				return cpsInRange;
@@ -861,8 +870,9 @@
 			}
 
 			function onWaterfallSubtractChange(value) {
-				waterfallState.substractBase = value;
+				waterfallState.subtractBase = value;
 				renderWaterfallImage();
+				renderCps();
 			}
 
 			function onSpectrumBinningChange(value) {
