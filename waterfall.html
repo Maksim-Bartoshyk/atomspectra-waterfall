@@ -824,22 +824,19 @@
 					const avgSpectrum = [...waterfallData.spectrums[i]];
 					for (let j = 0; j < avgSpectrum.length; j++) {
 						let appliedSize = 0;
-						// before
-						for (let k = i - windowSize / 2; k < i; k++) {
-							if (k < 0) {
+						for (let k = i - windowSize / 2; k <= i + windowSize / 2; k++) {
+							if (k < 0 || k === i) {
 								continue;
 							}
-							avgSpectrum[j] += waterfallData.spectrums[k][j];
-							appliedSize++;
-						}
-						// after
-						for (let k = i + 1; k <= i + windowSize / 2; k++) {
+
 							if (k >= waterfallData.spectrums.length) {
 								break;
 							}
-							avgSpectrum[j] += waterfallData.spectrums[k][j];
+
+							avgSpectrum[j] += waterfallData.spectrums[k][j] * (waterfallData.durations[i] / waterfallData.durations[k]);
 							appliedSize++;
 						}
+
 						avgSpectrum[j] /= appliedSize + 1;
 					}
 
