@@ -2,20 +2,63 @@
 	<head>
 		<style>
 			body {
-				background: #555;
-				color: #BBB;
+				background: #444;
+				color: #CCC;
 				padding: 8px;
 			}
-			.scale-switch, .cps-control {
+			body * {
+				font-size: 18px;
+   				font-family: monospace;
+			}
+			select, input {
+				background: #444;
+				color: #CCC;
+			}
+			input[type="number"] {
+				border: 1px solid #CCC;
+			}
+			.upload-controls {
+				border-bottom: 1px dotted;
+				margin-top: 16px;
+				margin-bottom: 24px;
+				padding-bottom: 4px;
+				text-wrap: nowrap;
+			}
+			.upload-controls input {
+				width: 600px;
+			}
+			.waterfall-control, .cps-control {
 				width: 100%;
-				margin: 16px 0;
+				border-bottom: 1px dotted;
+				margin: 4px 0;
+			}
+			.row {
+				display: inline-block;
+				margin-bottom: 12px;
+				text-wrap: nowrap;
+				width: 100%;
+			}
+			.col {
+				display: inline-block;
+				text-wrap: nowrap;
+				width: 280px;
+			}
+			.col label {
+				margin-left: 4px;
+			}
+			.col select {
+				margin-left: 16px;
+			}
+			.scale-switch {
+				display: inline-block;
+				margin-right: 16px;
 			}
 			.plot-container {
 				position: relative;
 				width: fit-content;
 			}
 			.plot {
-				border: 1px dashed #333;
+				border: 1px dashed #222;
 			}
 			.horizontal-cursor, .vertical-cursor {
 				display: none;
@@ -33,18 +76,17 @@
 				top: 0;
 				width: 0;
 			}
+			.cps-control .numeric-input {
+				margin: 0 4px;
+				width: 120px;
+			}
 			.cps-left-column {
 				display: inline-block;
-				width: 250px;
-			}
-			.upload-controls {
-				margin-bottom: 24px;
-			}
-			.upload-controls input {
 				width: 400px;
 			}
 			.export-map-button {
-				width: 250px;
+				margin-left: 4px;
+				width: 400px;
 			}
 		</style>
 		<script>
@@ -385,50 +427,67 @@
 			<span>Select atomspectra file to render:</span>
 			<input id="file-input" type="file" accept=".txt" name="files" onchange="onFileChange(this)">
 		</div>
-		<div class="scale-switch">
-			<input type="radio" id="lin" name="scale" value="lin" onchange="onWaterfallScaleChange(this.value)">
-			<label for="lin">LIN</label>
-			<input type="radio" id="sqrt" name="scale" value="sqrt" checked onchange="onWaterfallScaleChange(this.value)">
-			<label for="sqrt">SQRT</label>
-			<input type="radio" id="log" name="scale" value="log" onchange="onWaterfallScaleChange(this.value)">
-			<label for="log">LOG</label>
-			<input type="checkbox" id="blur-waterfall" name="blur-waterfall" onchange="onWaterfallBlurChange(this.checked)"/>
-			<label for="blur-waterfall">Blur</label>
-			<input type="checkbox" id="subtract-base" name="subtract-base" onchange="onWaterfallSubtractChange(this.checked)"/>
-			<label for="subtract-base">Subtract base spectrum</label>
-			<br/>
-			<br/>
-			<label for="spectrum-binning">Spectrum binning:</label>
-			<select name="spectrum-binning" id="spectrum-binning" onchange="onSpectrumBinningChange(this.value)">
-				<option value="1">1</option>
-				<option value="2">2</option>
-				<option value="3">3</option>
-				<option value="4">4</option>
-				<option value="5">5</option>
-				<option value="6">6</option>
-				<option value="7">7</option>
-				<option value="8">8</option>
-				<option value="9">9</option>
-				<option value="10">10</option>
-			</select>
-			<label for="channel-binning">Channel binning:</label>
-			<select name="channel-binning" id="channel-binning" onchange="onChannelBinningChange(this.value)">
-				<option value="1">1</option>
-				<option value="2">2</option>
-				<option value="4">4</option>
-				<option value="8">8</option>
-				<option value="16">16</option>
-				<option value="32">32</option>
-			</select>
-			<label for="moving-average">Moving average:</label>
-			<select name="moving-average" id="moving-average" onchange="onMovingAverageChange(this.value)">
-				<option value="0">0</option>
-				<option value="2">2</option>
-				<option value="4">4</option>
-				<option value="8">8</option>
-				<option value="16">16</option>
-				<option value="32">32</option>
-			</select>
+		<div class="waterfall-control">
+			<div class="row">
+				<div class="col">
+					<input type="radio" id="lin" name="scale" value="lin" onchange="onWaterfallScaleChange(this.value)">
+					<label for="lin">LIN</label>
+					<input type="radio" id="sqrt" name="scale" value="sqrt" checked onchange="onWaterfallScaleChange(this.value)">
+					<label for="sqrt">SQRT</label>
+					<input type="radio" id="log" name="scale" value="log" onchange="onWaterfallScaleChange(this.value)">
+					<label for="log">LOG</label>
+				</div>
+				<div class="col">
+					<label for="spectrum-binning">Spectrum binning:</label>
+					<select name="spectrum-binning" id="spectrum-binning" onchange="onSpectrumBinningChange(this.value)">
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5</option>
+						<option value="6">6</option>
+						<option value="7">7</option>
+						<option value="8">8</option>
+						<option value="9">9</option>
+						<option value="10">10</option>
+						<option value="25">25</option>
+						<option value="50">50</option>
+						<option value="100">100</option>
+					</select>
+				</div>
+				<div class="col">
+					<label for="channel-binning">Channel binning:</label>
+					<select name="channel-binning" id="channel-binning" onchange="onChannelBinningChange(this.value)">
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="4">4</option>
+						<option value="8">8</option>
+						<option value="16">16</option>
+						<option value="32">32</option>
+					</select>
+				</div>
+				<div class="col">
+					<label for="moving-average">Moving average:</label>
+					<select name="moving-average" id="moving-average" onchange="onMovingAverageChange(this.value)">
+						<option value="0">0</option>
+						<option value="2">2</option>
+						<option value="4">4</option>
+						<option value="8">8</option>
+						<option value="16">16</option>
+						<option value="32">32</option>
+					</select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<input type="checkbox" id="blur-waterfall" name="blur-waterfall" onchange="onWaterfallBlurChange(this.checked)"/>
+					<label for="blur-waterfall">Blur</label>
+				</div>
+				<div class="col">
+					<input type="checkbox" id="subtract-base" name="subtract-base" onchange="onWaterfallSubtractChange(this.checked)"/>
+					<label for="subtract-base">Subtract base spectrum</label>
+				</div>
+			</div>
 		</div>
 		<div class="plot-container">
 			<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
@@ -436,19 +495,23 @@
 			<div id="vertical-cursor" class="vertical-cursor"></div>
 		</div>
 		<div class="cps-control">
-			<button class="cps-left-column" onclick="renderCps()">CPS trend in channel range:</button> 
-			<input type="number" id="from-channel-1"/>-<input type="number" id="to-channel-1"/>
-			<button id="export-cps-map" class="export-map-button" disabled onclick="exportCpsMap(this)">Range 1 cps to map</button>
-			<br />
-			<div class="cps-left-column">
-				<input type="checkbox" id="cps-comparison" name="cps-comparison"/>
-				<label for="cps-comparison">Compare to CPS in channel range:</label>
+			<div class="row">
+				<button class="cps-left-column" onclick="renderCps()">CPS trend in channel range:</button> 
+				<input type="number" id="from-channel-1" class="numeric-input"/>-<input type="number" id="to-channel-1" class="numeric-input"/>
+				<button id="export-cps-map" class="export-map-button" disabled onclick="exportCpsMap(this)">Range 1 cps to map</button>
 			</div>
-			<input type="number" id="from-channel-2"/>-<input type="number" id="to-channel-2"/>
-			<button id="export-comparison-map" class="export-map-button" disabled onclick="exportComparisonMap(this)">Range 1 / range 2 comparison to map</button>
-			<br/>
-			<input type="checkbox" id="dotted-trend" name="dotted-trend"/>
-			<label for="dotted-trend">Dotted</label>
+			<div class="row">
+				<div class="cps-left-column">
+					<input type="checkbox" id="cps-comparison" name="cps-comparison"/>
+					<label for="cps-comparison">Compare to CPS in channel range:</label>
+				</div>
+				<input type="number" id="from-channel-2" class="numeric-input"/>-<input type="number" id="to-channel-2" class="numeric-input"/>
+				<button id="export-comparison-map" class="export-map-button" disabled onclick="exportComparisonMap(this)">Range 1/range 2 comparison to map</button>
+			</div>
+			<div class="row">
+				<input type="checkbox" id="dotted-trend" name="dotted-trend"/>
+				<label for="dotted-trend">Dotted</label>
+			</div>
 		</div>
 		<div class="plot-container">
 			<canvas id="cps-plot" class="plot" width="0" height="0"></canvas>
@@ -723,6 +786,11 @@
 			}
 
 			function getCountsInRange(from, to) {
+				from = from < 0 ? 0 : from;
+				to = to >= waterfallData.baseSpectrum.channelCount 
+					? waterfallData.baseSpectrum.channelCount - 1
+					: to; 
+
 				const countsInRange = {};
 				waterfallData.deltas.forEach((delta, deltaIndex) => {
 					for (let ci = from; ci <= to; ci++) {
@@ -791,7 +859,7 @@
 				if (isNaN(fromChannel1) || isNaN(toChannel1) || fromChannel1 > toChannel1) {
 					cpsToMapButton.disabled = true;
 					comparisonToMapButton.disabled = true;
-					renderCpsData(cpsCanvas, 0, 0, {});
+					renderCpsData(cpsCanvas);
 					return;
 				}
 				
@@ -800,7 +868,7 @@
 				if (compareCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
 					cpsToMapButton.disabled = true;
 					comparisonToMapButton.disabled = true;
-					renderCpsData(cpsCanvas, 0, 0, {});
+					renderCpsData(cpsCanvas);
 					return;
 				}
 
@@ -834,13 +902,16 @@
 				}
 			}
 
-			function renderCpsData(canvas, data, offset, height, label) {
-				const range = data.max - data.min;
-
+			function renderCpsData(canvas, data, offset, height, label) {			
 				const ctx = canvas.getContext("2d");
 				ctx.fillStyle = constants.backgroundColor;
 				ctx.fillRect(0, offset, canvas.width, height);
 
+				if (!data) {
+					return;
+				}
+
+				const range = data.max - data.min;
 				if (dottedCheckbox.checked) {
 					// points
 					ctx.fillStyle = constants.dotColor;
