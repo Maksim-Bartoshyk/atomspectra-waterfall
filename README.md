@@ -2,14 +2,14 @@
 
 Simplest waterfall image creator for atom spectra delta file (starting from atomspectra 6.6.15). For older version - https://github.com/Maksim-Bartoshyk/atomspectra-waterfall/releases/tag/AS-6.6.14
 
-Provided as is, use at your own risk.
+Provided as is, use at your own risk. This software is not sertified as a measurement tool, any results obtained with this software could not be used for official statements, conclusions or decisions.
 
-Usage (simple, might work on mobile device as well):
+Usage (simple, might work on mobile/tablet as well - check files in ```mobile``` folder):
 1) download repository
 2) save delta-spectrum file on computer
 3) open ```waterfall.html``` file in browser
-4) upload delta-spectrum file
-5) apply binning
+4) upload spectrogram file
+5) apply spectrum/channel binning
 6) right mouse click on spectrogram - save image as
 7) for radiacode spectrogram conversion use ```rcspg.html```
 
