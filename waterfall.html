@@ -43,6 +43,9 @@
 			.upload-controls input {
 				width: 400px;
 			}
+			.export-map-button {
+				width: 250px;
+			}
 		</style>
 		<script>
 			window.originalWaterfallData = 'waterfall-data-placeholder';
@@ -51,6 +54,7 @@
 		</script>
 		<script src="./spectrum.js"></script>
 		<script src="./waterfall-data.js"></script>
+		<script src="./radiacode.js"></script> <!-- to be replaced with atom.js -->
 	</head>
 	<body>
 		<div id="upload-controls" class="upload-controls">
@@ -109,14 +113,17 @@
 		<div class="cps-control">
 			<button class="cps-left-column" onclick="renderCps()">CPS trend in channel range:</button> 
 			<input type="number" id="from-channel-1"/>-<input type="number" id="to-channel-1"/>
-			<input type="checkbox" id="dotted-trend" name="dotted-trend"/>
-			<label for="dotted-trend">Dotted</label>
+			<button id="export-cps-map" class="export-map-button" disabled onclick="exportCpsMap(this)">Range 1 cps to map</button>
 			<br />
 			<div class="cps-left-column">
 				<input type="checkbox" id="cps-comparison" name="cps-comparison"/>
 				<label for="cps-comparison">Compare to CPS in channel range:</label>
 			</div>
 			<input type="number" id="from-channel-2"/>-<input type="number" id="to-channel-2"/>
+			<button id="export-comparison-map" class="export-map-button" disabled onclick="exportComparisonMap(this)">Range 1 / range 2 comparison to map</button>
+			<br/>
+			<input type="checkbox" id="dotted-trend" name="dotted-trend"/>
+			<label for="dotted-trend">Dotted</label>
 		</div>
 		<div class="plot-container">
 			<canvas id="cps-plot" class="plot" width="0" height="0"></canvas>
@@ -379,6 +386,8 @@
 			const fromChannelInput2 = document.getElementById('from-channel-2');
 			const toChannelInput2 = document.getElementById('to-channel-2');
 			const compareCheckbox = document.getElementById('cps-comparison');
+			const cpsToMapButton = document.getElementById('export-cps-map');
+			const comparisonToMapButton = document.getElementById('export-comparison-map');
 			
 			function initCpsControls() {
 				fromChannelInput1.value = 0;
@@ -454,6 +463,8 @@
 				const fromChannel1 = parseInt(fromChannelInput1.value);
 				const toChannel1 = parseInt(toChannelInput1.value);
 				if (isNaN(fromChannel1) || isNaN(toChannel1) || fromChannel1 > toChannel1) {
+					cpsToMapButton.disabled = true;
+					comparisonToMapButton.disabled = true;
 					renderCpsData(cpsCanvas, 0, 0, {});
 					return;
 				}
@@ -461,11 +472,14 @@
 				const fromChannel2 = parseInt(fromChannelInput2.value);
 				const toChannel2 = parseInt(toChannelInput2.value);
 				if (compareCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
+					cpsToMapButton.disabled = true;
+					comparisonToMapButton.disabled = true;
 					renderCpsData(cpsCanvas, 0, 0, {});
 					return;
 				}
 
 				if (compareCheckbox.checked) {
+					comparisonToMapButton.disabled = false;
 					const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
 					const cpsInRange1 = countsToCps(countsInRange1);
 					const countsInRange2 = getCountsInRange(fromChannel2, toChannel2);
@@ -483,6 +497,7 @@
 					renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range 2 cps');
 					renderCpsData(cpsCanvas, getRenderData(ratio), plotHeight * 2, plotHeight, 'range 1 / range 2');
 				} else {
+					cpsToMapButton.disabled = false;
 					const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
 					const cpsInRange1 = countsToCps(countsInRange1);
 					const renderData = getRenderData(cpsInRange1);
@@ -553,6 +568,14 @@
 				ctx.fillText(data.min.toFixed(range < 0.01 ? 4 : 2), 0, offset + height);
 				ctx.textBaseline = 'top';
 				ctx.fillText(label, canvas.width / 2 - label.length * 2, offset);
+			}
+
+			function exportCpsMap() {
+				
+			}
+
+			function exportComparisonMap() {
+				
 			}
 		</script>
 		<script>
