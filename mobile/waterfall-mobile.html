@@ -54,327 +54,330 @@
 		</script>
 		<script>
 			// spectrum.js content
-			exports.deserializeSpectrum = function(fileText) {
-				if (!fileText) {
-					throw new Error('spectrum file text is empty');
+(function () {
+	exports.deserializeSpectrum = function(fileText) {
+		if (!fileText) {
+			throw new Error('spectrum file text is empty');
+		}
+	
+		const lines = fileText.split('\n');
+		const format = lines[0];
+		const note = lines[1];
+		const time = parseInt(lines[2]);
+		const time2 = parseInt(lines[3]);
+		const latStr = lines[4];
+		const lonStr = lines[5];
+		const name = lines[6];
+		const foundIsotopes = lines[7];
+		const duration = parseFloat(lines[8]);
+		const channelsCount = parseInt(lines[9]);
+		const calibrationOrder = parseInt(lines[10]);
+		const calibration = [];
+		for (let i = 0; i < calibrationOrder + 1; i++) {
+			calibration.push(parseFloat(lines[11 + i]));
+		}
+	
+		let index = 0;
+		const channels = [];
+		while (index < channelsCount) {
+			channels.push(parseInt(lines[12 + calibrationOrder + index]));
+			index++;
+		}
+	
+		return {
+			format: format,
+			note: note,
+			timestamp: time,
+			timestamp2: time2,
+			latStr: latStr,
+			lonStr: lonStr,
+			name: name,
+			foundIsotopes: foundIsotopes,
+			duration: duration,
+			channelCount: channels.length,
+			calibration: calibration,
+			channels: channels
+		};
+	}
+	
+	exports.serializeSpectrum = function(spectrum) {
+		if (!spectrum) {
+			throw new Error('spectrum is not provided');
+		}
+	
+		let text = spectrum.format + '\n';
+		text += spectrum.note + '\n';
+		text += spectrum.timestamp + '\n';
+		text += spectrum.timestamp2 + '\n';
+		text += spectrum.latStr + '\n';
+		text += spectrum.lonStr + '\n';
+		text += spectrum.name + '\n';
+		text += spectrum.foundIsotopes + '\n';
+		text += spectrum.duration + '\n';
+		text += spectrum.channelCount + '\n';
+		text += (spectrum.calibration.length - 1) + '\n';
+		for (let i = 0; i < spectrum.calibration.length; i++) {
+			text += spectrum.calibration[i] + '\n';
+		}
+	
+		let index = 0;
+		while (index < spectrum.channelCount) {
+			text += spectrum.channels[index] + '\n';
+			index++;
+		}
+	
+		return text;
+	}
+	
+	exports.deserializeDeltas = function(fileText, baseSpectrum) {
+		if (!fileText) {
+			throw new Error('spectrum file text is empty');
+		}
+	
+		const lines = fileText.split('\n');
+		const deltaLinesCount = 5;
+		const deltas = [];
+		let deltaIndex = baseSpectrum.calibration.length + baseSpectrum.channelCount + 11; // skip base spectrum
+		while (deltaIndex <= lines.length - deltaLinesCount) {
+			const delta = readNextDelta(lines, deltaIndex, baseSpectrum.channelCount);
+			deltas.push(delta);
+			deltaIndex += deltaLinesCount;
+		}
+	
+		return {
+			deltas: deltas
+		};
+	}
+	
+	exports.reduceSpectrumCount = function(spectrums, factor) {
+		if (factor < 1) {
+			throw new Error('invalid factor: ' + factor);
+		}
+	
+		if (!spectrums || !spectrums.length) {
+			throw new Error('no spectrums provided');
+		}
+	
+		let reduced = [];
+		for (let i = 0; i < spectrums.length; i += factor) {
+			let summ = { ...spectrums[i], channels: [...spectrums[i].channels] };
+			for (let j = 1; j < factor && (i + j) < spectrums.length; j++) {
+				for (let k = 0; k < summ.channels.length; k++) {
+					summ.channels[k] += spectrums[i + j].channels[k];
 				}
-
-				const lines = fileText.split('\n');
-				const format = lines[0];
-				const note = lines[1];
-				const time = parseInt(lines[2]);
-				const time2 = parseInt(lines[3]);
-				const latStr = lines[4];
-				const lonStr = lines[5];
-				const name = lines[6];
-				const foundIsotopes = lines[7];
-				const duration = parseFloat(lines[8]);
-				const channelsCount = parseInt(lines[9]);
-				const calibrationOrder = parseInt(lines[10]);
-				const calibration = [];
-				for (let i = 0; i < calibrationOrder + 1; i++) {
-					calibration.push(parseFloat(lines[11 + i]));
-				}
-
-				let index = 0;
-				const channels = [];
-				while (index < channelsCount) {
-					channels.push(parseInt(lines[12 + calibrationOrder + index]));
-					index++;
-				}
-
-				return {
-					format: format,
-					note: note,
-					timestamp: time,
-					timestamp2: time2,
-					latStr: latStr,
-					lonStr: lonStr,
-					name: name,
-					foundIsotopes: foundIsotopes,
-					duration: duration,
-					channelCount: channels.length,
-					calibration: calibration,
-					channels: channels
-				};
+	
+				summ.duration += spectrums[i + j].duration;
 			}
-
-			exports.serializeSpectrum = function(spectrum) {
-				if (!spectrum) {
-					throw new Error('spectrum is not provided');
-				}
-
-				let text = spectrum.format + '\n';
-				text += spectrum.note + '\n';
-				text += spectrum.timestamp + '\n';
-				text += spectrum.timestamp2 + '\n';
-				text += spectrum.latStr + '\n';
-				text += spectrum.lonStr + '\n';
-				text += spectrum.name + '\n';
-				text += spectrum.foundIsotopes + '\n';
-				text += spectrum.duration + '\n';
-				text += spectrum.channelCount + '\n';
-				text += (spectrum.calibration.length - 1) + '\n';
-				for (let i = 0; i < spectrum.calibration.length; i++) {
-					text += spectrum.calibration[i] + '\n';
-				}
-
-				let index = 0;
-				while (index < spectrum.channelCount) {
-					text += spectrum.channels[index] + '\n';
-					index++;
-				}
-
-				return text;
+	
+			reduced.push(summ);
+		}
+	
+		return reduced;
+	}
+	
+	exports.reduceChannelCount = function(channels, factor) {
+		if (factor < 1) {
+			throw new Error('invalid factor: ' + factor);
+		}
+	
+		if (!channels || !channels.length) {
+			throw new Error('no channels provided');
+		}
+	
+		let reduced = [];
+		for (let i = 0; i < channels.length; i += factor) {
+			let summ = 0;
+			for (let j = 0; j < factor && (i + j) < channels.length; j++) {
+				summ += channels[i + j];
 			}
-
-			exports.deserializeDeltas = function(fileText, baseSpectrum) {
-				if (!fileText) {
-					throw new Error('spectrum file text is empty');
-				}
-
-				const lines = fileText.split('\n');
-				const deltaLinesCount = 5;
-				const deltas = [];
-				let deltaIndex = baseSpectrum.calibration.length + baseSpectrum.channelCount + 11; // skip base spectrum
-				while (deltaIndex <= lines.length - deltaLinesCount) {
-					const delta = readNextDelta(lines, deltaIndex, baseSpectrum.channelCount);
-					deltas.push(delta);
-					deltaIndex += deltaLinesCount;
-				}
-
-				return {
-					deltas: deltas
-				};
-			}
-
-			exports.reduceSpectrumCount = function(spectrums, factor) {
-				if (factor < 1) {
-					throw new Error('invalid factor: ' + factor);
-				}
-
-				if (!spectrums || !spectrums.length) {
-					throw new Error('no spectrums provided');
-				}
-
-				let reduced = [];
-				for (let i = 0; i < spectrums.length; i += factor) {
-					let summ = { ...spectrums[i] };
-					for (let j = 1; j < factor && (i + j) < spectrums.length; j++) {
-						for (let k = 0; k < summ.channels.length; k++) {
-							summ.channels[k] += spectrums[i + j].channels[k];
-						}
-
-						summ.duration += spectrums[i + j].duration;
-					}
-
-					reduced.push(summ);
-				}
-
-				return reduced;
-			}
-
-			exports.reduceChannelCount = function(channels, factor) {
-				if (factor < 1) {
-					throw new Error('invalid factor: ' + factor);
-				}
-
-				if (!channels || !channels.length) {
-					throw new Error('no channels provided');
-				}
-
-				let reduced = [];
-				for (let i = 0; i < channels.length; i += factor) {
-					let summ = 0;
-					for (let j = 0; j < factor && (i + j) < channels.length; j++) {
-						summ += channels[i + j];
-					}
-
-					reduced.push(summ);
-				}
-
-				return reduced;
-			}
-
-			exports.getCalibration = function (calibration, channelReduceFactor) {
-				const newCalibration = [];
-				for (let i = 0; i < calibration.length; i++) {
-					newCalibration.push(Math.pow(channelReduceFactor, i) * calibration[i]);
-				}
-
-				return newCalibration;
-			}
-
-			function readNextDelta(lines, fromIndex, channelCount) {
-				const timestamp = parseInt(lines[fromIndex]);
-				const lat = parseFloat(lines[fromIndex + 1]);
-				const lon = parseFloat(lines[fromIndex + 2]);
-				const duration = parseFloat(lines[fromIndex + 3]);
-				const channels = lines[fromIndex + 4]
-					.split('\t')
-					.slice(0, channelCount)
-					.map(str => parseInt(str));
-
-				return {
-					timestamp: timestamp,
-					duration: duration,
-					lat: lat,
-					lon: lon,
-					channels: channels
-				}
-			}
+	
+			reduced.push(summ);
+		}
+	
+		return reduced;
+	}
+	
+	exports.getCalibration = function (calibration, channelReduceFactor) {
+		const newCalibration = [];
+		for (let i = 0; i < calibration.length; i++) {
+			newCalibration.push(Math.pow(channelReduceFactor, i) * calibration[i]);
+		}
+	
+		return newCalibration;
+	}
+	
+	function readNextDelta(lines, fromIndex, channelCount) {
+		const timestamp = parseInt(lines[fromIndex]);
+		const lat = parseFloat(lines[fromIndex + 1]);
+		const lon = parseFloat(lines[fromIndex + 2]);
+		const duration = parseFloat(lines[fromIndex + 3]);
+		const channels = lines[fromIndex + 4]
+			.split('\t')
+			.slice(0, channelCount)
+			.map(str => parseInt(str));
+	
+		return {
+			timestamp: timestamp,
+			duration: duration,
+			lat: lat,
+			lon: lon,
+			channels: channels
+		}
+	}		
+})();
 		</script>
 		<script>
 			// waterfall-data.js contents
-			const sp = require('./spectrum.js');
+(function(){
+	const sp = require('./spectrum.js');
 
-			exports.createWaterfallData = function(baseSpectrum, deltas, channelReduceFactor) {
-				const baseChannels = sp.reduceChannelCount(baseSpectrum.channels, channelReduceFactor);
-				let waterfall = {
-					spectrums: [],
-					spectrumsCount: deltas.length,
-					channelCount: baseChannels.length,
-					timestamps: [],
-					durations: [],
-					calibration: sp.getCalibration(baseSpectrum.calibration, channelReduceFactor),
-					baseSpectrum: baseChannels,
-					baseSpectrumDuration: baseSpectrum.duration
-				};
-				deltas.forEach(delta => {
-					waterfall.timestamps.push(delta.timestamp);
-					waterfall.durations.push(delta.duration);
+	exports.createWaterfallData = function(baseSpectrum, deltas, channelReduceFactor) {
+		const baseChannels = sp.reduceChannelCount(baseSpectrum.channels, channelReduceFactor);
+		let waterfall = {
+			deltas: [],
+			baseSpectrum: {
+				...baseSpectrum,
+				channels: baseChannels,
+				channelCount: baseChannels.length,
+				calibration: sp.getCalibration(baseSpectrum.calibration, channelReduceFactor)
+			},
+		};
+		deltas.forEach(delta8k => {
+			waterfall.deltas.push({
+				...delta8k,
+				channels: sp.reduceChannelCount(delta8k.channels, channelReduceFactor)
+			});
+		});
 
-					const wfSpectrum = sp.reduceChannelCount(delta.channels, channelReduceFactor);
-					waterfall.spectrums.push(wfSpectrum);
-				});
-
-				return waterfall;
-			}
+		return waterfall;
+	}
+})();
 		</script>
 		<script>
 			// radiacode.js content, to be replaced with atom.js
-			const sp = require('./spectrum.js');
+(function () {
+	const sp = require('./spectrum.js');
 
-			exports.createRcspgData = function(baseSpectrum, deltas) {
-				if (!baseSpectrum || !deltas || deltas.length === 0) {
-					throw new Error('no deltas provided for rcspg convertion')
+	exports.createRcspgData = function(baseSpectrum, deltas) {
+		if (!baseSpectrum || !deltas || deltas.length === 0) {
+			throw new Error('no deltas provided for rcspg convertion')
+		}
+
+		const fromTimestamp = deltas[0].timestamp;
+		const toTimestamp = deltas[deltas.length - 1].timestamp;
+
+		// header
+		const utcISO = new Date(fromTimestamp).toISOString();
+		const formattedUTC = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+		const spgName = baseSpectrum.name;
+		const spgTime = formattedUTC;
+		let rcspgData = 'Spectrogram: ' + spgName + 
+						'\tTime: ' + spgTime + 
+						'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp) + // just in case to avoid any potential division by zero
+						'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
+						'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
+
+		const calibration = sp.getCalibration(baseSpectrum.calibration, 8);
+		// base spectrum, zero duration, y=x calibration, all zero channels
+		let a0 = 0;
+		let a1 = 1;
+		let a2 = 0;
+		switch (calibration.length) {
+			case 2:
+				a0 = calibration[0];
+				a1 = calibration[1];
+				break;
+			case 3:
+				a0 = calibration[0];
+				a1 = calibration[1];
+				a2 = calibration[2];
+				break;
+			default:
+				console.warn('calibration polynom order (' + calibration.length + ') is not supported, y=x applied');
+		}
+
+		// TODO: write base spectrum
+		rcspgData += '\nSpectrum: ' +
+					/*int32 duration*/'00 00 00 00' + ' ' +
+					/*float A0*/getBigEndianFloat(a0) + ' ' +
+					/*float A1*/getBigEndianFloat(a1) + ' ' +
+					/*float A2*/getBigEndianFloat(a2) + ' ' +
+					Array(1024).fill('00 00 00 00').join(' ');
+
+		// deltas
+		deltas.forEach(delta => {
+			const channels = sp.reduceChannelCount(delta.channels, 8);
+			rcspgData += '\n' + filetimeFromJSTime(delta.timestamp);
+			rcspgData += '\t' + Math.round(delta.duration);
+			channels.forEach(channel => {
+			rcspgData += '\t' + channel;
+			});
+		});
+
+		return rcspgData;
+	}
+
+	exports.getRctrkData = function(name, deltas, range1, range2, channelBin) {
+		let rctrkData = 'Track: ' + name + '\tAtom Spectra spectrogram\t \tEC\n';
+		rctrkData += 'Timestamp\tTime\tLatitude\tLongitude\tAccuracy\tDoseRate\tCountRate\tComment\n';
+		deltas.forEach(delta8k => {
+			const channels = sp.reduceChannelCount(delta8k.channels, channelBin);
+			let newLine = '';
+			// ex: '133594869443100000	2024-05-06 16:35:44	60.0006352	30.3515997	6.79	13.3	9.98	 '
+			newLine += filetimeFromJSTime(delta8k.timestamp).toString() + '\t';
+			newLine += formatDate(delta8k.timestamp) + '\t';
+			newLine += delta8k.lat.toFixed(8) + '\t';
+			newLine += delta8k.lon.toFixed(8) + '\t';
+			newLine += '0.0\t'; // accuracy
+			newLine += '0.0\t'; // doserate
+			let cps = cpsInRange(channels, delta8k.duration, range1);
+			if (range2) {
+				let cps2 = cpsInRange(channels, delta8k.duration, range2);
+				if (cps2 > 0) {
+					cps /= cps2;
+				} else {
+					cps = 0;
 				}
+			} 
+			newLine += cps.toFixed(4) + '\t'; // cps
+			newLine += ' \n'; // comment
 
-				const fromTimestamp = deltas[0].timestamp;
-				const toTimestamp = deltas[deltas.length - 1].timestamp;
-
-				// header
-				const utcISO = new Date(fromTimestamp).toISOString();
-				const formattedUTC = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
-				const spgName = baseSpectrum.name;
-				const spgTime = formattedUTC;
-				let rcspgData = 'Spectrogram: ' + spgName + 
-								'\tTime: ' + spgTime + 
-								'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp) + // just in case to avoid any potential division by zero
-								'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
-								'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
-
-				const calibration = sp.getCalibration(baseSpectrum.calibration, 8);
-				// base spectrum, zero duration, y=x calibration, all zero channels
-				let a0 = 0;
-				let a1 = 1;
-				let a2 = 0;
-				switch (calibration.length) {
-					case 2:
-						a0 = calibration[0];
-						a1 = calibration[1];
-						break;
-					case 3:
-						a0 = calibration[0];
-						a1 = calibration[1];
-						a2 = calibration[2];
-						break;
-					default:
-						console.warn('calibration polynom order (' + calibration.length + ') is not supported, y=x applied');
-				}
-
-				// TODO: write base spectrum
-				rcspgData += '\nSpectrum: ' +
-							/*int32 duration*/'00 00 00 00' + ' ' +
-							/*float A0*/getBigEndianFloat(a0) + ' ' +
-							/*float A1*/getBigEndianFloat(a1) + ' ' +
-							/*float A2*/getBigEndianFloat(a2) + ' ' +
-							Array(1024).fill('00 00 00 00').join(' ');
-
-				// deltas
-				deltas.forEach(delta => {
-					const channels = sp.reduceChannelCount(delta.channels, 8);
-					rcspgData += '\n' + filetimeFromJSTime(delta.timestamp);
-					rcspgData += '\t' + Math.round(delta.duration);
-					channels.forEach(channel => {
-					rcspgData += '\t' + channel;
-					});
-				});
-
-				return rcspgData;
+			if (cps > 0 && (delta8k.lat !== 0 && delta8k.lon !== 0)) {
+				rctrkData += newLine;
 			}
+		});
 
-			exports.getRctrkData = function(name, deltas, range1, range2, channelBin) {
-				let rctrkData = 'Track: ' + name + '\tAtom Spectra spectrogram\t \tEC\n';
-				rctrkData += 'Timestamp\tTime\tLatitude\tLongitude\tAccuracy\tDoseRate\tCountRate\tComment\n';
-				deltas.forEach(delta8k => {
-					const channels = sp.reduceChannelCount(delta8k.channels, channelBin);
-					let newLine = '';
-					// ex: '133594869443100000	2024-05-06 16:35:44	60.0006352	30.3515997	6.79	13.3	9.98	 '
-					newLine += filetimeFromJSTime(delta8k.timestamp).toString() + '\t';
-					newLine += formatDate(delta8k.timestamp) + '\t';
-					newLine += delta8k.lat.toFixed(8) + '\t';
-					newLine += delta8k.lon.toFixed(8) + '\t';
-					newLine += '0.0\t'; // accuracy
-					newLine += '0.0\t'; // doserate
-					let cps = cpsInRange(channels, delta8k.duration, range1);
-					if (range2) {
-						let cps2 = cpsInRange(channels, delta8k.duration, range2);
-						if (cps2 > 0) {
-							cps /= cps2;
-						} else {
-							cps = 0;
-						}
-					} 
-					newLine += cps.toFixed(4) + '\t'; // cps
-					newLine += ' \n'; // comment
+		return rctrkData;
+	}
 
-					if (cps > 0 && (delta8k.lat !== 0 && delta8k.lon !== 0)) {
-						rctrkData += newLine;
-					}
-				});
+	function getBigEndianFloat(value) {
+		const getHex = i => ('00' + i.toString(16)).slice(-2);
 
-				return rctrkData;
-			}
+		var view = new DataView(new ArrayBuffer(4));
+		view.setFloat32(0, value);
+		const result = Array
+			.apply(null, { length: 4 })
+			.map((_, i) => getHex(view.getUint8(i)))
+			.reverse()
+			.join(' ');
 
-			function getBigEndianFloat(value) {
-				const getHex = i => ('00' + i.toString(16)).slice(-2);
+		return result;
+	}
 
-				var view = new DataView(new ArrayBuffer(4));
-				view.setFloat32(0, value);
-				const result = Array
-					.apply(null, { length: 4 })
-					.map((_, i) => getHex(view.getUint8(i)))
-					.reverse()
-					.join(' ');
+	function filetimeFromJSTime(jsTime) {  
+		return jsTime * 1e4 + 116444736e9;
+	}
 
-				return result;
-			}
+	function formatDate(ts) {
+		const splitDate = new Date(ts).toISOString().split('T');
 
-			function filetimeFromJSTime(jsTime) {  
-				return jsTime * 1e4 + 116444736e9;
-			}
+		return splitDate[0] + ' ' + splitDate[1].split('.')[0];
+	}
 
-			function formatDate(ts) {
-				const splitDate = new Date(ts).toISOString().split('T');
-
-				return splitDate[0] + ' ' + splitDate[1].split('.')[0];
-			}
-
-			function cpsInRange(channels, duration, range) {
-				return channels.slice(range[0], range[1] + 1).reduce((a, v) => a + v, 0) / duration;
-			}
-
+	function cpsInRange(channels, duration, range) {
+		return channels.slice(range[0], range[1] + 1).reduce((a, v) => a + v, 0) / duration;
+	}
+})();
 		</script>
 	</head>
 	<body>
@@ -493,8 +496,8 @@
 
 			function renderWaterfallImage() {
 				const canvas = document.getElementById('waterfall-plot');
-				canvas.width = waterfallData.channelCount + constants.timestampWidth;
-				canvas.height = waterfallData.spectrumsCount + constants.channelAxisHeight;
+				canvas.width = waterfallData.baseSpectrum.channelCount + constants.timestampWidth;
+				canvas.height = waterfallData.deltas.length + constants.channelAxisHeight;
 
 				const ironPalette = [
 					"#00000a","#000014","#00001e","#000025","#00002a","#00002e","#000032","#000036",
@@ -556,16 +559,16 @@
 				ctx.fillStyle = constants.backgroundColor;
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 				let maxCps = 0;
-				waterfallData.spectrums.forEach((spectrum, spectrumIndex) => {
-					spectrum.forEach((channelValue, channelIndex) => {
+				waterfallData.deltas.forEach((delta, deltaIndex) => {
+					delta.channels.forEach((channelValue, channelIndex) => {
 						if (!channelValue) {
 							return;
 						}
 
-						let cps = channelValue / waterfallData.durations[spectrumIndex];
+						let cps = channelValue / delta.duration;
 						// TODO: duplicated code
 						if (waterfallState.subtractBase) {
-							const baseCps = waterfallData.baseSpectrum[channelIndex] / waterfallData.baseSpectrumDuration;
+							const baseCps = waterfallData.baseSpectrum.channels[channelIndex] / waterfallData.baseSpectrum.duration;
 							cps -= baseCps;
 							if (cps < 0) {
 								cps = 0;
@@ -577,16 +580,16 @@
 				});
 
 				// waterfall render
-				waterfallData.spectrums.forEach((spectrum, spectrumIndex) => {
-					spectrum.forEach((channelValue, channelIndex) => {
+				waterfallData.deltas.forEach((delta, deltaIndex) => {
+					delta.channels.forEach((channelValue, channelIndex) => {
 						if (!channelValue) {
 							return;
 						}
 
-						let cps = channelValue / waterfallData.durations[spectrumIndex];
+						let cps = channelValue / delta.duration;
 						// TODO: duplicated code
 						if (waterfallState.subtractBase) {
-							const baseCps = waterfallData.baseSpectrum[channelIndex] / waterfallData.baseSpectrumDuration;
+							const baseCps = waterfallData.baseSpectrum.channels[channelIndex] / waterfallData.baseSpectrum.duration;
 							cps -= baseCps;
 							if (cps < 0) {
 								cps = 0;
@@ -608,12 +611,12 @@
 						}
 
 						ctx.fillStyle = ironPalette[colorIndex];
-						ctx.fillRect(channelIndex + constants.timestampWidth, spectrumIndex, 1, 1);
+						ctx.fillRect(channelIndex + constants.timestampWidth, deltaIndex, 1, 1);
 
 						if (waterfallState.blur) {
 							ctx.fillStyle = hexToRGB(ironPalette[colorIndex], constants.blurOpacity);
 							for (let x = channelIndex + constants.timestampWidth - 1; x < channelIndex + constants.timestampWidth + 2; x++) {
-								for (let y = spectrumIndex - 1; y < spectrumIndex + 2; y++) {
+								for (let y = deltaIndex - 1; y < deltaIndex + 2; y++) {
 									ctx.fillRect(x, y, 1, 1);
 								}
 							}
@@ -622,8 +625,9 @@
 				});
 
 				// time axis
-				for (let tsIndex = 0; tsIndex < waterfallData.timestamps.length; tsIndex += constants.timestampHeight) {
-					timestamp = waterfallData.timestamps[tsIndex];
+				const timestamps = waterfallData.deltas.map(d => d.timestamp);
+				for (let tsIndex = 0; tsIndex < timestamps.length; tsIndex += constants.timestampHeight) {
+					const timestamp = timestamps[tsIndex];
 					ctx.textBaseline = 'top';
 					ctx.fillStyle = constants.textColor;
 					const utcISO = new Date(timestamp).toISOString();
@@ -644,10 +648,10 @@
 
 				// calculate energy for each channel
 				const allEnergies = [];
-				for (let i = 0; i < waterfallData.channelCount; i++) {
+				for (let i = 0; i < waterfallData.baseSpectrum.channelCount; i++) {
 					let energy = 0;
-					for (let order = 0; order < waterfallData.calibration.length; order++) {
-						energy += Math.pow(i, order) * waterfallData.calibration[order];
+					for (let order = 0; order < waterfallData.baseSpectrum.calibration.length; order++) {
+						energy += Math.pow(i, order) * waterfallData.baseSpectrum.calibration[order];
 					}
 					allEnergies.push(energy);
 				}
@@ -662,8 +666,8 @@
 				}
 
 				// energy axis render
-				const energyAxisBaseline = waterfallData.spectrumsCount;
-				const channelAxisBaseline = waterfallData.spectrumsCount + constants.channelAxisHeight / 2;
+				const energyAxisBaseline = waterfallData.deltas.length;
+				const channelAxisBaseline = waterfallData.deltas.length + constants.channelAxisHeight / 2;
 				let kevRendered = false;
 				for (let x = constants.timestampWidth; x < canvas.width; x++) {
 					const channelNumber = x - constants.timestampWidth;
@@ -708,31 +712,33 @@
 			const fromChannelInput2 = document.getElementById('from-channel-2');
 			const toChannelInput2 = document.getElementById('to-channel-2');
 			const compareCheckbox = document.getElementById('cps-comparison');
+			const cpsToMapButton = document.getElementById('export-cps-map');
+			const comparisonToMapButton = document.getElementById('export-comparison-map');
 			
 			function initCpsControls() {
 				fromChannelInput1.value = 0;
-				toChannelInput1.value = waterfallData.channelCount - 1;
+				toChannelInput1.value = waterfallData.baseSpectrum.channelCount - 1;
 				fromChannelInput2.value = 0;
-				toChannelInput2.value = waterfallData.channelCount - 1;
+				toChannelInput2.value = waterfallData.baseSpectrum.channelCount - 1;
 			}
 
 			function getCountsInRange(from, to) {
 				const countsInRange = {};
-				waterfallData.spectrums.forEach((spectrum, spectrumIndex) => {
+				waterfallData.deltas.forEach((delta, deltaIndex) => {
 					for (let ci = from; ci <= to; ci++) {
-						if (countsInRange[spectrumIndex] === undefined) {
-							countsInRange[spectrumIndex] = spectrum[ci];
+						if (countsInRange[deltaIndex] === undefined) {
+							countsInRange[deltaIndex] = delta.channels[ci];
 						} else {
-							countsInRange[spectrumIndex] += spectrum[ci];
+							countsInRange[deltaIndex] += delta.channels[ci];
 						}
 
 						if (waterfallState.subtractBase) {
-							countsInRange[spectrumIndex] -= waterfallData.baseSpectrum[ci] * (waterfallData.durations[spectrumIndex] / waterfallData.baseSpectrumDuration);
+							countsInRange[deltaIndex] -= waterfallData.baseSpectrum.channels[ci] * (delta.duration / waterfallData.baseSpectrum.duration);
 						}
 					}
 
-					if (countsInRange[spectrumIndex] < 0) {
-						countsInRange[spectrumIndex] = 0;
+					if (countsInRange[deltaIndex] < 0) {
+						countsInRange[deltaIndex] = 0;
 					}
 				});
 				
@@ -741,8 +747,8 @@
 			
 			function countsToCps(countsInRange) {
 				const cpsInRange = {};
-				Object.keys(countsInRange).forEach(spectrumIndex => {
-					cpsInRange[spectrumIndex] = countsInRange[spectrumIndex] / waterfallData.durations[spectrumIndex];
+				Object.keys(countsInRange).forEach(deltaIndex => {
+					cpsInRange[deltaIndex] = countsInRange[deltaIndex] / waterfallData.deltas[deltaIndex].duration;
 				});
 				
 				return cpsInRange;
@@ -751,7 +757,7 @@
 			function getRenderData(valuesInRange) {
 				let max = 0;
 				let min = Infinity;
-				for (let i = 0; i < waterfallData.spectrumsCount; i++) {
+				for (let i = 0; i < waterfallData.deltas.length; i++) {
 					if (valuesInRange[i] === undefined) {
 						continue;
 					}
@@ -777,12 +783,14 @@
 
 			function renderCps() {
 				const cpsCanvas = document.getElementById('cps-plot');
-				cpsCanvas.width = waterfallData.spectrumsCount;
+				cpsCanvas.width = waterfallData.deltas.length;
 				cpsCanvas.height = constants.cpsPlotHeight;
 			
 				const fromChannel1 = parseInt(fromChannelInput1.value);
 				const toChannel1 = parseInt(toChannelInput1.value);
 				if (isNaN(fromChannel1) || isNaN(toChannel1) || fromChannel1 > toChannel1) {
+					cpsToMapButton.disabled = true;
+					comparisonToMapButton.disabled = true;
 					renderCpsData(cpsCanvas, 0, 0, {});
 					return;
 				}
@@ -790,17 +798,21 @@
 				const fromChannel2 = parseInt(fromChannelInput2.value);
 				const toChannel2 = parseInt(toChannelInput2.value);
 				if (compareCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
+					cpsToMapButton.disabled = true;
+					comparisonToMapButton.disabled = true;
 					renderCpsData(cpsCanvas, 0, 0, {});
 					return;
 				}
 
 				if (compareCheckbox.checked) {
+					comparisonToMapButton.disabled = false;
+					cpsToMapButton.disabled = false;
 					const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
 					const cpsInRange1 = countsToCps(countsInRange1);
 					const countsInRange2 = getCountsInRange(fromChannel2, toChannel2);
 					const cpsInRange2 = countsToCps(countsInRange2);
 					const ratio = {};
-					for (let i = 0; i < waterfallData.spectrumsCount; i++) {
+					for (let i = 0; i < waterfallData.deltas.length; i++) {
 						if (cpsInRange1[i] !== undefined && cpsInRange2[i] > 0) {
 							ratio[i] = cpsInRange1[i] / cpsInRange2[i];
 						}
@@ -812,6 +824,8 @@
 					renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range 2 cps');
 					renderCpsData(cpsCanvas, getRenderData(ratio), plotHeight * 2, plotHeight, 'range 1 / range 2');
 				} else {
+					cpsToMapButton.disabled = false;
+					comparisonToMapButton.disabled = true;
 					const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
 					const cpsInRange1 = countsToCps(countsInRange1);
 					const renderData = getRenderData(cpsInRange1);
@@ -830,7 +844,7 @@
 				if (dottedCheckbox.checked) {
 					// points
 					ctx.fillStyle = constants.dotColor;
-					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
+					for (let x = 0; x < waterfallData.deltas.length; x++) {
 						if (data.values[x] === undefined) {
 							continue;
 						}
@@ -845,7 +859,7 @@
 					ctx.setLineDash([1, 0]);
 					ctx.strokeStyle = constants.lineColor;
 					let firstMove = true;
-					for (let x = 0; x < waterfallData.spectrumsCount; x++) {
+					for (let x = 0; x < waterfallData.deltas.length; x++) {
 						if (data.values[x] === undefined) {
 							continue;
 						}
@@ -882,6 +896,34 @@
 				ctx.fillText(data.min.toFixed(range < 0.01 ? 4 : 2), 0, offset + height);
 				ctx.textBaseline = 'top';
 				ctx.fillText(label, canvas.width / 2 - label.length * 2, offset);
+			}
+
+			function exportCpsMap() {
+				const range = [fromChannelInput1.value, toChannelInput1.value];
+				const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range [' + range[0] + ', ' + range[1] + ']', 
+					originalWaterfallData.deltas, range, undefined, waterfallState.channelBinning);
+
+				saveRctrk(originalWaterfallData.baseSpectrum.name + '-cps.rctrk', data);
+			}
+
+			function exportComparisonMap() {
+				const range = [fromChannelInput1.value, toChannelInput1.value];
+				const compareRange = [fromChannelInput2.value, toChannelInput2.value];
+				const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + 
+					' CP2S: cps comparison for ranges [' + range[0] + ', ' + range[1] + ']/[' + compareRange[0] + ', ' + compareRange[1] + ']', 
+					originalWaterfallData.deltas, range, compareRange, waterfallState.channelBinning);
+
+				saveRctrk(originalWaterfallData.baseSpectrum.name + '-cps-comparison.rctrk', data);
+			}
+
+			function saveRctrk(filename, data) {
+				const blob = new Blob([data], { type: 'text/rctrk' }); // invalid mime type to force android save it as .rcspg
+				const elem = window.document.createElement('a');
+				elem.href = window.URL.createObjectURL(blob);
+				elem.download = filename;
+				document.body.appendChild(elem);
+				elem.click();
+				document.body.removeChild(elem);
 			}
 		</script>
 		<script>
@@ -967,9 +1009,9 @@
 					offsetY--;
 				}
 
-				if (e.offsetY > waterfallData.spectrumsCount) {
-					horizontal.style.top = waterfallData.spectrumsCount;
-					cpsVertical.style.left = waterfallData.spectrumsCount;
+				if (e.offsetY > waterfallData.deltas.length) {
+					horizontal.style.top = waterfallData.deltas.length;
+					cpsVertical.style.left = waterfallData.deltas.length;
 				} else {
 					horizontal.style.top = offsetY;
 					cpsVertical.style.left = offsetY;
@@ -1038,78 +1080,24 @@
 				resetMovingAverage();
 			}
 			
-			function updateInputChannelValue(input, newBin, prevBin) {
-				
+			function updateInputChannelValue(input, newBin, prevBin) {				
 				const prevVal = parseInt(input.value);
+
 				if (!isNaN(prevVal)) {
 					let newVal = Math.round((prevVal / newBin) * prevBin);
 					if (newVal < 0) {
 						newVal = 0;
 					}
-					if (newVal > waterfallData.channelCount - 1) {
-						newVal = waterfallData.channelCount - 1;
+					if (newVal > waterfallData.baseSpectrum.channelCount - 1) {
+						newVal = waterfallData.baseSpectrum.channelCount - 1;
 					}
 					input.value = newVal;
 				}
 			}
 
 			function applyBinning() {
-				// spectrums
-				waterfallData.spectrums = [];
-				waterfallData.timestamps = [];
-				waterfallData.durations = [];
-				for (let i = 0; i < originalWaterfallData.spectrums.length; i += waterfallState.spectrumBinning) {
-					const summSpectrum = [...originalWaterfallData.spectrums[i]];
-					const summTimestamp = originalWaterfallData.timestamps[i];
-					let summDuration = originalWaterfallData.durations[i];
-					for (let j = 1; j < waterfallState.spectrumBinning && (i + j) < originalWaterfallData.spectrums.length; j++) {
-						for (let k = 0; k < summSpectrum.length; k++) {
-							summSpectrum[k] += originalWaterfallData.spectrums[i + j][k];
-						}
-
-						summDuration += originalWaterfallData.durations[i + j];
-					}
-
-					waterfallData.spectrums.push(summSpectrum);
-					waterfallData.durations.push(summDuration);
-					waterfallData.timestamps.push(summTimestamp);
-				}
-				waterfallData.spectrumsCount = waterfallData.spectrums.length;
-
-				// channels
-				for (let i = 0; i < waterfallData.spectrums.length; i++) {
-					waterfallData.spectrums[i] = reduceChannelCount(waterfallData.spectrums[i], waterfallState.channelBinning);
-				}
-				waterfallData.channelCount = waterfallData.spectrums[0].length;
-				waterfallData.baseSpectrum = reduceChannelCount(originalWaterfallData.baseSpectrum, waterfallState.channelBinning);
-
-				// calibration
-				waterfallData.calibration = [];
-				for (let i = 0; i < originalWaterfallData.calibration.length; i++) {
-					waterfallData.calibration.push(Math.pow(waterfallState.channelBinning, i) * originalWaterfallData.calibration[i]);
-				}
-			}
-
-			function reduceChannelCount(channels, factor) {
-				if (factor < 1) {
-					throw new Error('invalid factor: ' + factor);
-				}
-
-				if (!channels || !channels.length) {
-					throw new Error('no channels provided');
-				}
-
-				let reduced = [];
-				for (let i = 0; i < channels.length; i += factor) {
-					let summ = 0;
-					for (let j = 0; j < factor && (i + j) < channels.length; j++) {
-						summ += channels[i + j];
-					}
-
-					reduced.push(summ);
-				}
-
-				return reduced;
+				const deltas = exports.reduceSpectrumCount(originalWaterfallData.deltas, waterfallState.spectrumBinning);
+				waterfallData = exports.createWaterfallData(originalWaterfallData.baseSpectrum, deltas, waterfallState.channelBinning);
 			}
 		</script>
 		<script>
@@ -1128,61 +1116,61 @@
 				applyBinning();
 
 				// horizontal average
-				let avgSpectrums = [];
-				for (let i = 0; i < waterfallData.spectrums.length; i++) {
-					const avgSpectrum = [];
-					for (let j = 0; j < waterfallData.spectrums[i].length; j++) {
-						avgSpectrum.push(waterfallData.spectrums[i][j]);
+				let avgDeltas = [];
+				for (let i = 0; i < waterfallData.deltas.length; i++) {
+					const avgDelta = {
+						...waterfallData.deltas[i],
+						channels: []
+					};
+					for (let j = 0; j < waterfallData.deltas[i].channels.length; j++) {
+						avgDelta.channels.push(waterfallData.deltas[i].channels[j]);
 						let appliedSize = 0;
-						// before
-						for (let k = j - windowSize / 2; k < j; k++) {
-							if (k < 0) {
+						for (let k = j - windowSize / 2; k <= j + windowSize / 2; k++) {
+							if (k < 0 || k === j) {
 								continue;
 							}
-							avgSpectrum[j] += waterfallData.spectrums[i][k];
-							appliedSize++;
-						}
-						// after
-						for (let k = j + 1; k <= j + windowSize / 2; k++) {
-							if (k >= waterfallData.spectrums[i].length) {
+							if (k >= waterfallData.deltas[i].channels.length) {
 								break;
 							}
-							avgSpectrum[j] += waterfallData.spectrums[i][k];
+							avgDelta.channels[j] += waterfallData.deltas[i].channels[k];
 							appliedSize++;
 						}
-						avgSpectrum[j] /= appliedSize + 1;
+						avgDelta.channels[j] /= appliedSize + 1;
 					}
 
-					avgSpectrums.push(avgSpectrum);
+					avgDeltas.push(avgDelta);
 				}
-				waterfallData.spectrums = avgSpectrums;
+				waterfallData.deltas = avgDeltas;
 
 				// vertical average
-				avgSpectrums = [];
-				for (let i = 0; i < waterfallData.spectrums.length; i++) {
-					const avgSpectrum = [...waterfallData.spectrums[i]];
-					for (let j = 0; j < avgSpectrum.length; j++) {
+				avgDeltas = [];
+				for (let i = 0; i < waterfallData.deltas.length; i++) {
+					const avgDelta = {
+						...waterfallData.deltas[i],
+						channels: [...waterfallData.deltas[i].channels]
+					};
+					for (let j = 0; j < avgDelta.channels.length; j++) {
 						let appliedSize = 0;
 						for (let k = i - windowSize / 2; k <= i + windowSize / 2; k++) {
 							if (k < 0 || k === i) {
 								continue;
 							}
 
-							if (k >= waterfallData.spectrums.length) {
+							if (k >= waterfallData.deltas.length) {
 								break;
 							}
 
-							avgSpectrum[j] += waterfallData.spectrums[k][j] * (waterfallData.durations[i] / waterfallData.durations[k]);
+							avgDelta.channels[j] += waterfallData.deltas[k].channels[j] * (waterfallData.deltas[i].duration / waterfallData.deltas[k].duration);
 							appliedSize++;
 						}
 
-						avgSpectrum[j] /= appliedSize + 1;
+						avgDelta.channels[j] /= appliedSize + 1;
 					}
 
-					avgSpectrums.push(avgSpectrum);
+					avgDeltas.push(avgDelta);
 				}
 
-				waterfallData.spectrums = avgSpectrums;
+				waterfallData.deltas = avgDeltas;
 				renderWaterfallImage();
 				renderCps();
 			}

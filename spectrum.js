@@ -104,7 +104,7 @@
 	
 		let reduced = [];
 		for (let i = 0; i < spectrums.length; i += factor) {
-			let summ = { ...spectrums[i] };
+			let summ = { ...spectrums[i], channels: [...spectrums[i].channels] };
 			for (let j = 1; j < factor && (i + j) < spectrums.length; j++) {
 				for (let k = 0; k < summ.channels.length; k++) {
 					summ.channels[k] += spectrums[i + j].channels[k];

@@ -1,24 +1,24 @@
-const sp = require('./spectrum.js');
+(function(){
+	const sp = require('./spectrum.js');
 
-exports.createWaterfallData = function(baseSpectrum, deltas, channelReduceFactor) {
-	const baseChannels = sp.reduceChannelCount(baseSpectrum.channels, channelReduceFactor);
-	let waterfall = {
-		spectrums: [],
-		spectrumsCount: deltas.length,
-		channelCount: baseChannels.length,
-		timestamps: [],
-		durations: [],
-		calibration: sp.getCalibration(baseSpectrum.calibration, channelReduceFactor),
-		baseSpectrum: baseChannels,
-		baseSpectrumDuration: baseSpectrum.duration
-	};
-	deltas.forEach(delta => {
-		waterfall.timestamps.push(delta.timestamp);
-		waterfall.durations.push(delta.duration);
+	exports.createWaterfallData = function(baseSpectrum, deltas, channelReduceFactor) {
+		const baseChannels = sp.reduceChannelCount(baseSpectrum.channels, channelReduceFactor);
+		let waterfall = {
+			deltas: [],
+			baseSpectrum: {
+				...baseSpectrum,
+				channels: baseChannels,
+				channelCount: baseChannels.length,
+				calibration: sp.getCalibration(baseSpectrum.calibration, channelReduceFactor)
+			},
+		};
+		deltas.forEach(delta8k => {
+			waterfall.deltas.push({
+				...delta8k,
+				channels: sp.reduceChannelCount(delta8k.channels, channelReduceFactor)
+			});
+		});
 
-		const wfSpectrum = sp.reduceChannelCount(delta.channels, channelReduceFactor);
-		waterfall.spectrums.push(wfSpectrum);
-	});
-
-	return waterfall;
-}
+		return waterfall;
+	}
+})();
