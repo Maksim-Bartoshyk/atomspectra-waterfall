@@ -88,7 +88,26 @@
 				margin-left: 4px;
 				width: 400px;
 			}
+			.error {
+				color: orangered;
+			}
+			.blocking-overlay {
+				position: absolute;
+				background: rgba(100, 100, 100, 0.75);
+				top: 64px;
+				bottom: 0;
+				left: 0;
+				right: 0;
+			}
 		</style>
+		<script>
+			window.onerror = function(msg, url, lineNo, columnNo, error) {
+				const div = document.createElement('div');
+				div.className = "row error";
+				div.innerText = msg + ' (line: ' + lineNo + ', column: ' + columnNo + ')';
+				document.body.appendChild(div);
+			};
+		</script>
 		<script>
 			window.originalWaterfallData = 'waterfall-data-placeholder';
 			window.exports = {}; // hack to re-use nodejs modules
@@ -99,6 +118,7 @@
 		<script src="./radiacode.js"></script> <!-- to be replaced with atom.js -->
 	</head>
 	<body>
+		<div id="blocking-overlay" class="blocking-overlay"></div>
 		<div id="upload-controls" class="upload-controls">
 			<span>Select atomspectra file to render:</span>
 			<input id="file-input" type="file" accept=".txt" name="files" onchange="onFileChange(this)">
@@ -956,11 +976,13 @@
 		<script>
 			// startup - check if we have to run with nodejs prepared data or user loads it in browser
 			const uploadControls = document.getElementById('upload-controls');
+			const overlay = document.getElementById('blocking-overlay');
 
 			if (window.originalWaterfallData === 'waterfall-data-placeholder') {
 				uploadControls.style.display = 'block';
 			} else {
 				uploadControls.style.display = 'none';
+				overlay.style.display = 'none';
 				window.waterfallData = { ...originalWaterfallData };
 				renderWaterfallImage();
 				initCpsControls();
@@ -975,6 +997,7 @@
 
 				const reader = new FileReader();
 				reader.onload = (e) => {
+					overlay.style.display = 'none';
 					const fileText = e.target.result;
 					const baseSpectrum = exports.deserializeSpectrum(fileText);
 					const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
