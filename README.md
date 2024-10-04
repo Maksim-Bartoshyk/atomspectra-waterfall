@@ -4,7 +4,7 @@ Simplest waterfall image creator for atom spectra delta file (starting from atom
 
 Provided as is, use at your own risk. This software is not sertified as a measurement tool, any results obtained with this software could not be used for official statements, conclusions or decisions.
 
-Usage (simple, might work on mobile/tablet as well - check files in ```mobile``` folder):
+Usage (simple, might work on mobile/tablet as well - check files in ```offline``` folder):
 1) download repository
 2) save delta-spectrum file on computer
 3) open ```waterfall.html``` file in browser
