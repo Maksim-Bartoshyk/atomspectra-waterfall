@@ -706,7 +706,6 @@
 				ctx.putImageData(imageData, constants.timestampWidth, 0);
 
 				if (waterfallState.blur) {
-					debugger;
 					const blurData = ctx.createImageData(imageData.width, imageData.height);
 					const radius = constants.blurRadius;
 					for (let x = 0; x < imageData.width; x++) {
