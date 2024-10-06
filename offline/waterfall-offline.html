@@ -9,7 +9,7 @@
 			}
 			body * {
 				font-size: 18px;
-   				font-family: monospace;
+				font-family: monospace;
 			}
 			select, input {
 				background: #444;
@@ -54,9 +54,18 @@
 				display: inline-block;
 				margin-right: 16px;
 			}
-			.plot-container {
+			.wf-plot-container, .cps-plot-container {
 				position: relative;
 				width: fit-content;
+			}
+			.wf-plot-container.plot-container-scrollable {
+				max-height: 50%;
+				max-width: 100%;
+				overflow: auto;
+			}
+			.cps-plot-container.plot-container-scrollable {
+				max-width: 100%;
+				overflow: auto;
 			}
 			.plot {
 				border: 1px dashed #222;
@@ -509,9 +518,13 @@
 					<input type="checkbox" id="subtract-base" name="subtract-base" onchange="onWaterfallSubtractChange(this.checked)"/>
 					<label for="subtract-base">Subtract base spectrum</label>
 				</div>
+				<div class="col">
+					<input type="checkbox" id="use-scroll" name="use-scroll" onchange="onUseScrollChange(this.checked)"/>
+					<label for="use-scroll">Use scroll</label>
+				</div>
 			</div>
 		</div>
-		<div class="plot-container">
+		<div id="waterfall-plot-container" class="wf-plot-container" onscroll="onWaterfallContainerScroll(this)">
 			<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
 			<div id="horizontal-cursor" class="horizontal-cursor"></div>
 			<div id="vertical-cursor" class="vertical-cursor"></div>
@@ -535,7 +548,7 @@
 				<label for="dotted-trend">Dotted</label>
 			</div>
 		</div>
-		<div class="plot-container">
+		<div id="cps-plot-container" class="cps-plot-container" onscroll="onCpsContainerScroll(this)">
 			<canvas id="cps-plot" class="plot" width="0" height="0"></canvas>
 			<div id="cps-vertical-cursor" class="vertical-cursor"></div>
 		</div>
@@ -706,7 +719,6 @@
 				ctx.putImageData(imageData, constants.timestampWidth, 0);
 
 				if (waterfallState.blur) {
-					debugger;
 					const blurData = ctx.createImageData(imageData.width, imageData.height);
 					const radius = constants.blurRadius;
 					for (let x = 0; x < imageData.width; x++) {
@@ -1055,7 +1067,9 @@
 			const cpsPlot = document.getElementById('cps-plot');
 			const horizontal = document.getElementById('horizontal-cursor');
 			const vertical = document.getElementById('vertical-cursor');
-			const cpsVertical = document.getElementById('cps-vertical-cursor')
+			const cpsVertical = document.getElementById('cps-vertical-cursor');
+			const wfContainer = document.getElementById('waterfall-plot-container');
+			const cpsContainer = document.getElementById('cps-plot-container');
 			waterfallPlot.parentElement.addEventListener('mouseenter', e => waterfallOnEnter(e));
 			waterfallPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave(e));
 			waterfallPlot.parentElement.addEventListener('mousemove', e => waterfallOnMove(e));
@@ -1081,7 +1095,7 @@
 				if (isCursor(e.target)) {
 					return;
 				}
-
+				return;
 				horizontal.style.display = 'none';
 				vertical.style.display = 'none';
 				cpsVertical.style.display = 'none';
@@ -1092,8 +1106,30 @@
 					return;
 				}
 
-				onHorizontalWfMove(e, false);
+				// channel index
+				let offsetX = e.offsetX;
+				offsetX--;
+
+				if (offsetX < constants.timestampWidth) {
+					vertical.style.left = constants.timestampWidth;
+				} else {
+					vertical.style.left = offsetX;
+				}
 				onVerticalWfMove(e);
+
+				// spectrum index
+				let offsetY = e.offsetY;
+				if (offsetY > 0) {
+					offsetY--;
+				}
+
+				if (e.offsetY > waterfallData.deltas.length) {
+					horizontal.style.top = waterfallData.deltas.length;
+					cpsVertical.style.left = waterfallData.deltas.length;
+				} else {
+					horizontal.style.top = offsetY;
+					cpsVertical.style.left = offsetY;
+				}
 			}
 
 			function cpsOnMove(e) {
@@ -1112,37 +1148,41 @@
 			}
 
 			function onHorizontalWfMove(e, cursorDivOffset) {
-				// channel index
-				let offsetX = cursorDivOffset
-					? e.offsetX + constants.timestampWidth
-					: e.offsetX;
-				offsetX--;
-
-				if (offsetX < constants.timestampWidth) {
-					vertical.style.left = constants.timestampWidth;
-				} else {
-					vertical.style.left = offsetX;
-				}
+				e.preventDefault();
+				e.stopPropagation();
 			}
 
 			function onVerticalWfMove(e) {
-				// spectrum index
-				let offsetY = e.offsetY;
-				if (offsetY > 0) {
-					offsetY--;
-				}
-
-				if (e.offsetY > waterfallData.deltas.length) {
-					horizontal.style.top = waterfallData.deltas.length;
-					cpsVertical.style.left = waterfallData.deltas.length;
-				} else {
-					horizontal.style.top = offsetY;
-					cpsVertical.style.left = offsetY;
-				}
+				e.preventDefault();
+				e.stopPropagation();
 			}
 
 			function isCursor(target) {
 				return target === horizontal || target === vertical || target === cpsVertical;
+			}
+
+			function onCpsContainerScroll(cpsContainer) {
+				if (wfContainer.scrollTop != cpsContainer.scrollLeft) {
+					wfContainer.scrollTop = cpsContainer.scrollLeft;
+				}
+			}
+
+			function onWaterfallContainerScroll(wfContainer) {
+				if (cpsContainer.scrollLeft != wfContainer.scrollTop) {
+					cpsContainer.scrollLeft = wfContainer.scrollTop;
+				}
+
+				vertical.style.top = wfContainer.scrollTop + 'px';
+			}
+
+			function onUseScrollChange(checked) {
+				if (checked) {
+					wfContainer.classList.add('plot-container-scrollable');
+					cpsContainer.classList.add('plot-container-scrollable');
+				} else {
+					wfContainer.classList.remove('plot-container-scrollable');
+					cpsContainer.classList.remove('plot-container-scrollable');
+				}
 			}
 		</script>
 		<script>
