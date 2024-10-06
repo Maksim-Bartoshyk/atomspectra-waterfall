@@ -4,8 +4,9 @@
 			body {
 				background: #444;
 				color: #CCC;
+				margin: 0;
 				min-width: 1100px;
-				padding: 8px;
+				padding: 0 8px;
 			}
 			body * {
 				font-size: 18px;
@@ -18,20 +19,22 @@
 			input[type="number"] {
 				border: 1px solid #CCC;
 			}
-			.upload-controls {
+			.upload-control {
 				border-bottom: 1px dotted;
-				margin-top: 16px;
-				margin-bottom: 24px;
+				padding-top: 24px;
 				padding-bottom: 4px;
 				text-wrap: nowrap;
 			}
-			.upload-controls input {
+			.upload-control input {
 				width: 600px;
 			}
 			.waterfall-control, .cps-control {
 				width: 100%;
 				border-bottom: 1px dotted;
-				margin: 4px 0;
+				padding: 4px 0;
+			}
+			.waterfall-control {
+				padding-top: 24px;
 			}
 			.row {
 				display: inline-block;
@@ -59,7 +62,6 @@
 				width: fit-content;
 			}
 			.wf-plot-container.plot-container-scrollable {
-				max-height: 50%;
 				max-width: 100%;
 				overflow: auto;
 			}
@@ -104,7 +106,7 @@
 			.blocking-overlay {
 				position: absolute;
 				background: rgba(100, 100, 100, 0.75);
-				top: 64px;
+				top: 56px;
 				bottom: 0;
 				left: 0;
 				right: 0;
@@ -130,11 +132,11 @@
 	</head>
 	<body>
 		<div id="blocking-overlay" class="blocking-overlay"></div>
-		<div id="upload-controls" class="upload-controls">
+		<div id="upload-control" class="upload-control">
 			<span>Select atomspectra file to render:</span>
 			<input id="file-input" type="file" accept=".txt" name="files" onchange="onFileChange(this)">
 		</div>
-		<div class="waterfall-control">
+		<div id="waterfall-control" class="waterfall-control">
 			<div class="row">
 				<div class="col">
 					<input type="radio" id="lin" name="scale" value="lin" onchange="onWaterfallScaleChange(this.value)">
@@ -205,7 +207,7 @@
 			<div id="horizontal-cursor" class="horizontal-cursor"></div>
 			<div id="vertical-cursor" class="vertical-cursor"></div>
 		</div>
-		<div class="cps-control">
+		<div id="cps-control" class="cps-control">
 			<div class="row">
 				<button class="cps-left-column" onclick="renderCps()">CPS trend in channel range:</button> 
 				<input type="number" id="from-channel-1" class="numeric-input"/>-<input type="number" id="to-channel-1" class="numeric-input"/>
@@ -243,7 +245,8 @@
 				dotColor: 'white',
 				cpsPlotHeight: 200,
 				cpsExtendRange: 0.1,
-				blurRadius: 1
+				blurRadius: 1,
+				waterfallMinHeight: 300,
 			};
 			window.waterfallState = {
 				scale: 'sqrt',
@@ -741,57 +744,40 @@
 			// mouse cursor render
 			const waterfallPlot = document.getElementById('waterfall-plot');
 			const cpsPlot = document.getElementById('cps-plot');
-			const horizontal = document.getElementById('horizontal-cursor');
-			const vertical = document.getElementById('vertical-cursor');
-			const cpsVertical = document.getElementById('cps-vertical-cursor');
+			const wfHorizontalCursor = document.getElementById('horizontal-cursor');
+			const wfVerticalCursor = document.getElementById('vertical-cursor');
+			const cpsVerticalCursor = document.getElementById('cps-vertical-cursor');
 			const wfContainer = document.getElementById('waterfall-plot-container');
 			const cpsContainer = document.getElementById('cps-plot-container');
-			waterfallPlot.parentElement.addEventListener('mouseenter', e => waterfallOnEnter(e));
-			waterfallPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave(e));
-			waterfallPlot.parentElement.addEventListener('mousemove', e => waterfallOnMove(e));
-			cpsPlot.parentElement.addEventListener('mouseenter', e => cpsOnEnter(e));
-			cpsPlot.parentElement.addEventListener('mouseleave', e => plotOnLeave(e));
-			cpsPlot.parentElement.addEventListener('mousemove', e => cpsOnMove(e));
-			horizontal.addEventListener('mousemove', e => onHorizontalWfMove(e, true));
-			vertical.addEventListener('mousemove', e => onVerticalWfMove(e));
+			waterfallPlot.parentElement.addEventListener('mouseleave', e => plotOnMouseLeave(e));
+			waterfallPlot.parentElement.addEventListener('mousemove', e => waterfallOnMouseMove(e));
+			cpsPlot.parentElement.addEventListener('mouseleave', e => plotOnMouseLeave(e));
+			cpsPlot.parentElement.addEventListener('mousemove', e => cpsOnMouseMove(e));
+			wfHorizontalCursor.addEventListener('mousemove', e => onCursorMouseMove(e));
+			wfVerticalCursor.addEventListener('mousemove', e => onCursorMouseMove(e));
 
-			function waterfallOnEnter() {
-				horizontal.style.display = 'block';
-				vertical.style.display = 'block';
-				cpsVertical.style.display = 'block';
+			function plotOnMouseLeave(e) {
+				wfHorizontalCursor.style.display = 'none';
+				wfVerticalCursor.style.display = 'none';
+				cpsVerticalCursor.style.display = 'none';
 			}
 
-			function cpsOnEnter() {
-				horizontal.style.display = 'block';
-				vertical.style.display = 'none';
-				cpsVertical.style.display = 'block';
-			}
-
-			function plotOnLeave(e) {
-				if (isCursor(e.target)) {
-					return;
-				}
-				return;
-				horizontal.style.display = 'none';
-				vertical.style.display = 'none';
-				cpsVertical.style.display = 'none';
-			}
-
-			function waterfallOnMove(e) {
-				if (isCursor(e.target)) {
-					return;
-				}
+			function waterfallOnMouseMove(e) {
+				wfHorizontalCursor.style.display = 'block';
+				wfVerticalCursor.style.display = 'block';
+				cpsVerticalCursor.style.display = 'block';
 
 				// channel index
 				let offsetX = e.offsetX;
 				offsetX--;
 
 				if (offsetX < constants.timestampWidth) {
-					vertical.style.left = constants.timestampWidth;
-				} else {
-					vertical.style.left = offsetX;
+					wfVerticalCursor.style.left = constants.timestampWidth;
+				} else if (offsetX > constants.timestampWidth + waterfallData.baseSpectrum.channelCount) {
+					offsetX = constants.timestampWidth + waterfallData.baseSpectrum.channelCount
+				}else {
+					wfVerticalCursor.style.left = offsetX;
 				}
-				onVerticalWfMove(e);
 
 				// spectrum index
 				let offsetY = e.offsetY;
@@ -800,18 +786,18 @@
 				}
 
 				if (e.offsetY > waterfallData.deltas.length) {
-					horizontal.style.top = waterfallData.deltas.length;
-					cpsVertical.style.left = waterfallData.deltas.length;
+					wfHorizontalCursor.style.top = waterfallData.deltas.length;
+					cpsVerticalCursor.style.left = waterfallData.deltas.length;
 				} else {
-					horizontal.style.top = offsetY;
-					cpsVertical.style.left = offsetY;
+					wfHorizontalCursor.style.top = offsetY;
+					cpsVerticalCursor.style.left = offsetY;
 				}
 			}
 
-			function cpsOnMove(e) {
-				if (isCursor(e.target)) {
-					return;
-				}
+			function cpsOnMouseMove(e) {
+				wfHorizontalCursor.style.display = 'block';
+				wfVerticalCursor.style.display = 'block';
+				cpsVerticalCursor.style.display = 'block';
 
 				// spectrum index
 				let offsetX = e.offsetX;
@@ -819,22 +805,13 @@
 					offsetX--;
 				}
 
-				horizontal.style.top = offsetX;
-				cpsVertical.style.left = offsetX;
+				wfHorizontalCursor.style.top = offsetX;
+				cpsVerticalCursor.style.left = offsetX;
 			}
 
-			function onHorizontalWfMove(e, cursorDivOffset) {
+			function onCursorMouseMove(e, cursorDivOffset) {
 				e.preventDefault();
 				e.stopPropagation();
-			}
-
-			function onVerticalWfMove(e) {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-
-			function isCursor(target) {
-				return target === horizontal || target === vertical || target === cpsVertical;
 			}
 
 			function onCpsContainerScroll(cpsContainer) {
@@ -848,16 +825,45 @@
 					cpsContainer.scrollLeft = wfContainer.scrollTop;
 				}
 
-				vertical.style.top = wfContainer.scrollTop + 'px';
+				wfVerticalCursor.style.top = wfContainer.scrollTop + 'px';
 			}
 
 			function onUseScrollChange(checked) {
 				if (checked) {
 					wfContainer.classList.add('plot-container-scrollable');
 					cpsContainer.classList.add('plot-container-scrollable');
+
+					// TODO: looks weird and unreliable
+					const waterfallControlHeight = document.getElementById('waterfall-control').getBoundingClientRect().height;
+					const cpsControlHeight = document.getElementById('cps-control').getBoundingClientRect().height;
+					let height = window.innerHeight - constants.cpsPlotHeight - cpsControlHeight - waterfallControlHeight;
+					const uploadControl = document.getElementById('upload-control');
+					if (uploadControl) {
+						height -= uploadControl.getBoundingClientRect().height;
+					}
+
+					height -= 32; // horizontal scroll on cps plot/borders etc.
+					if (height < constants.waterfallMinHeight) {
+						height = constants.waterfallMinHeight;
+					}
+
+					if (height > waterfallData.deltas.length + constants.channelAxisHeight + 24) { // borders and horizontal scroll
+						height = waterfallData.deltas.length + constants.channelAxisHeight + 24;
+					}
+
+					if (height > window.innerWidth - 8) {
+						height = window.innerWidth - 8;
+					}
+
+					// TODO: make sticky time/channel axis?
+					wfContainer.style.height = height + 'px';
+					cpsContainer.style.width = height + 'px';
 				} else {
 					wfContainer.classList.remove('plot-container-scrollable');
 					cpsContainer.classList.remove('plot-container-scrollable');
+					wfContainer.style.height = 'unset';
+					cpsContainer.style.width = 'unset';
+					wfVerticalCursor.style.top = 0;
 				}
 			}
 		</script>
@@ -1017,7 +1023,7 @@
 		</script>
 		<script>
 			// startup - check if we have to run with nodejs prepared data or user loads it in browser
-			const uploadControls = document.getElementById('upload-controls');
+			const uploadControls = document.getElementById('upload-control');
 			const overlay = document.getElementById('blocking-overlay');
 
 			if (window.originalWaterfallData === 'waterfall-data-placeholder') {
