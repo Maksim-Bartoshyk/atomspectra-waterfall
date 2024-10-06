@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const sp = require('./spectrum.js');
-const rc = require('./radiacode.js');
+const sp = require('./shared/spectrum.js');
+const rc = require('./shared/radiacode.js');
 
 let range = [0, 1023];
 let compareRange;
@@ -28,8 +28,6 @@ function convertFiles(filepath) {
 	}
 
 	let deltas = deltaInfo.deltas;
-	deltas.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
-
 	const trackName = compareRange
 	 	? filename + ' CP2S: cps ratio for ranges ' + JSON.stringify(range) + ' / ' + JSON.stringify(compareRange)
 		: filename + ' CP2S: cps in range ' + JSON.stringify(range);

@@ -18,19 +18,19 @@ Usage (advanced, mostly for large spectrograms):
 2) download repository
 3) save delta-spectrum file on computer
 4) open folder containing waterfall.js in console
-5) run ```node waterfall.js <delta spectrum file>```, for example ```node waterfall.js "sample-data/nano-3/Spectrum-2024-09-29_20-48-55-Spectrum_auto.txt"```
+5) run ```node waterfall-cli.js <delta spectrum file>```, for example ```node waterfall-cli.js "sample-data/nano-3/Spectrum-2024-09-29_20-48-55-Spectrum_auto.txt"```
 6) open generated ```Spectrum-2024-09-29_20-48-55-Spectrum_auto.html``` in web browser
 7) right mouse click on spectrogram - save image as
 
 Parameters:
-1) ```-rc X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```--rc 8``` makes 1024 channes from 8192, default is 8
-2) ```-rs X``` reduce spectrum count (spectrogram height) by provided factor (X), i.e. ```--rs 2``` makes 100 spectrums from 200, default is 1
+1) ```-channel-binning X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```-channel-binning 8``` makes 1024 channes from 8192, default is 8
+2) ```-spectrum-binning X``` reduce spectrum count (spectrogram height) by provided factor (X), i.e. ```-spectrum-binning 2``` makes 100 spectrums from 200, default is 1
 3) ```--rcspg``` outputs data in radiacode spectrogram format
 
-Combining spectrums into single one (if you want to examine some part of spectrogram in becqmoni, for instance):
+Combining spectrums into single one (if you want to examine some part of spectrogram in [BecqMoni](https://github.com/Am6er/BecqMoni), for instance):
 
-run ```node combine.js <delta spectrum file> -from-index X -to-index Y```, for example ```node combine.js "sample-data/nano-3/Spectrum-2024-09-29_20-48-55-Spectrum_auto.txt" -from-index 270 -to-index 330```
+run ```node combine-cli.js <delta spectrum file> -from-index X -to-index Y```, for example ```node combine-cli.js "sample-data/nano-3/Spectrum-2024-09-29_20-48-55-Spectrum_auto.txt" -from-index 270 -to-index 330```
 
 ```<delta spectrum file name>_combined.txt``` is created
 
-Important: from and to indices when -rs parameter is 1, channel count is unchanged
+Index of spectrum is rendered next to timestamp on spectrogram.

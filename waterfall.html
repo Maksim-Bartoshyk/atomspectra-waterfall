@@ -126,15 +126,18 @@
 			window.exports = {}; // hack to re-use nodejs modules
 			window.require = () => window.exports;
 		</script>
-		<script src="./spectrum.js"></script>
-		<script src="./waterfall-data.js"></script>
-		<script src="./radiacode.js"></script> <!-- to be replaced with atom.js -->
+		<script src="./shared/spectrum.js"></script>
+		<script src="./shared/waterfall-data.js"></script>
+		<script src="./shared/radiacode.js"></script> <!-- to be replaced with atom.js -->
 	</head>
 	<body>
 		<div id="blocking-overlay" class="blocking-overlay"></div>
 		<div id="upload-control" class="upload-control">
 			<span>Select atomspectra file to render:</span>
 			<input id="file-input" type="file" accept=".txt" name="files" onchange="onFileChange(this)">
+		</div>
+		<div id="file-info-container" class="upload-control">
+			<span id="file-info"></span>
 		</div>
 		<div id="waterfall-control" class="waterfall-control">
 			<div class="row">
@@ -438,9 +441,9 @@
 					ctx.fillStyle = constants.textColor;
 					const utcISO = new Date(timestamp).toISOString();
 					let label = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
-					if (tsIndex % 100 === 0) {
-						label += ': ' + tsIndex;
-					}
+					//if (tsIndex % 100 === 0) {
+						label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
+					//}
 					ctx.fillText(label, 0, tsIndex);
 
 					// label tick
@@ -841,6 +844,10 @@
 					if (uploadControl) {
 						height -= uploadControl.getBoundingClientRect().height;
 					}
+					const infoContainer = document.getElementById('file-info-container');
+					if (infoContainer) {
+						height -= infoContainer.getBoundingClientRect().height;
+					}
 
 					height -= 32; // horizontal scroll on cps plot/borders etc.
 					if (height < constants.waterfallMinHeight) {
@@ -940,7 +947,7 @@
 				renderCps();
 			}
 			
-			function updateInputChannelValue(input, newBin, prevBin) {				
+			function updateInputChannelValue(input, newBin, prevBin) {
 				const prevVal = parseInt(input.value);
 
 				if (!isNaN(prevVal)) {
@@ -956,8 +963,13 @@
 			}
 
 			function applyBinningAndAverage() {
-				const deltas = exports.reduceSpectrumCount(originalWaterfallData.deltas, waterfallState.spectrumBinning);
-				waterfallData = exports.createWaterfallData(originalWaterfallData.baseSpectrum, deltas, waterfallState.channelBinning);
+				waterfallData = exports.createWaterfallData(
+					originalWaterfallData.baseSpectrum, 
+					originalWaterfallData.deltas, 
+					waterfallState.channelBinning, 
+					waterfallState.spectrumBinning
+				);
+
 				applyMovingAverage();
 			}
 
@@ -1023,14 +1035,21 @@
 		</script>
 		<script>
 			// startup - check if we have to run with nodejs prepared data or user loads it in browser
-			const uploadControls = document.getElementById('upload-control');
+			const uploadControl = document.getElementById('upload-control');
+			const infoContainer = document.getElementById('file-info-container');
+			const infoSpan = document.getElementById('file-info');
 			const overlay = document.getElementById('blocking-overlay');
 
 			if (window.originalWaterfallData === 'waterfall-data-placeholder') {
-				uploadControls.style.display = 'block';
+				uploadControl.style.display = 'block';
+				infoContainer.style.display = 'none';
 			} else {
-				uploadControls.style.display = 'none';
+				uploadControl.style.display = 'none';
 				overlay.style.display = 'none';
+				infoContainer.style.display = 'block';
+				infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
+					+ 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
+				
 				window.waterfallData = { ...originalWaterfallData };
 				renderWaterfallImage();
 				initCpsControls();
@@ -1051,7 +1070,7 @@
 					const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
 					const deltas = deltaInfo.deltas;
 
-					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, 1);
+					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, 1, 1);
 					window.waterfallData = { ...originalWaterfallData };
 
 					resetMovingAverage();

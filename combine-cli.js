@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const sp = require('./spectrum.js');
+const sp = require('./shared/spectrum.js');
 
 let combineFromIndex = 0;
 let combineToIndex = 0;
@@ -35,7 +35,6 @@ function combineDeltas(filepath) {
 	}
 
 	console.log('combining spectrums from: ' + combineFromIndex + ', to: ' + combineToIndex);
-	deltas.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
 	deltas = deltas.slice(combineFromIndex, combineToIndex);
 
 	const combined = sp.reduceSpectrumCount(deltas, deltas.length)[0];

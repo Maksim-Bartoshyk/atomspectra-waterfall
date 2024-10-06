@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const sp = require('./spectrum.js');
-const rc = require('./radiacode.js');
-const wf = require('./waterfall-data.js');
+const sp = require('./shared/spectrum.js');
+const rc = require('./shared/radiacode.js');
+const wf = require('./shared/waterfall-data.js');
 
-let channelReduceFactorParam = 8;
-let spectrumReduceFactorParam = 1;
+let channelBinningParam = 8;
+let spectrumBinningParam = 1;
 let rcspg = false;
 
 function printItervalsStats(deltas) {
@@ -20,7 +20,7 @@ function printItervalsStats(deltas) {
 	});
 
 	console.info('');
-	console.info('spectrums to render:', deltas.length);
+	console.info('count of spectrums in source file:', deltas.length);
 	console.info('intervals:');
 	Object.keys(intervalsDict)
 		.map(k => [k, intervalsDict[k]])
@@ -59,8 +59,6 @@ function convertFiles(filepath) {
 	}
 
 	let deltas = deltaInfo.deltas;
-	deltas.sort((s1, s2) => s1.timestamp > s2.timestamp ? 1 : -1); // ascending
-	deltas = sp.reduceSpectrumCount(deltas, spectrumReduceFactorParam);
 	printItervalsStats(deltas);
 
 	const resultFilename = basename.split('.')[0];
@@ -69,7 +67,8 @@ function convertFiles(filepath) {
 		fs.writeFileSync(resultFilename + '.rcspg', rcspgData);
 		console.info(resultFilename + '.rcspg has been created');
 	} else {
-		const waterfall = wf.createWaterfallData(baseSpectrum, deltas, channelReduceFactorParam);
+		const waterfall = wf.createWaterfallData(baseSpectrum, deltas, channelBinningParam, spectrumBinningParam);
+		waterfall.filename = basename;
 		const template = fs.readFileSync('waterfall.html', 'utf-8');
 		fs.writeFileSync(resultFilename + '.html', template.replace("'waterfall-data-placeholder'", JSON.stringify(waterfall)));
 		console.info(resultFilename + '.html has been created');
@@ -89,27 +88,27 @@ function paramValue(paramName) {
 
 rcspg = paramIsSet('--rcspg');
 
-if (paramIsSet('-rc')) {
+if (paramIsSet('-channel-binning')) {
 	if (rcspg) {
-		console.warn('reduce channels param is not suported for rcspg export');
+		console.warn('channel binning param is not suported for rcspg export');
 	} else {
-		let value = parseInt(paramValue('-rc'));
+		let value = parseInt(paramValue('-channel-binning'));
 		if (isNaN(value) || value < 1) {
-			console.error('invalid reduce channels factor, must be positive integer');
+			console.error('invalid channel binning param, must be positive integer');
 			return;
 		} else {
-			channelReduceFactorParam = value;
+			channelBinningParam = value;
 		}
 	}
 }
 
-if (paramIsSet('-rs')) {
-	let value = parseInt(paramValue('-rs'));
+if (paramIsSet('-spectrum-binning')) {
+	let value = parseInt(paramValue('-spectrum-binning'));
 	if (isNaN(value) || value < 1) {
-		console.error('invalid reduce spectrum factor, must be positive integer');
+		console.error('invalid spectrum binning param, must be positive integer');
 		return;
 	} else {
-		spectrumReduceFactorParam = value;
+		spectrumBinningParam = value;
 	}
 }
 
