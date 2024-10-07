@@ -577,6 +577,23 @@
 					<input type="checkbox" id="use-scroll" name="use-scroll" onchange="onUseScrollChange(this.checked)"/>
 					<label for="use-scroll">Use scroll</label>
 				</div>
+				<div class="col">
+					<label for="max-cps">Scale maximum</label>
+					<select name="max-cps" id="max-cps" onchange="onMaxCpsChange(this.value)">
+						<option value="100">100%</option>
+						<option value="90">90%</option>
+						<option value="80">80%</option>
+						<option value="70">70%</option>
+						<option value="60">60%</option>
+						<option value="50">50%</option>
+						<option value="40">40%</option>
+						<option value="30">30%</option>
+						<option value="20">20%</option>
+						<option value="10">10%</option>
+						<option value="5">5%</option>
+						<option value="1">1%</option>
+					</select>
+				</div>
 			</div>
 		</div>
 		<div id="waterfall-plot-container" class="wf-plot-container" onscroll="onWaterfallContainerScroll(this)">
@@ -637,6 +654,7 @@
 				blur: false,
 				subtractBase: false,
 				movingAverage: 0,
+				maxCpsPercent: 100,
 			}
 		</script>
 		<script>
@@ -755,9 +773,12 @@
 							}
 						}
 
-						const linearColorIndex = Math.round((cps / maxCps) * (ironPaletteRGB.length - 1));
-						let colorIndex;
+						let linearColorIndex = Math.round((cps / (maxCps * waterfallState.maxCpsPercent / 100)) * (ironPaletteRGB.length - 1));
+						if (linearColorIndex > ironPaletteRGB.length - 1) {
+							linearColorIndex = ironPaletteRGB.length - 1;
+						}
 
+						let colorIndex;
 						switch (waterfallState.scale) {
 							case 'log':
 								colorIndex = Math.round((Math.log(linearColorIndex + 2) / Math.log(ironPaletteRGB.length)) * (ironPaletteRGB.length - 1));
@@ -1373,6 +1394,11 @@
 				applyBinningAndAverage();
 				renderWaterfallImage();
 				renderCps();
+			}
+
+			function onMaxCpsChange(value) {
+				waterfallState.maxCpsPercent = parseInt(value);
+				renderWaterfallImage();
 			}
 			
 			function updateInputChannelValue(input, newBin, prevBin) {
