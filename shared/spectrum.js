@@ -93,9 +93,9 @@
 		};
 	}
 	
-	exports.reduceSpectrumCount = function(spectrums, factor) {
-		if (factor < 1) {
-			throw new Error('invalid factor: ' + factor);
+	exports.reduceSpectrumCount = function(spectrums, spectrumsBinning) {
+		if (spectrumsBinning < 1) {
+			throw new Error('invalid factor: ' + spectrumsBinning);
 		}
 	
 		if (!spectrums || !spectrums.length) {
@@ -103,9 +103,9 @@
 		}
 	
 		let reduced = [];
-		for (let i = 0; i < spectrums.length; i += factor) {
+		for (let i = 0; i < spectrums.length; i += spectrumsBinning) {
 			let summ = { ...spectrums[i], channels: [...spectrums[i].channels] };
-			for (let j = 1; j < factor && (i + j) < spectrums.length; j++) {
+			for (let j = 1; j < spectrumsBinning && (i + j) < spectrums.length; j++) {
 				for (let k = 0; k < summ.channels.length; k++) {
 					summ.channels[k] += spectrums[i + j].channels[k];
 				}
@@ -119,9 +119,9 @@
 		return reduced;
 	}
 	
-	exports.reduceChannelCount = function(channels, factor) {
-		if (factor < 1) {
-			throw new Error('invalid factor: ' + factor);
+	exports.reduceChannelCount = function(channels, channelBinning) {
+		if (channelBinning < 1) {
+			throw new Error('invalid channel binning: ' + channelBinning);
 		}
 	
 		if (!channels || !channels.length) {
@@ -129,9 +129,9 @@
 		}
 	
 		let reduced = [];
-		for (let i = 0; i < channels.length; i += factor) {
+		for (let i = 0; i < channels.length; i += channelBinning) {
 			let summ = 0;
-			for (let j = 0; j < factor && (i + j) < channels.length; j++) {
+			for (let j = 0; j < channelBinning && (i + j) < channels.length; j++) {
 				summ += channels[i + j];
 			}
 	
@@ -141,13 +141,53 @@
 		return reduced;
 	}
 	
-	exports.getCalibration = function (calibration, channelReduceFactor) {
+	exports.getCalibration = function (calibration, channelBinning) {
 		const newCalibration = [];
 		for (let i = 0; i < calibration.length; i++) {
-			newCalibration.push(Math.pow(channelReduceFactor, i) * calibration[i]);
+			newCalibration.push(Math.pow(channelBinning, i) * calibration[i]);
 		}
 	
 		return newCalibration;
+	}
+
+	exports.combineSpectrums = function(deltas, fromIndex, toIndex, baseSpectrum, filename) {
+		if (fromIndex < 0) {
+			fromIndex = 0;
+		}
+
+		if (toIndex > deltas.length - 1) {
+			toIndex = deltas.length - 1;
+		}
+
+		if (fromIndex > toIndex) {
+			const tmp = fromIndex;
+			fromIndex = toIndex;
+			toIndex = tmp;
+		}
+
+		const deltasToCombine = deltas.slice(fromIndex, toIndex + 1);
+		const combinedDelta = this.reduceSpectrumCount(deltasToCombine, deltasToCombine.length)[0];
+		const combinedSpectrum = {
+			format: 'FORMAT: 3',
+			note: 'Counts: ' + combinedDelta.channels.reduce((a, v) => a += v, 0) + ', '
+				+ 'combined from spectrogram ' + filename + ', '
+				+ 'from index: ' + fromIndex + ', '
+				+ 'to index: ' + toIndex + ', '
+				+ 'from time: ' + formatTime(deltas[fromIndex].timestamp) + ', '
+				+ 'to time: ' + formatTime(deltas[toIndex].timestamp),
+			timestamp: combinedDelta.timestamp,
+			timestamp2: '0',
+			latStr: '0.0',
+			lonStr: '0.0',
+			name: baseSpectrum.name,
+			foundIsotopes: '',
+			duration: combinedDelta.duration,
+			channelCount: combinedDelta.channels.length,
+			calibration: baseSpectrum.calibration,
+			channels: combinedDelta.channels
+		};
+		
+		return combinedSpectrum;
 	}
 	
 	function readNextDelta(lines, fromIndex, channelCount) {
@@ -167,5 +207,11 @@
 			lon: lon,
 			channels: channels
 		}
-	}		
+	}
+	
+	function formatTime(timestamp) {
+		const utcISO = new Date(timestamp).toISOString();
+
+		return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+	}
 })();

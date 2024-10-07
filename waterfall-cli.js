@@ -67,8 +67,7 @@ function convertFiles(filepath) {
 		fs.writeFileSync(resultFilename + '.rcspg', rcspgData);
 		console.info(resultFilename + '.rcspg has been created');
 	} else {
-		const waterfall = wf.createWaterfallData(baseSpectrum, deltas, channelBinningParam, spectrumBinningParam);
-		waterfall.filename = basename;
+		const waterfall = wf.createWaterfallData(baseSpectrum, deltas, channelBinningParam, spectrumBinningParam, basename);
 		const template = fs.readFileSync('waterfall.html', 'utf-8');
 		fs.writeFileSync(resultFilename + '.html', template.replace("'waterfall-data-placeholder'", JSON.stringify(waterfall)));
 		console.info(resultFilename + '.html has been created');

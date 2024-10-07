@@ -96,7 +96,7 @@
 				display: inline-block;
 				width: 400px;
 			}
-			.export-map-button {
+			.export-button {
 				margin-left: 4px;
 				width: 400px;
 			}
@@ -223,9 +223,9 @@
 		};
 	}
 	
-	exports.reduceSpectrumCount = function(spectrums, factor) {
-		if (factor < 1) {
-			throw new Error('invalid factor: ' + factor);
+	exports.reduceSpectrumCount = function(spectrums, spectrumsBinning) {
+		if (spectrumsBinning < 1) {
+			throw new Error('invalid factor: ' + spectrumsBinning);
 		}
 	
 		if (!spectrums || !spectrums.length) {
@@ -233,9 +233,9 @@
 		}
 	
 		let reduced = [];
-		for (let i = 0; i < spectrums.length; i += factor) {
+		for (let i = 0; i < spectrums.length; i += spectrumsBinning) {
 			let summ = { ...spectrums[i], channels: [...spectrums[i].channels] };
-			for (let j = 1; j < factor && (i + j) < spectrums.length; j++) {
+			for (let j = 1; j < spectrumsBinning && (i + j) < spectrums.length; j++) {
 				for (let k = 0; k < summ.channels.length; k++) {
 					summ.channels[k] += spectrums[i + j].channels[k];
 				}
@@ -249,9 +249,9 @@
 		return reduced;
 	}
 	
-	exports.reduceChannelCount = function(channels, factor) {
-		if (factor < 1) {
-			throw new Error('invalid factor: ' + factor);
+	exports.reduceChannelCount = function(channels, channelBinning) {
+		if (channelBinning < 1) {
+			throw new Error('invalid channel binning: ' + channelBinning);
 		}
 	
 		if (!channels || !channels.length) {
@@ -259,9 +259,9 @@
 		}
 	
 		let reduced = [];
-		for (let i = 0; i < channels.length; i += factor) {
+		for (let i = 0; i < channels.length; i += channelBinning) {
 			let summ = 0;
-			for (let j = 0; j < factor && (i + j) < channels.length; j++) {
+			for (let j = 0; j < channelBinning && (i + j) < channels.length; j++) {
 				summ += channels[i + j];
 			}
 	
@@ -271,13 +271,53 @@
 		return reduced;
 	}
 	
-	exports.getCalibration = function (calibration, channelReduceFactor) {
+	exports.getCalibration = function (calibration, channelBinning) {
 		const newCalibration = [];
 		for (let i = 0; i < calibration.length; i++) {
-			newCalibration.push(Math.pow(channelReduceFactor, i) * calibration[i]);
+			newCalibration.push(Math.pow(channelBinning, i) * calibration[i]);
 		}
 	
 		return newCalibration;
+	}
+
+	exports.combineSpectrums = function(deltas, fromIndex, toIndex, baseSpectrum, filename) {
+		if (fromIndex < 0) {
+			fromIndex = 0;
+		}
+
+		if (toIndex > deltas.length - 1) {
+			toIndex = deltas.length - 1;
+		}
+
+		if (fromIndex > toIndex) {
+			const tmp = fromIndex;
+			fromIndex = toIndex;
+			toIndex = tmp;
+		}
+
+		const deltasToCombine = deltas.slice(fromIndex, toIndex + 1);
+		const combinedDelta = this.reduceSpectrumCount(deltasToCombine, deltasToCombine.length)[0];
+		const combinedSpectrum = {
+			format: 'FORMAT: 3',
+			note: 'Counts: ' + combinedDelta.channels.reduce((a, v) => a += v, 0) + ', '
+				+ 'combined from spectrogram ' + filename + ', '
+				+ 'from index: ' + fromIndex + ', '
+				+ 'to index: ' + toIndex + ', '
+				+ 'from time: ' + formatTime(deltas[fromIndex].timestamp) + ', '
+				+ 'to time: ' + formatTime(deltas[toIndex].timestamp),
+			timestamp: combinedDelta.timestamp,
+			timestamp2: '0',
+			latStr: '0.0',
+			lonStr: '0.0',
+			name: baseSpectrum.name,
+			foundIsotopes: '',
+			duration: combinedDelta.duration,
+			channelCount: combinedDelta.channels.length,
+			calibration: baseSpectrum.calibration,
+			channels: combinedDelta.channels
+		};
+		
+		return combinedSpectrum;
 	}
 	
 	function readNextDelta(lines, fromIndex, channelCount) {
@@ -297,7 +337,13 @@
 			lon: lon,
 			channels: channels
 		}
-	}		
+	}
+	
+	function formatTime(timestamp) {
+		const utcISO = new Date(timestamp).toISOString();
+
+		return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+	}
 })();
 		</script>
 		<!-- <script src="./shared/waterfall-data.js"></script> -->
@@ -305,7 +351,7 @@
 (function(){
 	const sp = require('./spectrum.js');
 
-	exports.createWaterfallData = function(baseSpectrum, deltas, channelBinning, spectrumBinning) {
+	exports.createWaterfallData = function(baseSpectrum, deltas, channelBinning, spectrumBinning, filename) {
 		const baseChannels = sp.reduceChannelCount(baseSpectrum.channels, channelBinning);
 		let waterfall = {
 			deltas: [],
@@ -316,7 +362,8 @@
 				calibration: sp.getCalibration(baseSpectrum.calibration, channelBinning)
 			},
 			channelBinning: channelBinning,
-			spectrumBinning: spectrumBinning
+			spectrumBinning: spectrumBinning,
+			filename: filename
 		};
 
 		sp.reduceSpectrumCount(deltas, spectrumBinning).forEach(delta8k => {
@@ -541,7 +588,7 @@
 			<div class="row">
 				<button class="cps-left-column" onclick="renderCps()">CPS trend in channel range:</button> 
 				<input type="number" id="from-channel-1" class="numeric-input"/>-<input type="number" id="to-channel-1" class="numeric-input"/>
-				<button id="export-cps-map" class="export-map-button" disabled onclick="exportCpsMap(this)">Range 1 cps to map</button>
+				<button id="export-cps-map" class="export-button" disabled onclick="exportCpsMap(this)">Range 1 cps to map</button>
 			</div>
 			<div class="row">
 				<div class="cps-left-column">
@@ -549,11 +596,15 @@
 					<label for="cps-comparison">Compare to CPS in channel range:</label>
 				</div>
 				<input type="number" id="from-channel-2" class="numeric-input"/>-<input type="number" id="to-channel-2" class="numeric-input"/>
-				<button id="export-comparison-map" class="export-map-button" disabled onclick="exportComparisonMap(this)">Range 1/range 2 comparison to map</button>
+				<button id="export-comparison-map" class="export-button" disabled onclick="exportComparisonMap(this)">Range 1/range 2 comparison to map</button>
 			</div>
 			<div class="row">
-				<input type="checkbox" id="dotted-trend" name="dotted-trend"/>
-				<label for="dotted-trend">Dotted</label>
+				<div class="cps-left-column">
+					<input type="checkbox" id="dotted-trend" name="dotted-trend"/>
+					<label for="dotted-trend">Dotted</label>
+				</div>
+				<input type="number" id="from-spectrum" class="numeric-input" placeholder="from index"/>-<input type="number" id="to-spectrum" class="numeric-input" placeholder="to index"/>
+				<button id="export-spectrum-range" class="export-button" onclick="exportSpectrumRange(this)">Spectrogram range to spectrum</button>
 			</div>
 		</div>
 		<div id="cps-plot-container" class="cps-plot-container" onscroll="onCpsContainerScroll(this)">
@@ -846,6 +897,8 @@
 			const dottedCheckbox = document.getElementById('dotted-trend');
 			const fromChannelInput2 = document.getElementById('from-channel-2');
 			const toChannelInput2 = document.getElementById('to-channel-2');
+			const fromSpectrumInput = document.getElementById('from-spectrum');
+			const toSpectrumInput = document.getElementById('to-spectrum');
 			const compareCheckbox = document.getElementById('cps-comparison');
 			const cpsToMapButton = document.getElementById('export-cps-map');
 			const comparisonToMapButton = document.getElementById('export-comparison-map');
@@ -1044,9 +1097,10 @@
 			function exportCpsMap() {
 				const range = [fromChannelInput1.value, toChannelInput1.value];
 				const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range [' + range[0] + ', ' + range[1] + ']', 
-					originalWaterfallData.deltas, range, undefined, waterfallState.channelBinning);
+					originalWaterfallData.deltas, range, undefined, waterfallState.channelBinning
+				);
 
-				saveRctrk(originalWaterfallData.baseSpectrum.name + '-cps.rctrk', data);
+				saveFile(originalWaterfallData.filename + '-cps.rctrk', data, 'text/rctrk');
 			}
 
 			function exportComparisonMap() {
@@ -1054,13 +1108,37 @@
 				const compareRange = [fromChannelInput2.value, toChannelInput2.value];
 				const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + 
 					' CP2S: cps comparison for ranges [' + range[0] + ', ' + range[1] + ']/[' + compareRange[0] + ', ' + compareRange[1] + ']', 
-					originalWaterfallData.deltas, range, compareRange, waterfallState.channelBinning);
+					originalWaterfallData.deltas, range, compareRange, waterfallState.channelBinning
+				);
 
-				saveRctrk(originalWaterfallData.baseSpectrum.name + '-cps-comparison.rctrk', data);
+				saveFile(originalWaterfallData.filename + '-cps-comparison.rctrk', data, 'text/rctrk');
 			}
 
-			function saveRctrk(filename, data) {
-				const blob = new Blob([data], { type: 'text/rctrk' }); // invalid mime type to force android save it as .rcspg
+			function exportSpectrumRange() {
+				const fromSpectrum = parseInt(fromSpectrumInput.value);
+				const toSpectrum = parseInt(toSpectrumInput.value);
+				if (isNaN(fromSpectrum) || isNaN(toSpectrum) || fromSpectrum > toSpectrum) {
+					// TODO: implement UI validation
+					throw new Error('invalid from or to spectrum index');
+				}
+
+				if (originalWaterfallData.channelBinning !== 1) {
+					alert('Export to ' + originalWaterfallData.baseSpectrum.channelCount + ' channels due to channel binning applied by CLI.');
+				}
+				
+				const combinedSpectrum = exports.combineSpectrums(
+					originalWaterfallData.deltas, 
+					fromSpectrum, 
+					toSpectrum, 
+					originalWaterfallData.baseSpectrum, 
+					originalWaterfallData.filename
+				);
+				const spectrumText = exports.serializeSpectrum(combinedSpectrum);
+				saveFile(originalWaterfallData.filename + '_combined.txt', spectrumText, 'text/plain');
+			}
+
+			function saveFile(filename, data, type) {
+				const blob = new Blob([data], { type: type });
 				const elem = window.document.createElement('a');
 				elem.href = window.URL.createObjectURL(blob);
 				elem.download = filename;
@@ -1420,7 +1498,7 @@
 					const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
 					const deltas = deltaInfo.deltas;
 
-					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, 1, 1);
+					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, 1, 1, file.name);
 					window.waterfallData = { ...originalWaterfallData };
 
 					resetMovingAverage();

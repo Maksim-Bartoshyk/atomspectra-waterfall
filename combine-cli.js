@@ -35,13 +35,9 @@ function combineDeltas(filepath) {
 	}
 
 	console.log('combining spectrums from: ' + combineFromIndex + ', to: ' + combineToIndex);
-	deltas = deltas.slice(combineFromIndex, combineToIndex);
 
-	const combined = sp.reduceSpectrumCount(deltas, deltas.length)[0];
-	baseSpectrum.channels = combined.channels;
-	baseSpectrum.timestamp = combined.timestamp;
-	baseSpectrum.duration = combined.duration;
-	const spectrumText = sp.serializeSpectrum(baseSpectrum);
+	const combinedSpectrum = sp.combineSpectrums(deltas, combineFromIndex, combineToIndex, baseSpectrum, basename);
+	const spectrumText = sp.serializeSpectrum(combinedSpectrum);
 	const filename = basename.split('.')[0] + '_combined.txt';
 	fs.writeFileSync(filename, spectrumText);
 	console.info(filename + ' has been created');

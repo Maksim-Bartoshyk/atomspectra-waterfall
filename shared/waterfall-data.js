@@ -1,7 +1,7 @@
 (function(){
 	const sp = require('./spectrum.js');
 
-	exports.createWaterfallData = function(baseSpectrum, deltas, channelBinning, spectrumBinning) {
+	exports.createWaterfallData = function(baseSpectrum, deltas, channelBinning, spectrumBinning, filename) {
 		const baseChannels = sp.reduceChannelCount(baseSpectrum.channels, channelBinning);
 		let waterfall = {
 			deltas: [],
@@ -12,7 +12,8 @@
 				calibration: sp.getCalibration(baseSpectrum.calibration, channelBinning)
 			},
 			channelBinning: channelBinning,
-			spectrumBinning: spectrumBinning
+			spectrumBinning: spectrumBinning,
+			filename: filename
 		};
 
 		sp.reduceSpectrumCount(deltas, spectrumBinning).forEach(delta8k => {
