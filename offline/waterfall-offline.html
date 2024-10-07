@@ -1122,7 +1122,7 @@
 				// tooltip
 				const spectrumIndex = offsetY;
 				const channelIndex = offsetX - constants.timestampWidth;
-				const tooltipText = 'spectrum: ' + spectrumIndex
+				const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
 					+ '\n' + 'channel: ' + channelIndex
 					+ '\n' + 'energy: ' + channelToEnergy(channelIndex)
 					+ '\n' + 'time: ' + timeToString(waterfallData.deltas[spectrumIndex].timestamp);
@@ -1131,7 +1131,7 @@
 
 			function cpsOnMouseMove(e) {
 				wfHorizontalCursor.style.display = 'block';
-				wfVerticalCursor.style.display = 'block';
+				wfVerticalCursor.style.display = 'none';
 				cpsVerticalCursor.style.display = 'block';
 
 				// spectrum cursor
@@ -1147,7 +1147,7 @@
 
 				// tooltip
 				const spectrumIndex = offsetX;
-				const tooltipText = 'spectrum: ' + spectrumIndex
+				const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
 					+ '\n' + 'time: ' + timeToString(waterfallData.deltas[spectrumIndex].timestamp);
 				cpsPlot.setAttribute('title', tooltipText);
 			}
