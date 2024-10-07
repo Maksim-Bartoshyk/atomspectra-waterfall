@@ -69,21 +69,21 @@
 				max-width: 100%;
 				overflow: auto;
 			}
-			.plot {
-				border: 1px dashed #222;
-			}
 			.horizontal-cursor, .vertical-cursor {
 				display: none;
 				position: absolute;
+				z-index: 1;
 			}
 			.horizontal-cursor {
-				border-top: 1px dotted #777;
+				box-sizing: border-box;
+				border-bottom: 1px dotted #777;
 				height: 0;
 				right: 0;
 				width: calc(100% - 150px);
 			}
 			.vertical-cursor {
-				border-left: 1px dotted #777;
+				box-sizing: border-box;
+				border-right: 1px dotted #777;
 				height: 100%;
 				top: 0;
 				width: 0;
@@ -533,9 +533,9 @@
 			</div>
 		</div>
 		<div id="waterfall-plot-container" class="wf-plot-container" onscroll="onWaterfallContainerScroll(this)">
-			<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
 			<div id="horizontal-cursor" class="horizontal-cursor"></div>
 			<div id="vertical-cursor" class="vertical-cursor"></div>
+			<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
 		</div>
 		<div id="cps-control" class="cps-control">
 			<div class="row">
@@ -577,6 +577,7 @@
 				cpsExtendRange: 0.1,
 				blurRadius: 1,
 				waterfallMinHeight: 250,
+				cursorOffset: 3,
 			};
 			window.waterfallState = {
 				scale: 'sqrt',
@@ -768,9 +769,7 @@
 					ctx.fillStyle = constants.textColor;
 					const utcISO = new Date(timestamp).toISOString();
 					let label = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
-					//if (tsIndex % 100 === 0) {
-						label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
-					//}
+					label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
 					ctx.fillText(label, 0, tsIndex);
 
 					// label tick
@@ -1090,6 +1089,9 @@
 				wfHorizontalCursor.style.display = 'none';
 				wfVerticalCursor.style.display = 'none';
 				cpsVerticalCursor.style.display = 'none';
+
+				waterfallPlot.setAttribute('title', '');
+				cpsPlot.setAttribute('title', '');
 			}
 
 			function waterfallOnMouseMove(e) {
@@ -1097,31 +1099,34 @@
 				wfVerticalCursor.style.display = 'block';
 				cpsVerticalCursor.style.display = 'block';
 
-				// channel index
-				let offsetX = e.offsetX;
-				offsetX--;
-
+				// channel cursor
+				let offsetX = e.offsetX - constants.cursorOffset;
 				if (offsetX < constants.timestampWidth) {
-					wfVerticalCursor.style.left = constants.timestampWidth;
-				} else if (offsetX > constants.timestampWidth + waterfallData.baseSpectrum.channelCount) {
-					offsetX = constants.timestampWidth + waterfallData.baseSpectrum.channelCount
-				}else {
-					wfVerticalCursor.style.left = offsetX;
+					offsetX = constants.timestampWidth;
+				} else if (offsetX > constants.timestampWidth + waterfallData.baseSpectrum.channelCount - 1) {
+					offsetX = constants.timestampWidth + waterfallData.baseSpectrum.channelCount - 1;
 				}
+				wfVerticalCursor.style.left = offsetX;
 
-				// spectrum index
-				let offsetY = e.offsetY;
-				if (offsetY > 0) {
-					offsetY--;
+				// spectrum cursor
+				let offsetY = e.offsetY - constants.cursorOffset;
+				if (offsetY < 0) {
+					offsetY = 0;
+				} else if (e.offsetY >= waterfallData.deltas.length) {
+					offsetY = waterfallData.deltas.length - 1;
+					offsetY = waterfallData.deltas.length - 1;
 				}
+				wfHorizontalCursor.style.top = offsetY;
+				cpsVerticalCursor.style.left = offsetY;
 
-				if (e.offsetY > waterfallData.deltas.length) {
-					wfHorizontalCursor.style.top = waterfallData.deltas.length;
-					cpsVerticalCursor.style.left = waterfallData.deltas.length;
-				} else {
-					wfHorizontalCursor.style.top = offsetY;
-					cpsVerticalCursor.style.left = offsetY;
-				}
+				// tooltip
+				const spectrumIndex = offsetY;
+				const channelIndex = offsetX - constants.timestampWidth;
+				const tooltipText = 'spectrum: ' + spectrumIndex
+					+ '\n' + 'channel: ' + channelIndex
+					+ '\n' + 'energy: ' + channelToEnergy(channelIndex)
+					+ '\n' + 'time: ' + timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+				waterfallPlot.setAttribute('title', tooltipText);
 			}
 
 			function cpsOnMouseMove(e) {
@@ -1129,14 +1134,22 @@
 				wfVerticalCursor.style.display = 'block';
 				cpsVerticalCursor.style.display = 'block';
 
-				// spectrum index
-				let offsetX = e.offsetX;
-				if (offsetX > 0) {
-					offsetX--;
+				// spectrum cursor
+				let offsetX = e.offsetX - constants.cursorOffset;
+				if (offsetX < 0) {
+					offsetX = 0;
+				} else if (offsetX > waterfallData.deltas.length - 1) {
+					offsetX = waterfallData.deltas.length - 1;
 				}
 
 				wfHorizontalCursor.style.top = offsetX;
 				cpsVerticalCursor.style.left = offsetX;
+
+				// tooltip
+				const spectrumIndex = offsetX;
+				const tooltipText = 'spectrum: ' + spectrumIndex
+					+ '\n' + 'time: ' + timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+				cpsPlot.setAttribute('title', tooltipText);
 			}
 
 			function onCursorMouseMove(e, cursorDivOffset) {
@@ -1199,6 +1212,16 @@
 					cpsContainer.style.width = 'unset';
 					wfVerticalCursor.style.top = 0;
 				}
+			}
+
+			function timeToString(timestamp) {
+				const utcISO = new Date(timestamp).toISOString();
+
+				return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+			}
+
+			function channelToEnergy(channel) {
+				return waterfallData.baseSpectrum.calibration.reduce((e, c, i) => e += Math.pow(channel, i) * c, 0).toFixed(1) + ' keV';
 			}
 		</script>
 		<script>
