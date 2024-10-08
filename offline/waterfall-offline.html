@@ -1120,8 +1120,9 @@
 				const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range [' + range[0] + ', ' + range[1] + ']', 
 					originalWaterfallData.deltas, range, undefined, waterfallState.channelBinning
 				);
+				const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + ']';
 
-				saveFile(originalWaterfallData.filename + '-cps.rctrk', data, 'text/rctrk');
+				saveFile(filename + '-cps.rctrk', data, 'text/rctrk');
 			}
 
 			function exportComparisonMap() {
@@ -1131,8 +1132,9 @@
 					' CP2S: cps comparison for ranges [' + range[0] + ', ' + range[1] + ']/[' + compareRange[0] + ', ' + compareRange[1] + ']', 
 					originalWaterfallData.deltas, range, compareRange, waterfallState.channelBinning
 				);
+				const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + '][' + compareRange[0] + ', ' + compareRange[1] + ']';
 
-				saveFile(originalWaterfallData.filename + '-cps-comparison.rctrk', data, 'text/rctrk');
+				saveFile(filename + '-cps-comparison.rctrk', data, 'text/rctrk');
 			}
 
 			function exportSpectrumRange() {
@@ -1155,7 +1157,9 @@
 					originalWaterfallData.filename
 				);
 				const spectrumText = exports.serializeSpectrum(combinedSpectrum);
-				saveFile(originalWaterfallData.filename + '_combined.txt', spectrumText, 'text/plain');
+				const filename = originalWaterfallData.baseSpectrum.name + '-[' + fromSpectrum + ', ' + toSpectrum + ']';
+
+				saveFile(filename + '-combined.txt', spectrumText, 'text/plain');
 			}
 
 			function saveFile(filename, data, type) {
