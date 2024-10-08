@@ -1032,7 +1032,7 @@
 						}
 					}
 
-					const plotHeight = constants.cpsPlotHeight;
+					const plotHeight = constants.cpsPlotHeight / 3;
 					cpsCanvas.height = plotHeight * 3;
 					renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, plotHeight, 'range 1 cps');
 					renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range 2 cps');
