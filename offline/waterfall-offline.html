@@ -655,6 +655,16 @@
 				subtractBase: false,
 				movingAverage: 0,
 				maxCpsPercent: 100,
+			};
+			window.common = {
+				timeToString: timestamp => {
+					const utcISO = new Date(timestamp).toISOString();
+
+					return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+				},
+				channelToEnergy: channel => {
+					return waterfallData.baseSpectrum.calibration.reduce((e, c, i) => e += Math.pow(channel, i) * c, 0);
+				}
 			}
 		</script>
 		<script>
@@ -839,8 +849,7 @@
 					const timestamp = timestamps[tsIndex];
 					ctx.textBaseline = 'top';
 					ctx.fillStyle = constants.textColor;
-					const utcISO = new Date(timestamp).toISOString();
-					let label = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+					let label = common.timeToString(timestamp);
 					label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
 					ctx.fillText(label, 0, tsIndex);
 
@@ -1117,10 +1126,16 @@
 
 			function exportCpsMap() {
 				const range = [fromChannelInput1.value, toChannelInput1.value];
-				const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range [' + range[0] + ', ' + range[1] + ']', 
-					originalWaterfallData.deltas, range, undefined, waterfallState.channelBinning
+				const energyRange = getEnergyRangeStr(range);
+				const description = originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range ' + energyRange;
+				const data = exports.getRctrkData(
+					description, 
+					originalWaterfallData.deltas, 
+					range, 
+					undefined, 
+					waterfallState.channelBinning
 				);
-				const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + ']';
+				const filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange;
 
 				saveFile(filename + '-cps.rctrk', data, 'text/rctrk');
 			}
@@ -1128,11 +1143,13 @@
 			function exportComparisonMap() {
 				const range = [fromChannelInput1.value, toChannelInput1.value];
 				const compareRange = [fromChannelInput2.value, toChannelInput2.value];
+				const energyRange = getEnergyRangeStr(range);
+				const compareEnergyRange = getEnergyRangeStr(compareRange);
 				const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + 
-					' CP2S: cps comparison for ranges [' + range[0] + ', ' + range[1] + ']/[' + compareRange[0] + ', ' + compareRange[1] + ']', 
+					' CP2S: cps comparison for ranges ' + energyRange + '/' + compareEnergyRange, 
 					originalWaterfallData.deltas, range, compareRange, waterfallState.channelBinning
 				);
-				const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + '][' + compareRange[0] + ', ' + compareRange[1] + ']';
+				const filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange;
 
 				saveFile(filename + '-cps-comparison.rctrk', data, 'text/rctrk');
 			}
@@ -1170,6 +1187,10 @@
 				document.body.appendChild(elem);
 				elem.click();
 				document.body.removeChild(elem);
+			}
+
+			function getEnergyRangeStr(range) {
+				return '[' + common.channelToEnergy(range[0]).toFixed(0) + '-' + common.channelToEnergy(range[1]).toFixed(0) + ' keV]';
 			}
 		</script>
 		<script>
@@ -1227,8 +1248,8 @@
 				const channelIndex = offsetX - constants.timestampWidth;
 				const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
 					+ '\n' + 'channel: ' + channelIndex
-					+ '\n' + 'energy: ' + channelToEnergy(channelIndex)
-					+ '\n' + 'time: ' + timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+					+ '\n' + 'energy: ' + common.channelToEnergy(channelIndex).toFixed(1) + ' keV'
+					+ '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp);
 				waterfallPlot.setAttribute('title', tooltipText);
 			}
 
@@ -1251,7 +1272,7 @@
 				// tooltip
 				const spectrumIndex = offsetX;
 				const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
-					+ '\n' + 'time: ' + timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+					+ '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp);
 				cpsPlot.setAttribute('title', tooltipText);
 			}
 
@@ -1315,16 +1336,6 @@
 					cpsContainer.style.width = 'unset';
 					wfVerticalCursor.style.top = 0;
 				}
-			}
-
-			function timeToString(timestamp) {
-				const utcISO = new Date(timestamp).toISOString();
-
-				return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
-			}
-
-			function channelToEnergy(channel) {
-				return waterfallData.baseSpectrum.calibration.reduce((e, c, i) => e += Math.pow(channel, i) * c, 0).toFixed(1) + ' keV';
 			}
 		</script>
 		<script>
