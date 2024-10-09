@@ -4,21 +4,10 @@
 		</style>
 		<script>
 			window.exports = {};
+			window.require = () => window.exports;
 		</script>
-		<script src="./spectrum.js">
-		</script>
-		<script>
-			// hack to run radiacode.js
-			window.require = function (path) {
-				switch (path) {
-					case './spectrum.js':
-						return window.exports;
-					default:
-						throw new Error('unexpected require call');
-				}
-			}
-		</script>
-		<script src="./radiacode.js"></script>
+		<script src="./shared/spectrum.js"></script>
+		<script src="./shared/radiacode.js"></script>
 	</head>
 	<body>
 		<span>Select atomspectra file to convert to .rcspg format:</span>
