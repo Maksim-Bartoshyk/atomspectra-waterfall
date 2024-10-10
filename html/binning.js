@@ -24,27 +24,27 @@
     maxCpsInput.addEventListener('change', (e) => onMaxCpsChange(e.target.value));
     
     window.binning = {
-        resetWaterfallBinning: () => {
-            spectrumBinningInput.value = 1;
-            channelBinningInput.value = 1;
-            waterfallState.channelBinning = 1;
-            waterfallState.spectrumBinning = 1;
-        },
-        resetMovingAverage: () => {
-            waterfallState.movingAverage = 0;
-            movingAverageInput.value = 0;
-        },
-        applyBinningAndAverage: () => {
-            waterfallData = exports.createWaterfallData(
-                originalWaterfallData.baseSpectrum, 
-                originalWaterfallData.deltas, 
-                waterfallState.channelBinning, 
-                waterfallState.spectrumBinning
-            );
+        resetWaterfallBinning: () => resetWaterfallBinning(),
+        resetMovingAverage: () => resetMovingAverage(),
+        applyBinningAndAverage: () => applyBinningAndAverage(),
+    };
 
-            applyMovingAverage();
-        }
-    }; 
+    function resetWaterfallBinning() {
+        waterfallState.spectrumBinning = 1;
+        spectrumBinningInput.value = waterfallState.spectrumBinning;
+        
+        waterfallState.channelBinning = originalWaterfallData.channelBinning;
+        channelBinningInput.value = waterfallState.channelBinning;
+        const opts = channelBinningInput.getElementsByTagName('option');
+        [...opts].forEach(opt => {
+            opt.disabled = parseInt(opt.value) < waterfallState.channelBinning;
+        });
+    }
+
+    function resetMovingAverage() {
+        waterfallState.movingAverage = 0;
+        movingAverageInput.value = 0;
+    }
 
     function onWaterfallScaleChange(value) {
         waterfallState.scale = value;
@@ -123,6 +123,17 @@
             }
             input.value = newVal;
         }
+    }
+
+    function applyBinningAndAverage() {
+        waterfallData = exports.createWaterfallData(
+            originalWaterfallData.baseSpectrum, 
+            originalWaterfallData.deltas, 
+            waterfallState.channelBinning / originalWaterfallData.channelBinning, 
+            waterfallState.spectrumBinning
+        );
+
+        applyMovingAverage();
     }
 
     function applyMovingAverage() {

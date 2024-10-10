@@ -24,6 +24,15 @@
 		<div id="upload-control" class="upload-control">
 			<span>Select atomspectra file to render:</span>
 			<input id="file-input" type="file" accept=".txt" name="files">
+			<label for="import-channel-binning">Import with channel binning:</label>
+			<select name="import-channel-binning" id="import-channel-binning">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="4">4</option>
+				<option value="8" selected>8</option>
+				<option value="16">16</option>
+				<option value="32">32</option>
+			</select>
 		</div>
 		<div id="file-info-container" class="upload-control">
 			<span id="file-info"></span>

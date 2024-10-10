@@ -91,9 +91,10 @@ if (paramIsSet('-channel-binning')) {
 	if (rcspg) {
 		console.warn('channel binning param is not suported for rcspg export');
 	} else {
-		let value = parseInt(paramValue('-channel-binning'));
-		if (isNaN(value) || value < 1) {
-			console.error('invalid channel binning param, must be positive integer');
+		const allowed = [1, 2, 4, 8, 16, 32];
+		const value = parseInt(paramValue('-channel-binning'));
+		if (isNaN(value) || allowed.indexOf(value) === -1) {
+			console.error('invalid channel binning param, allowed values: ', allowed);
 			return;
 		} else {
 			channelBinningParam = value;
@@ -102,7 +103,7 @@ if (paramIsSet('-channel-binning')) {
 }
 
 if (paramIsSet('-spectrum-binning')) {
-	let value = parseInt(paramValue('-spectrum-binning'));
+	const value = parseInt(paramValue('-spectrum-binning'));
 	if (isNaN(value) || value < 1) {
 		console.error('invalid spectrum binning param, must be positive integer');
 		return;

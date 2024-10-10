@@ -25,7 +25,7 @@ input[type="number"] {
     text-wrap: nowrap;
 }
 .upload-control input {
-    width: 600px;
+    width: 405px;
 }
 .waterfall-control, .cps-control {
     width: 100%;
@@ -131,7 +131,8 @@ input[type="number"] {
 			window.exports = {}; // hack to re-use nodejs modules
 			window.require = () => window.exports;
 		</script>
-		<script>(function () {
+		<script>// TODO: try use typed array to optimize memory consumption (float32, for instance)
+(function () {
 	exports.deserializeSpectrum = function(fileText) {
 		if (!fileText) {
 			throw new Error('spectrum file text is empty');
@@ -507,6 +508,15 @@ input[type="number"] {
 		<div id="upload-control" class="upload-control">
 			<span>Select atomspectra file to render:</span>
 			<input id="file-input" type="file" accept=".txt" name="files">
+			<label for="import-channel-binning">Import with channel binning:</label>
+			<select name="import-channel-binning" id="import-channel-binning">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="4">4</option>
+				<option value="8" selected>8</option>
+				<option value="16">16</option>
+				<option value="32">32</option>
+			</select>
 		</div>
 		<div id="file-info-container" class="upload-control">
 			<span id="file-info"></span>
@@ -1328,27 +1338,27 @@ input[type="number"] {
     maxCpsInput.addEventListener('change', (e) => onMaxCpsChange(e.target.value));
     
     window.binning = {
-        resetWaterfallBinning: () => {
-            spectrumBinningInput.value = 1;
-            channelBinningInput.value = 1;
-            waterfallState.channelBinning = 1;
-            waterfallState.spectrumBinning = 1;
-        },
-        resetMovingAverage: () => {
-            waterfallState.movingAverage = 0;
-            movingAverageInput.value = 0;
-        },
-        applyBinningAndAverage: () => {
-            waterfallData = exports.createWaterfallData(
-                originalWaterfallData.baseSpectrum, 
-                originalWaterfallData.deltas, 
-                waterfallState.channelBinning, 
-                waterfallState.spectrumBinning
-            );
+        resetWaterfallBinning: () => resetWaterfallBinning(),
+        resetMovingAverage: () => resetMovingAverage(),
+        applyBinningAndAverage: () => applyBinningAndAverage(),
+    };
 
-            applyMovingAverage();
-        }
-    }; 
+    function resetWaterfallBinning() {
+        waterfallState.spectrumBinning = 1;
+        spectrumBinningInput.value = waterfallState.spectrumBinning;
+        
+        waterfallState.channelBinning = originalWaterfallData.channelBinning;
+        channelBinningInput.value = waterfallState.channelBinning;
+        const opts = channelBinningInput.getElementsByTagName('option');
+        [...opts].forEach(opt => {
+            opt.disabled = parseInt(opt.value) < waterfallState.channelBinning;
+        });
+    }
+
+    function resetMovingAverage() {
+        waterfallState.movingAverage = 0;
+        movingAverageInput.value = 0;
+    }
 
     function onWaterfallScaleChange(value) {
         waterfallState.scale = value;
@@ -1429,6 +1439,17 @@ input[type="number"] {
         }
     }
 
+    function applyBinningAndAverage() {
+        waterfallData = exports.createWaterfallData(
+            originalWaterfallData.baseSpectrum, 
+            originalWaterfallData.deltas, 
+            waterfallState.channelBinning / originalWaterfallData.channelBinning, 
+            waterfallState.spectrumBinning
+        );
+
+        applyMovingAverage();
+    }
+
     function applyMovingAverage() {
         windowSize = waterfallState.movingAverage;
         // horizontal average
@@ -1497,8 +1518,12 @@ input[type="number"] {
     const infoSpan = document.getElementById('file-info');
     const overlay = document.getElementById('blocking-overlay');
     const fileInput = document.getElementById('file-input');
+    const importChannelBinInput = document.getElementById('import-channel-binning');
 
     fileInput.addEventListener('change', (e) => onFileChange(e.target));
+    importChannelBinInput.addEventListener('change', (e) => { 
+        fileInput.value = ''; 
+    });
 
     if (window.originalWaterfallData === 'waterfall-data-placeholder') {
         uploadControl.style.display = 'block';
@@ -1511,6 +1536,7 @@ input[type="number"] {
             + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
         
         window.waterfallData = { ...originalWaterfallData };
+        binning.resetWaterfallBinning();
         waterfall.renderWaterfallImage();
         cps.initCpsControls();
         cps.renderCps();
@@ -1530,15 +1556,13 @@ input[type="number"] {
             const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
             const deltas = deltaInfo.deltas;
 
-            window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, 1, 1, file.name);
+            const importChannelBin = parseInt(importChannelBinInput.value);
+            const spectrumBin = 1;
+            window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
             window.waterfallData = { ...originalWaterfallData };
 
             binning.resetMovingAverage();
             binning.resetWaterfallBinning();
-            waterfallState.channelBinning = 8;
-            document.getElementById('channel-binning').value = waterfallState.channelBinning;
-
-            binning.applyBinningAndAverage();
             cps.initCpsControls();
             waterfall.renderWaterfallImage();
             cps.renderCps();
