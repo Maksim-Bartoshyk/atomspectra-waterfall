@@ -1,3 +1,4 @@
+// TODO: try use typed array to optimize memory consumption (float32, for instance)
 (function () {
 	exports.deserializeSpectrum = function(fileText) {
 		if (!fileText) {
