@@ -143,10 +143,10 @@
         for (let i = 0; i < waterfallData.deltas.length; i++) {
             const avgDelta = {
                 ...waterfallData.deltas[i],
-                channels: []
+                channels: new Float32Array(waterfallData.baseSpectrum.channelCount)
             };
             for (let j = 0; j < waterfallData.deltas[i].channels.length; j++) {
-                avgDelta.channels.push(waterfallData.deltas[i].channels[j]);
+                avgDelta.channels[j] = waterfallData.deltas[i].channels[j];
                 let appliedSize = 0;
                 for (let k = j - windowSize / 2; k <= j + windowSize / 2; k++) {
                     if (k < 0 || k === j) {
@@ -170,7 +170,7 @@
         for (let i = 0; i < waterfallData.deltas.length; i++) {
             const avgDelta = {
                 ...waterfallData.deltas[i],
-                channels: [...waterfallData.deltas[i].channels]
+                channels: new Float32Array(waterfallData.deltas[i].channels)
             };
             for (let j = 0; j < avgDelta.channels.length; j++) {
                 let appliedSize = 0;

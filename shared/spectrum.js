@@ -23,9 +23,9 @@
 		}
 	
 		let index = 0;
-		const channels = [];
+		const channels = new Float32Array(channelsCount);
 		while (index < channelsCount) {
-			channels.push(parseInt(lines[12 + calibrationOrder + index]));
+			channels[index] = parseFloat(lines[12 + calibrationOrder + index]);
 			index++;
 		}
 	
@@ -105,7 +105,10 @@
 	
 		let reduced = [];
 		for (let i = 0; i < spectrums.length; i += spectrumsBinning) {
-			let summ = { ...spectrums[i], channels: [...spectrums[i].channels] };
+			let summ = { 
+				...spectrums[i],
+				channels: new Float32Array(spectrums[i].channels) 
+			};
 			for (let j = 1; j < spectrumsBinning && (i + j) < spectrums.length; j++) {
 				for (let k = 0; k < summ.channels.length; k++) {
 					summ.channels[k] += spectrums[i + j].channels[k];
@@ -139,7 +142,7 @@
 			reduced.push(summ);
 		}
 	
-		return reduced;
+		return new Float32Array(reduced);
 	}
 	
 	exports.getCalibration = function (calibration, channelBinning) {
@@ -196,10 +199,11 @@
 		const lat = parseFloat(lines[fromIndex + 1]);
 		const lon = parseFloat(lines[fromIndex + 2]);
 		const duration = parseFloat(lines[fromIndex + 3]);
-		const channels = lines[fromIndex + 4]
+		const channels = new Float32Array(channelCount);
+		lines[fromIndex + 4]
 			.split('\t')
 			.slice(0, channelCount)
-			.map(str => parseInt(str));
+			.forEach((str, index) => channels[index] = parseFloat(str));
 	
 		return {
 			timestamp: timestamp,
