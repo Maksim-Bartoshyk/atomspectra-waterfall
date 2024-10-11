@@ -253,7 +253,7 @@
         }
 
         if (originalWaterfallData.channelBinning !== 1) {
-            alert('Export to ' + originalWaterfallData.baseSpectrum.channelCount + ' channels due to channel binning applied by CLI.');
+            alert('Export to ' + originalWaterfallData.baseSpectrum.channelCount + ' channels due to channel binning applied by CLI or during import.');
         }
         
         const combinedSpectrum = exports.combineSpectrums(

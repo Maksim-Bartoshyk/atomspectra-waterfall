@@ -4,14 +4,14 @@ Simplest waterfall image creator for atom spectra delta file (starting from atom
 
 Provided as is, use at your own risk. This software is not sertified as a measurement tool, any results obtained with this software could not be used for official statements, conclusions or decisions.
 
-Usage (simple, might work on mobile/tablet as well - check files in ```offline``` folder):
+Usage (simple, might work on mobile/tablet as well):
 1) download repository
 2) save delta-spectrum file on computer
-3) open ```waterfall.html``` file in browser
+3) open ```offline/waterfall-offline.html``` file in browser
 4) upload spectrogram file
 5) apply spectrum/channel binning
 6) right mouse click on spectrogram - save image as
-7) for radiacode spectrogram conversion use ```rcspg.html```
+7) for radiacode spectrogram conversion use ```offline/rcspg-ofline.html```
 
 Usage (advanced, mostly for large spectrograms):
 1) install nodejs - https://nodejs.org/

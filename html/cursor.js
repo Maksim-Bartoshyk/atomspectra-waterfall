@@ -54,12 +54,16 @@
 
         // vertical line
         const wfContainerRect = wfContainer.getBoundingClientRect();
-        wfVerticalCursor.style.left = offsetX + wfContainerRect.left - wfContainer.scrollLeft;
-        wfVerticalCursor.style.height = wfContainerRect.height + 'px';
-
+        wfVerticalCursor.style.left = offsetX + wfContainerRect.left - wfContainer.scrollLeft + window.scrollX;
+        if (wfContainerRect.height < waterfallData.deltas.length + constants.channelAxisHeight) {
+            wfVerticalCursor.style.height = wfContainerRect.height > waterfallData.deltas.length + 'px';
+        } else {
+            wfVerticalCursor.style.height = waterfallData.deltas.length + constants.channelAxisHeight + 'px';
+        }
+        
         // horizontal line
         const cpsContainerRect = cpsContainer.getBoundingClientRect();
-        wfHorizontalCursor.style.top = offsetY + wfContainerRect.top - wfContainer.scrollTop;
+        wfHorizontalCursor.style.top = offsetY + wfContainerRect.top - wfContainer.scrollTop + window.scrollY;
         wfHorizontalCursor.style.left = wfContainerRect.left;
         wfHorizontalCursor.style.width = wfContainerRect.width + cpsContainerRect.width + 'px';
     }
@@ -85,7 +89,7 @@
         // horizontal line
         const wfContainerRect = wfContainer.getBoundingClientRect();
         const cpsContainerRect = cpsContainer.getBoundingClientRect();
-        wfHorizontalCursor.style.top = offsetX + cpsContainerRect.top - cpsContainer.scrollTop;
+        wfHorizontalCursor.style.top = offsetX + cpsContainerRect.top - cpsContainer.scrollTop + window.scrollY;
         wfHorizontalCursor.style.left = wfContainerRect.left;
         wfHorizontalCursor.style.width = wfContainerRect.width + cpsContainerRect.width + 'px';
     }
