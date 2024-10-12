@@ -56,7 +56,7 @@
         const wfContainerRect = wfContainer.getBoundingClientRect();
         wfVerticalCursor.style.left = offsetX + wfContainerRect.left - wfContainer.scrollLeft + window.scrollX;
         if (wfContainerRect.height < waterfallData.deltas.length + constants.channelAxisHeight) {
-            wfVerticalCursor.style.height = wfContainerRect.height > waterfallData.deltas.length + 'px';
+            wfVerticalCursor.style.height = wfContainerRect.height + 'px';
         } else {
             wfVerticalCursor.style.height = waterfallData.deltas.length + constants.channelAxisHeight + 'px';
         }
@@ -82,8 +82,17 @@
 
         // tooltip
         const spectrumIndex = offsetX;
-        const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
+        let tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
             + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+        if (cpsData.range1 && cpsData.range1[spectrumIndex] !== undefined) {
+            tooltipText += '\n' + 'range1: ' + formatFloat(cpsData.range1[spectrumIndex]) + ' cps';
+        }
+        if (cpsData.range2 && cpsData.range2[spectrumIndex] !== undefined) {
+            tooltipText += '\n' + 'range2: ' + formatFloat(cpsData.range2[spectrumIndex]) + ' cps';
+        }
+        if (cpsData.ratio && cpsData.ratio[spectrumIndex] !== undefined) {
+            tooltipText += '\n' + 'ratio: ' + formatFloat(cpsData.ratio[spectrumIndex]);
+        }
         cpsPlot.setAttribute('title', tooltipText);
 
         // horizontal line
@@ -104,5 +113,11 @@
         if (cpsContainer.scrollTop !== wfContainer.scrollTop) {
             cpsContainer.scrollTop = wfContainer.scrollTop;
         }
+    }
+
+    function formatFloat(val) {
+        return val > 0.1
+            ? val.toFixed(2)
+            : val.toFixed(4);
     }
 })();

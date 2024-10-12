@@ -79,14 +79,6 @@
             min = Math.min(min, valuesInRange[i]);
         }
 
-        if (max === 0 && min === 0) {
-            max = 1;
-            min = -1;
-        }
-        const range = max - min;
-        max += constants.cpsExtendRange * (range === 0 ? max : range);
-        min -= constants.cpsExtendRange * (range === 0 ? max : range);
-    
         return {
             values: valuesInRange,
             max: max,
@@ -131,6 +123,12 @@
                 }
             }
 
+            window.cpsData = {
+                range1: cpsInRange1,
+                range2: cpsInRange2,
+                ratio: ratio,
+            }
+
             const plotHeight = constants.cpsPlotHeight / 3;
             cpsCanvas.height = plotHeight * 3;
             renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, plotHeight, 'range 1 cps');
@@ -142,6 +140,10 @@
             const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
             const cpsInRange1 = countsToCps(countsInRange1);
             const renderData = getRenderData(cpsInRange1);
+
+            window.cpsData = {
+                range1: cpsInRange1,
+            }
 
             renderCpsData(cpsCanvas, renderData, 0, cpsCanvas.height, 'range 1 cps');
         }
@@ -156,7 +158,17 @@
             return;
         }
 
-        const range = data.max - data.min;
+        let displayMax = data.max;
+        let displayMin = data.min;
+        if (displayMax === 0 && displayMin === 0) {
+            displayMax = 1;
+            displayMin = -1;
+        }
+        let displayRange = displayMax - displayMin;
+        displayMax += constants.cpsExtendRange * (displayRange === 0 ? displayMax : displayRange);
+        displayMin -= constants.cpsExtendRange * (displayRange === 0 ? displayMax : displayRange);
+        displayRange = displayMax - displayMin;
+
         if (dottedCheckbox.checked) {
             // points
             ctx.fillStyle = constants.dotColor;
@@ -165,7 +177,7 @@
                     continue;
                 }
 
-                const y = height - ((data.values[x] - data.min) / range) * height + offset;
+                const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
                 ctx.fillRect(x, y, 1, 1);
             }
         } else {
@@ -180,7 +192,7 @@
                     continue;
                 }
 
-                const y = height - ((data.values[x] - data.min) / range) * height + offset;
+                const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
 
                 if (firstMove) {
                     ctx.moveTo(x, y);
@@ -205,11 +217,12 @@
         }
 
         // labels
+        const range = data.max - data.min;
         ctx.fillStyle = constants.textColor;
         ctx.textBaseline = 'top';
-        ctx.fillText(data.max.toFixed(range < 0.01 ? 4 : 2), 0, offset);
+        ctx.fillText(data.max.toFixed(range < 0.01 ? 4 : 2) + ' (max)', 0, offset);
         ctx.textBaseline = 'bottom';
-        ctx.fillText(data.min.toFixed(range < 0.01 ? 4 : 2), 0, offset + height);
+        ctx.fillText(data.min.toFixed(range < 0.01 ? 4 : 2) + ' (min)', 0, offset + height);
         ctx.textBaseline = 'top';
         ctx.fillText(label, canvas.width / 2 - label.length * 2, offset);
     }
