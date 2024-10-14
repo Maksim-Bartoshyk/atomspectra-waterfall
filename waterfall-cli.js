@@ -68,6 +68,9 @@ function convertFiles(filepath) {
 		console.info(resultFilename + '.rcspg has been created');
 	} else {
 		const waterfall = wf.createWaterfallData(baseSpectrum, deltas, channelBinningParam, spectrumBinningParam, basename);
+		// Float32Arrays are serialized by JSON.stringify as key/value objects, while template expects array-like value
+		waterfall.baseSpectrum.channels = [...waterfall.baseSpectrum.channels];
+		waterfall.deltas.forEach(delta => delta.channels = [...delta.channels]);
 		const template = fs.readFileSync('waterfall.html', 'utf-8');
 		fs.writeFileSync(resultFilename + '.html', template.replace("'waterfall-data-placeholder'", JSON.stringify(waterfall)));
 		console.info(resultFilename + '.html has been created');
