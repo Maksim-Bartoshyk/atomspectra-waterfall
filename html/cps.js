@@ -131,9 +131,9 @@
 
             const plotHeight = constants.cpsPlotHeight / 3;
             cpsCanvas.height = plotHeight * 3;
-            renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, plotHeight, 'range 1 cps');
-            renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range 2 cps');
-            renderCpsData(cpsCanvas, getRenderData(ratio), plotHeight * 2, plotHeight, 'range 1 / range 2');
+            renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, plotHeight, 'range_1 cps');
+            renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range_2 cps');
+            renderCpsData(cpsCanvas, getRenderData(ratio), plotHeight * 2, plotHeight, 'range_1 / range_2');
         } else {
             cpsToMapButton.disabled = false;
             comparisonToMapButton.disabled = true;
@@ -145,11 +145,11 @@
                 range1: cpsInRange1,
             }
 
-            renderCpsData(cpsCanvas, renderData, 0, cpsCanvas.height, 'range 1 cps');
+            renderCpsData(cpsCanvas, renderData, 0, cpsCanvas.height, 'range_1 cps');
         }
     }
 
-    function renderCpsData(canvas, data, offset, height, label) {			
+    function renderCpsData(canvas, data, offset, height, label) {
         const ctx = canvas.getContext("2d");
         ctx.fillStyle = constants.backgroundColor;
         ctx.fillRect(0, offset, canvas.width, height);

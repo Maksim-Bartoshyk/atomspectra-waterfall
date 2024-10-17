@@ -22,7 +22,7 @@ input[type="number"] {
     padding-bottom: 4px;
     text-wrap: nowrap;
 }
-.upload-control input {
+.upload-control .file-input {
     width: 573px;
 }
 .waterfall-control, .cps-control {

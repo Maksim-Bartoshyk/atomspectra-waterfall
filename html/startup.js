@@ -6,6 +6,15 @@
     const overlay = document.getElementById('blocking-overlay');
     const fileInput = document.getElementById('file-input');
     const importChannelBinInput = document.getElementById('import-channel-binning');
+    const v6614Checkbox = document.getElementById('v-6.6.14');
+
+    v6614Checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            fileInput.setAttribute('multiple', '');
+        } else {
+            fileInput.removeAttribute('multiple', '');
+        }
+    });
 
     fileInput.addEventListener('change', (e) => onFileChange(e.target));
     importChannelBinInput.addEventListener('change', (e) => { 
@@ -36,25 +45,63 @@
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
-            overlay.style.display = 'none';
-            const fileText = e.target.result;
-            const baseSpectrum = exports.deserializeSpectrum(fileText);
-            const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
-            const deltas = deltaInfo.deltas;
+        if (v6614Checkbox.checked) {
+            let fileIndex = 0;
+            let baseSpectrum;
+            let deltas = [];
 
-            const importChannelBin = parseInt(importChannelBinInput.value);
-            const spectrumBin = 1;
-            window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-            window.waterfallData = { ...originalWaterfallData };
+            reader.onload = (e) => {
+                const fileText = e.target.result;
+                
+                if (fileIndex === 0) {
+                    baseSpectrum = exports.deserializeSpectrum(fileText);
+                }
 
-            binning.resetMovingAverage();
-            binning.resetWaterfallBinning();
-            cps.initCpsControls();
-            waterfall.renderWaterfallImage();
-            cps.renderCps();
-        };
+                if (fileIndex < input.files.length) {
+                    deltas.push(exports.deserializeSpectrum(fileText));
+                }
 
-        reader.readAsText(file);
+                if (fileIndex === input.files.length - 1) {
+                    overlay.style.display = 'none';
+                    const importChannelBin = parseInt(importChannelBinInput.value);
+                    const spectrumBin = 1;
+                    deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+                    window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+                    window.waterfallData = { ...originalWaterfallData };
+
+                    binning.resetMovingAverage();
+                    binning.resetWaterfallBinning();
+                    cps.initCpsControls();
+                    waterfall.renderWaterfallImage();
+                    cps.renderCps();
+                } else {
+                    fileIndex++;
+                    reader.readAsText(input.files[fileIndex]);
+                }
+            };
+
+            reader.readAsText(file);
+        } else {
+            reader.onload = (e) => {
+                overlay.style.display = 'none';
+                const fileText = e.target.result;
+                const baseSpectrum = exports.deserializeSpectrum(fileText);
+                const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
+                const deltas = deltaInfo.deltas;
+
+                const importChannelBin = parseInt(importChannelBinInput.value);
+                const spectrumBin = 1;
+                window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+                window.waterfallData = { ...originalWaterfallData };
+
+                binning.resetMovingAverage();
+                binning.resetWaterfallBinning();
+                cps.initCpsControls();
+                waterfall.renderWaterfallImage();
+                cps.renderCps();
+            };
+
+            reader.readAsText(file);
+        }
     }
 })();

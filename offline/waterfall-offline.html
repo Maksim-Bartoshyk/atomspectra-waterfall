@@ -24,7 +24,7 @@ input[type="number"] {
     padding-bottom: 4px;
     text-wrap: nowrap;
 }
-.upload-control input {
+.upload-control .file-input {
     width: 573px;
 }
 .waterfall-control, .cps-control {
@@ -511,7 +511,7 @@ input[type="number"] {
 		<div id="blocking-overlay" class="blocking-overlay"></div>
 		<div id="upload-control" class="upload-control">
 			<span>Atomspectra file:</span>
-			<input id="file-input" type="file" accept=".txt" name="files">
+			<input id="file-input" class="file-input" type="file" accept=".txt" name="files">
 			<label for="import-channel-binning">Import with channel binning:</label>
 			<select name="import-channel-binning" id="import-channel-binning">
 				<option value="1">1</option>
@@ -521,6 +521,8 @@ input[type="number"] {
 				<option value="16">16</option>
 				<option value="32">32</option>
 			</select>
+			|<input type="checkbox" id="v-6.6.14" name="v-6.6.14"/>
+			<label for="v-6.6.14">6.6.14</label>
 		</div>
 		<div id="file-info-container" class="upload-control">
 			<span id="file-info"></span>
@@ -549,9 +551,14 @@ input[type="number"] {
 						<option value="9">9</option>
 						<option value="10">10</option>
 						<option value="15">15</option>
-						<option value="25">25</option>
+						<option value="20">20</option>
+						<option value="30">30</option>
+						<option value="40">40</option>
 						<option value="50">50</option>
-						<option value="75">75</option>
+						<option value="60">60</option>
+						<option value="70">70</option>
+						<option value="80">80</option>
+						<option value="90">90</option>
 						<option value="100">100</option>
 					</select>
 				</div>
@@ -613,17 +620,17 @@ input[type="number"] {
 		</div>
 		<div id="cps-control" class="cps-control">
 			<div class="row">
-				<button id="render-cps" class="cps-left-column">CPS trend in channel range:</button> 
+				<button id="render-cps" class="cps-left-column">CPS trend in channel range_1:</button> 
 				<input type="number" id="from-channel-1" class="numeric-input"/>-<input type="number" id="to-channel-1" class="numeric-input"/>
-				<button id="export-cps-map" class="export-button" disabled>Range 1 cps to map</button>
+				<button id="export-cps-map" class="export-button" disabled>Range_1 cps to map</button>
 			</div>
 			<div class="row">
 				<div class="cps-left-column">
 					<input type="checkbox" id="cps-comparison" name="cps-comparison"/>
-					<label for="cps-comparison">Compare to CPS in channel range:</label>
+					<label for="cps-comparison">Compare to CPS in channel range_2:</label>
 				</div>
 				<input type="number" id="from-channel-2" class="numeric-input"/>-<input type="number" id="to-channel-2" class="numeric-input"/>
-				<button id="export-comparison-map" class="export-button" disabled>Range 1/range 2 comparison to map</button>
+				<button id="export-comparison-map" class="export-button" disabled>Range_1/range_2 comparison to map</button>
 			</div>
 			<div class="row">
 				<div class="cps-left-column">
@@ -1060,9 +1067,9 @@ input[type="number"] {
 
             const plotHeight = constants.cpsPlotHeight / 3;
             cpsCanvas.height = plotHeight * 3;
-            renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, plotHeight, 'range 1 cps');
-            renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range 2 cps');
-            renderCpsData(cpsCanvas, getRenderData(ratio), plotHeight * 2, plotHeight, 'range 1 / range 2');
+            renderCpsData(cpsCanvas, getRenderData(cpsInRange1), 0, plotHeight, 'range_1 cps');
+            renderCpsData(cpsCanvas, getRenderData(cpsInRange2), plotHeight, plotHeight, 'range_2 cps');
+            renderCpsData(cpsCanvas, getRenderData(ratio), plotHeight * 2, plotHeight, 'range_1 / range_2');
         } else {
             cpsToMapButton.disabled = false;
             comparisonToMapButton.disabled = true;
@@ -1074,11 +1081,11 @@ input[type="number"] {
                 range1: cpsInRange1,
             }
 
-            renderCpsData(cpsCanvas, renderData, 0, cpsCanvas.height, 'range 1 cps');
+            renderCpsData(cpsCanvas, renderData, 0, cpsCanvas.height, 'range_1 cps');
         }
     }
 
-    function renderCpsData(canvas, data, offset, height, label) {			
+    function renderCpsData(canvas, data, offset, height, label) {
         const ctx = canvas.getContext("2d");
         ctx.fillStyle = constants.backgroundColor;
         ctx.fillRect(0, offset, canvas.width, height);
@@ -1557,6 +1564,15 @@ input[type="number"] {
     const overlay = document.getElementById('blocking-overlay');
     const fileInput = document.getElementById('file-input');
     const importChannelBinInput = document.getElementById('import-channel-binning');
+    const v6614Checkbox = document.getElementById('v-6.6.14');
+
+    v6614Checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            fileInput.setAttribute('multiple', '');
+        } else {
+            fileInput.removeAttribute('multiple', '');
+        }
+    });
 
     fileInput.addEventListener('change', (e) => onFileChange(e.target));
     importChannelBinInput.addEventListener('change', (e) => { 
@@ -1587,26 +1603,64 @@ input[type="number"] {
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
-            overlay.style.display = 'none';
-            const fileText = e.target.result;
-            const baseSpectrum = exports.deserializeSpectrum(fileText);
-            const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
-            const deltas = deltaInfo.deltas;
+        if (v6614Checkbox.checked) {
+            let fileIndex = 0;
+            let baseSpectrum;
+            let deltas = [];
 
-            const importChannelBin = parseInt(importChannelBinInput.value);
-            const spectrumBin = 1;
-            window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-            window.waterfallData = { ...originalWaterfallData };
+            reader.onload = (e) => {
+                const fileText = e.target.result;
+                
+                if (fileIndex === 0) {
+                    baseSpectrum = exports.deserializeSpectrum(fileText);
+                }
 
-            binning.resetMovingAverage();
-            binning.resetWaterfallBinning();
-            cps.initCpsControls();
-            waterfall.renderWaterfallImage();
-            cps.renderCps();
-        };
+                if (fileIndex < input.files.length) {
+                    deltas.push(exports.deserializeSpectrum(fileText));
+                }
 
-        reader.readAsText(file);
+                if (fileIndex === input.files.length - 1) {
+                    overlay.style.display = 'none';
+                    const importChannelBin = parseInt(importChannelBinInput.value);
+                    const spectrumBin = 1;
+                    deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+                    window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+                    window.waterfallData = { ...originalWaterfallData };
+
+                    binning.resetMovingAverage();
+                    binning.resetWaterfallBinning();
+                    cps.initCpsControls();
+                    waterfall.renderWaterfallImage();
+                    cps.renderCps();
+                } else {
+                    fileIndex++;
+                    reader.readAsText(input.files[fileIndex]);
+                }
+            };
+
+            reader.readAsText(file);
+        } else {
+            reader.onload = (e) => {
+                overlay.style.display = 'none';
+                const fileText = e.target.result;
+                const baseSpectrum = exports.deserializeSpectrum(fileText);
+                const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
+                const deltas = deltaInfo.deltas;
+
+                const importChannelBin = parseInt(importChannelBinInput.value);
+                const spectrumBin = 1;
+                window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+                window.waterfallData = { ...originalWaterfallData };
+
+                binning.resetMovingAverage();
+                binning.resetWaterfallBinning();
+                cps.initCpsControls();
+                waterfall.renderWaterfallImage();
+                cps.renderCps();
+            };
+
+            reader.readAsText(file);
+        }
     }
 })();</script>
 	</body>
