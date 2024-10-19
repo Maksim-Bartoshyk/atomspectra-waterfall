@@ -606,6 +606,36 @@ input[type="number"] {
 						<option value="1">1%</option>
 					</select>
 				</div>
+				<div class="col">
+					<label for="timezone">Display time</label>
+					<select name="timezone" id="timezone">
+						<option value="-11">-11</option>
+						<option value="-10">-10</option>
+						<option value="-9">-9</option>
+						<option value="-8">-8</option>
+						<option value="-7">-7</option>
+						<option value="-6">-6</option>
+						<option value="-5">-5</option>
+						<option value="-4">-4</option>
+						<option value="-3">-3</option>
+						<option value="-2">-2</option>
+						<option value="-1">-1</option>
+						<option value="0">UTC</option>
+						<option value="local" selected>Local</option>
+						<option value="1">+1</option>
+						<option value="2">+2</option>
+						<option value="3">+3</option>
+						<option value="4">+4</option>
+						<option value="5">+5</option>
+						<option value="6">+6</option>
+						<option value="7">+7</option>
+						<option value="8">+8</option>
+						<option value="9">+9</option>
+						<option value="10">+10</option>
+						<option value="11">+11</option>
+						<option value="12">+12</option>
+					</select>
+				</div>
 			</div>
 		</div>
 		<div id="plot-container" class="plot-container">
@@ -667,16 +697,30 @@ input[type="number"] {
         subtractBase: false,
         movingAverage: 0,
         maxCpsPercent: 100,
+        timeOffsetHours: getLocalTimeOffsetHours(),
     };
     window.common = {
         timeToString: timestamp => {
-            const utcISO = new Date(timestamp).toISOString();
+            const utcISO = new Date(timestamp + waterfallState.timeOffsetHours * 60 * 60 * 1000).toISOString();
+            let offsetStr;
+            if (waterfallState.timeOffsetHours > 0) {
+                offsetStr = '+' + waterfallState.timeOffsetHours + 'h';
+            } else if (waterfallState.timeOffsetHours < 0) {
+                offsetStr = '' + waterfallState.timeOffsetHours + 'h';
+            } else {
+                offsetStr = 'UTC';
+            }
 
-            return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+            return utcISO.split('T').join(' ').split('.')[0] + ' ' + offsetStr;
         },
         channelToEnergy: channel => {
             return waterfallData.baseSpectrum.calibration.reduce((e, c, i) => e += Math.pow(channel, i) * c, 0);
-        }
+        },
+        getLocalTimeOffsetHours: () => getLocalTimeOffsetHours(),
+    }
+
+    function getLocalTimeOffsetHours() {
+        return -(new Date().getTimezoneOffset() / 60);
     }
 })();
 </script>
@@ -1381,6 +1425,9 @@ input[type="number"] {
 
     const maxCpsInput = document.getElementById('max-cps');
     maxCpsInput.addEventListener('change', (e) => onMaxCpsChange(e.target.value));
+
+    const timezoneInput = document.getElementById('timezone');
+    timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
     
     window.binning = {
         resetWaterfallBinning: () => resetWaterfallBinning(),
@@ -1466,6 +1513,16 @@ input[type="number"] {
 
     function onMaxCpsChange(value) {
         waterfallState.maxCpsPercent = parseInt(value);
+        waterfall.renderWaterfallImage();
+    }
+
+    function onTimezoneChange(value) {
+        if (value === 'local') {
+            waterfallState.timeOffsetHours = common.getLocalTimeOffsetHours();
+        } else {
+            waterfallState.timeOffsetHours = parseInt(value);
+        }
+        
         waterfall.renderWaterfallImage();
     }
     

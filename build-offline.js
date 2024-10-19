@@ -9,7 +9,7 @@ waterfall = waterfall.replace('<script src="./html/common.js"></script>', '<scri
 waterfall = waterfall.replace('<script src="./html/waterfall.js"></script>', '<script>' + fs.readFileSync('./html/waterfall.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/cps.js"></script>', '<script>' + fs.readFileSync('./html/cps.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/cursor.js"></script>', '<script>' + fs.readFileSync('./html/cursor.js') + '</script>');
-waterfall = waterfall.replace('<script src="./html/binning.js"></script>', '<script>' + fs.readFileSync('./html/binning.js') + '</script>');
+waterfall = waterfall.replace('<script src="./html/waterfall-control.js"></script>', '<script>' + fs.readFileSync('./html/waterfall-control.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/startup.js"></script>', '<script>' + fs.readFileSync('./html/startup.js') + '</script>');
 fs.writeFileSync('./offline/waterfall-offline.html', waterfall);
 

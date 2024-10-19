@@ -24,15 +24,29 @@
         subtractBase: false,
         movingAverage: 0,
         maxCpsPercent: 100,
+        timeOffsetHours: getLocalTimeOffsetHours(),
     };
     window.common = {
         timeToString: timestamp => {
-            const utcISO = new Date(timestamp).toISOString();
+            const utcISO = new Date(timestamp + waterfallState.timeOffsetHours * 60 * 60 * 1000).toISOString();
+            let offsetStr;
+            if (waterfallState.timeOffsetHours > 0) {
+                offsetStr = '+' + waterfallState.timeOffsetHours + 'h';
+            } else if (waterfallState.timeOffsetHours < 0) {
+                offsetStr = '' + waterfallState.timeOffsetHours + 'h';
+            } else {
+                offsetStr = 'UTC';
+            }
 
-            return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+            return utcISO.split('T').join(' ').split('.')[0] + ' ' + offsetStr;
         },
         channelToEnergy: channel => {
             return waterfallData.baseSpectrum.calibration.reduce((e, c, i) => e += Math.pow(channel, i) * c, 0);
-        }
+        },
+        getLocalTimeOffsetHours: () => getLocalTimeOffsetHours(),
+    }
+
+    function getLocalTimeOffsetHours() {
+        return -(new Date().getTimezoneOffset() / 60);
     }
 })();

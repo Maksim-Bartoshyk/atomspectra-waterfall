@@ -22,6 +22,9 @@
 
     const maxCpsInput = document.getElementById('max-cps');
     maxCpsInput.addEventListener('change', (e) => onMaxCpsChange(e.target.value));
+
+    const timezoneInput = document.getElementById('timezone');
+    timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
     
     window.binning = {
         resetWaterfallBinning: () => resetWaterfallBinning(),
@@ -107,6 +110,16 @@
 
     function onMaxCpsChange(value) {
         waterfallState.maxCpsPercent = parseInt(value);
+        waterfall.renderWaterfallImage();
+    }
+
+    function onTimezoneChange(value) {
+        if (value === 'local') {
+            waterfallState.timeOffsetHours = common.getLocalTimeOffsetHours();
+        } else {
+            waterfallState.timeOffsetHours = parseInt(value);
+        }
+        
         waterfall.renderWaterfallImage();
     }
     
