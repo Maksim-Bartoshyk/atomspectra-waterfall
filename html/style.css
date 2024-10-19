@@ -2,7 +2,7 @@ body {
     background: #444;
     color: #CCC;
     margin: 0;
-    min-width: 1100px;
+    min-width: 1200px;
     padding: 0 8px;
 }
 body * {
@@ -16,14 +16,26 @@ select, input {
 input[type="number"] {
     border: 1px solid #CCC;
 }
+.blocking-overlay {
+    position: absolute;
+    background: rgba(100, 100, 100, 0.75);
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    min-width: 1200px;
+}
 .upload-control {
     border-bottom: 1px dotted;
     padding-top: 24px;
     padding-bottom: 4px;
     text-wrap: nowrap;
 }
+.upload-control * {
+    display: inline-block;
+}
 .upload-control .file-input {
-    width: 573px;
+    width: 620px;
 }
 .waterfall-control, .cps-control {
     width: 100%;
@@ -37,18 +49,17 @@ input[type="number"] {
     display: inline-block;
     margin-bottom: 12px;
     text-wrap: nowrap;
-    width: 100%;
 }
 .col {
-    display: inline-block;
+    align-items: baseline;
+    display: inline-flex;
+    padding-right: 12px;
     text-wrap: nowrap;
-    width: 280px;
+    width: 256px;
 }
 .col label {
+    flex-grow: 1;
     margin-left: 4px;
-}
-.col select {
-    margin-left: 16px;
 }
 .scale-switch {
     display: inline-block;
@@ -105,13 +116,4 @@ input[type="number"] {
 }
 .error {
     color: orangered;
-}
-.blocking-overlay {
-    position: absolute;
-    background: rgba(100, 100, 100, 0.75);
-    top: 56px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: 1132px;
 }

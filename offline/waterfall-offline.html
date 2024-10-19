@@ -4,7 +4,7 @@
     background: #444;
     color: #CCC;
     margin: 0;
-    min-width: 1100px;
+    min-width: 1200px;
     padding: 0 8px;
 }
 body * {
@@ -18,14 +18,26 @@ select, input {
 input[type="number"] {
     border: 1px solid #CCC;
 }
+.blocking-overlay {
+    position: absolute;
+    background: rgba(100, 100, 100, 0.75);
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    min-width: 1200px;
+}
 .upload-control {
     border-bottom: 1px dotted;
     padding-top: 24px;
     padding-bottom: 4px;
     text-wrap: nowrap;
 }
+.upload-control * {
+    display: inline-block;
+}
 .upload-control .file-input {
-    width: 573px;
+    width: 620px;
 }
 .waterfall-control, .cps-control {
     width: 100%;
@@ -39,18 +51,17 @@ input[type="number"] {
     display: inline-block;
     margin-bottom: 12px;
     text-wrap: nowrap;
-    width: 100%;
 }
 .col {
-    display: inline-block;
+    align-items: baseline;
+    display: inline-flex;
+    padding-right: 12px;
     text-wrap: nowrap;
-    width: 280px;
+    width: 256px;
 }
 .col label {
+    flex-grow: 1;
     margin-left: 4px;
-}
-.col select {
-    margin-left: 16px;
 }
 .scale-switch {
     display: inline-block;
@@ -108,15 +119,7 @@ input[type="number"] {
 .error {
     color: orangered;
 }
-.blocking-overlay {
-    position: absolute;
-    background: rgba(100, 100, 100, 0.75);
-    top: 56px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: 1132px;
-}</style>
+</style>
 		<script>
 			// error console
 			window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -512,7 +515,7 @@ input[type="number"] {
 		<div id="upload-control" class="upload-control">
 			<span>Atomspectra file:</span>
 			<input id="file-input" class="file-input" type="file" accept=".txt" name="files">
-			<label for="import-channel-binning">Import with channel binning:</label>
+			<label for="import-channel-binning">Import channel binning:</label>
 			<select name="import-channel-binning" id="import-channel-binning">
 				<option value="1">1</option>
 				<option value="2">2</option>
@@ -607,7 +610,7 @@ input[type="number"] {
 					</select>
 				</div>
 				<div class="col">
-					<label for="timezone">Display time</label>
+					<label for="timezone">Show time as:</label>
 					<select name="timezone" id="timezone">
 						<option value="-11">-11</option>
 						<option value="-10">-10</option>
