@@ -66,7 +66,12 @@
     }
 
     function onSpectrumBinningChange(value) {
-        const newBin = parseInt(value);
+        let newBin = parseInt(value);
+        if (isNaN(newBin) || newBin < 1) {
+            newBin = 1;
+            spectrumBinningInput.value = newBin;
+        }
+
         waterfallState.spectrumBinning = newBin;
 
         binning.applyBinningAndAverage();

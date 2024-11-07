@@ -61,6 +61,9 @@ input[type="number"] {
     flex-grow: 1;
     margin-left: 4px;
 }
+.col input {
+    max-width: 64px;
+}
 .scale-switch {
     display: inline-block;
     margin-right: 16px;
