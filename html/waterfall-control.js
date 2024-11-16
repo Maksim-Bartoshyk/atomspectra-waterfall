@@ -27,20 +27,22 @@
     timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
     
     window.binning = {
-        resetWaterfallBinning: () => resetWaterfallBinning(),
+        resetWaterfallBinning: (...args) => resetWaterfallBinning(...args),
         resetMovingAverage: () => resetMovingAverage(),
         applyBinningAndAverage: () => applyBinningAndAverage(),
     };
 
-    function resetWaterfallBinning() {
+    function resetWaterfallBinning(channelBinning) {
         waterfallState.spectrumBinning = 1;
         spectrumBinningInput.value = waterfallState.spectrumBinning;
         
-        waterfallState.channelBinning = originalWaterfallData.channelBinning;
+        waterfallState.channelBinning = channelBinning >= originalWaterfallData.channelBinning
+            ? channelBinning
+            : originalWaterfallData.channelBinning;
         channelBinningInput.value = waterfallState.channelBinning;
         const opts = channelBinningInput.getElementsByTagName('option');
         [...opts].forEach(opt => {
-            opt.disabled = parseInt(opt.value) < waterfallState.channelBinning;
+            opt.disabled = parseInt(opt.value) < originalWaterfallData.channelBinning;
         });
     }
 

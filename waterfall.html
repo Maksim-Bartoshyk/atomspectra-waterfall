@@ -28,12 +28,12 @@
 			<select name="import-channel-binning" id="import-channel-binning">
 				<option value="1">1</option>
 				<option value="2">2</option>
-				<option value="4">4</option>
-				<option value="8" selected>8</option>
+				<option value="4" selected>4</option>
+				<option value="8">8</option>
 				<option value="16">16</option>
 				<option value="32">32</option>
 			</select>
-			|<input type="checkbox" id="v-6.6.14" name="v-6.6.14"/>
+			| <input type="checkbox" id="v-6.6.14" name="v-6.6.14"/>
 			<label for="v-6.6.14">6.6.14</label>
 		</div>
 		<div id="file-info-container" class="upload-control">
@@ -50,40 +50,8 @@
 					<label for="log">LOG</label>
 				</div>
 				<div class="col">
-					<label for="spectrum-binning">Spectrum binning:</label>
-					<input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning"/>
-				</div>
-				<div class="col">
-					<label for="channel-binning">Channel binning:</label>
-					<select name="channel-binning" id="channel-binning">
-						<option value="1">1</option>
-						<option value="2">2</option>
-						<option value="4">4</option>
-						<option value="8">8</option>
-						<option value="16">16</option>
-						<option value="32">32</option>
-					</select>
-				</div>
-				<div class="col">
-					<label for="moving-average">Moving average:</label>
-					<select name="moving-average" id="moving-average">
-						<option value="0">0</option>
-						<option value="2">2</option>
-						<option value="4">4</option>
-						<option value="8">8</option>
-						<option value="16">16</option>
-						<option value="32">32</option>
-					</select>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col">
 					<input type="checkbox" id="blur-waterfall" name="blur-waterfall"/>
-					<label for="blur-waterfall">Blur</label>
-				</div>
-				<div class="col">
-					<input type="checkbox" id="subtract-base" name="subtract-base"/>
-					<label for="subtract-base">Subtract base spectrum</label>
+					<label for="blur-waterfall">Blur waterfall image</label>
 				</div>
 				<div class="col">
 					<label for="max-cps">Scale maximum:</label>
@@ -128,12 +96,44 @@
 					</select>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col">
+					<input type="checkbox" id="subtract-base" name="subtract-base"/>
+					<label for="subtract-base">Subtract base spectrum</label>
+				</div>
+				<div class="col">
+					<label for="spectrum-binning">Spectrum binning:</label>
+					<input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning"/>
+				</div>
+				<div class="col">
+					<label for="channel-binning">Channel binning:</label>
+					<select name="channel-binning" id="channel-binning">
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="4">4</option>
+						<option value="8">8</option>
+						<option value="16">16</option>
+						<option value="32">32</option>
+					</select>
+				</div>
+				<div class="col">
+					<label for="moving-average">Moving average:</label>
+					<select name="moving-average" id="moving-average">
+						<option value="0">0</option>
+						<option value="2">2</option>
+						<option value="4">4</option>
+						<option value="8">8</option>
+						<option value="16">16</option>
+						<option value="32">32</option>
+					</select>
+				</div>
+			</div>
 		</div>
 		<div id="plot-container" class="plot-container">
 			<div id="horizontal-cursor" class="horizontal-cursor"></div>
 			<div id="vertical-cursor" class="vertical-cursor"></div>
 			<div id="waterfall-container" class="waterfall-container">
-				<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
+				<canvas id="waterfall-plot" class="plot" width="662" height="0"></canvas>
 			</div>
 			<div id="cps-container" class="cps-container">
 				<canvas id="cps-plot" class="cps-plot" width="0" height="0"></canvas>

@@ -7,7 +7,7 @@ Provided as is, use at your own risk. This software is not sertified as a measur
 Usage (simple, might work on mobile/tablet as well):
 1) download repository
 2) save delta-spectrum file on computer
-3) open ```offline/waterfall-offline.html``` file in browser
+3) open ```offline/waterfall-offline.html``` file in browser, (Chrome is recommended)
 4) upload spectrogram file
 5) apply spectrum/channel binning
 6) right mouse click on spectrogram - save image as
@@ -23,7 +23,7 @@ Usage (advanced, mostly for large spectrograms):
 7) right mouse click on spectrogram - save image as
 
 Parameters:
-1) ```-channel-binning X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```-channel-binning 8``` makes 1024 channes from 8192, default is 8
+1) ```-channel-binning X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```-channel-binning 8``` makes 1024 channes from 8192, default is 4
 2) ```-spectrum-binning X``` reduce spectrum count (spectrogram height) by provided factor (X), i.e. ```-spectrum-binning 2``` makes 100 spectrums from 200, default is 1
 3) ```--rcspg``` outputs data in radiacode spectrogram format
 

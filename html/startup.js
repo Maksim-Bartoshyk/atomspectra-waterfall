@@ -31,11 +31,7 @@
         infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
             + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
         
-        window.waterfallData = { ...originalWaterfallData };
-        binning.resetWaterfallBinning();
-        waterfall.renderWaterfallImage();
-        cps.initCpsControls();
-        cps.renderCps();
+        start();
     }
 
     function onFileChange(input) {
@@ -67,13 +63,8 @@
                     const spectrumBin = 1;
                     deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
                     window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-                    window.waterfallData = { ...originalWaterfallData };
-
-                    binning.resetMovingAverage();
-                    binning.resetWaterfallBinning();
-                    cps.initCpsControls();
-                    waterfall.renderWaterfallImage();
-                    cps.renderCps();
+                    
+                    start();
                 } else {
                     fileIndex++;
                     reader.readAsText(input.files[fileIndex]);
@@ -92,16 +83,20 @@
                 const importChannelBin = parseInt(importChannelBinInput.value);
                 const spectrumBin = 1;
                 window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-                window.waterfallData = { ...originalWaterfallData };
 
-                binning.resetMovingAverage();
-                binning.resetWaterfallBinning();
-                cps.initCpsControls();
-                waterfall.renderWaterfallImage();
-                cps.renderCps();
+                start();
             };
 
             reader.readAsText(file);
         }
+    }
+
+    function start() {
+        binning.resetMovingAverage();
+        binning.resetWaterfallBinning(16);
+        binning.applyBinningAndAverage();
+        cps.initCpsControls();
+        waterfall.renderWaterfallImage();
+        cps.renderCps();
     }
 })();

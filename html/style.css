@@ -1,13 +1,18 @@
 body {
     background: #444;
+    box-sizing: border-box;
     color: #CCC;
     margin: 0;
-    min-width: 1200px;
-    padding: 0 8px;
+    min-width: 1024px;
+    padding: 0 12px;
+    scrollbar-color: #444 #888;
 }
 body * {
-    font-size: 18px;
-    font-family: monospace;
+    box-sizing: border-box;
+    font-size: 16px;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
 }
 select, input {
     background: #444;
@@ -16,18 +21,21 @@ select, input {
 input[type="number"] {
     border: 1px solid #CCC;
 }
+input[type="checkbox"], input[type="radio"] {
+    margin: 3px 3px 3px 0;
+}
 .blocking-overlay {
     position: absolute;
     background: rgba(100, 100, 100, 0.75);
-    top: 56px;
+    top: 40px;
     bottom: 0;
     left: 0;
     right: 0;
-    min-width: 1200px;
+    min-width: 1024px;
 }
 .upload-control {
     border-bottom: 1px dotted;
-    padding-top: 24px;
+    padding-top: 12px;
     padding-bottom: 4px;
     text-wrap: nowrap;
 }
@@ -35,31 +43,28 @@ input[type="number"] {
     display: inline-block;
 }
 .upload-control .file-input {
-    width: 620px;
+    width: 580px;
 }
 .waterfall-control, .cps-control {
     width: 100%;
     border-bottom: 1px dotted;
-    padding: 4px 0;
 }
 .waterfall-control {
-    padding-top: 24px;
+    padding-top: 12px;
 }
 .row {
-    display: inline-block;
-    margin-bottom: 12px;
-    text-wrap: nowrap;
+    display: flex;
+    justify-content: space-between;
+    max-width: 1000px;
+    padding-bottom: 8px;
 }
 .col {
     align-items: baseline;
     display: inline-flex;
-    padding-right: 12px;
-    text-wrap: nowrap;
-    width: 256px;
+    width: 220px;
 }
 .col label {
     flex-grow: 1;
-    margin-left: 4px;
 }
 .col input {
     max-width: 64px;
@@ -69,14 +74,14 @@ input[type="number"] {
     margin-right: 16px;
 }
 .plot-container, .plot-container .cps-container {
-    height: calc(100% - 300px); /* - other controls height */
+    height: calc(100% - 212px); /* - other controls height */
 }
 .plot-container .waterfall-container {
     display: inline-block;
     height: 100%;
     max-width: calc(100% - 320px); /* cpsPlotWidth in js + scroll */
     overflow-x: scroll;
-    overflow-y: auto;
+    overflow-y: scroll;
 }
 .plot-container .cps-container {
     display: inline-block;
@@ -105,17 +110,19 @@ input[type="number"] {
     border-right: 1px dotted #777;
     width: 0;
 }
+.cps-control {
+    padding-top: 8px;
+}
 .cps-control .numeric-input {
     margin: 0 4px;
-    width: 120px;
+    width: 150px;
 }
 .cps-left-column {
     display: inline-block;
-    width: 400px;
+    width: 330px;
 }
 .export-button {
-    margin-left: 4px;
-    width: 400px;
+    width: 340px;
 }
 .error {
     color: orangered;

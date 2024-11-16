@@ -2,14 +2,19 @@
 	<head>
 		<style>body {
     background: #444;
+    box-sizing: border-box;
     color: #CCC;
     margin: 0;
-    min-width: 1200px;
-    padding: 0 8px;
+    min-width: 1024px;
+    padding: 0 12px;
+    scrollbar-color: #444 #888;
 }
 body * {
-    font-size: 18px;
-    font-family: monospace;
+    box-sizing: border-box;
+    font-size: 16px;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
 }
 select, input {
     background: #444;
@@ -18,18 +23,21 @@ select, input {
 input[type="number"] {
     border: 1px solid #CCC;
 }
+input[type="checkbox"], input[type="radio"] {
+    margin: 3px 3px 3px 0;
+}
 .blocking-overlay {
     position: absolute;
     background: rgba(100, 100, 100, 0.75);
-    top: 56px;
+    top: 40px;
     bottom: 0;
     left: 0;
     right: 0;
-    min-width: 1200px;
+    min-width: 1024px;
 }
 .upload-control {
     border-bottom: 1px dotted;
-    padding-top: 24px;
+    padding-top: 12px;
     padding-bottom: 4px;
     text-wrap: nowrap;
 }
@@ -37,31 +45,28 @@ input[type="number"] {
     display: inline-block;
 }
 .upload-control .file-input {
-    width: 620px;
+    width: 580px;
 }
 .waterfall-control, .cps-control {
     width: 100%;
     border-bottom: 1px dotted;
-    padding: 4px 0;
 }
 .waterfall-control {
-    padding-top: 24px;
+    padding-top: 12px;
 }
 .row {
-    display: inline-block;
-    margin-bottom: 12px;
-    text-wrap: nowrap;
+    display: flex;
+    justify-content: space-between;
+    max-width: 1000px;
+    padding-bottom: 8px;
 }
 .col {
     align-items: baseline;
     display: inline-flex;
-    padding-right: 12px;
-    text-wrap: nowrap;
-    width: 256px;
+    width: 220px;
 }
 .col label {
     flex-grow: 1;
-    margin-left: 4px;
 }
 .col input {
     max-width: 64px;
@@ -71,14 +76,14 @@ input[type="number"] {
     margin-right: 16px;
 }
 .plot-container, .plot-container .cps-container {
-    height: calc(100% - 300px); /* - other controls height */
+    height: calc(100% - 212px); /* - other controls height */
 }
 .plot-container .waterfall-container {
     display: inline-block;
     height: 100%;
     max-width: calc(100% - 320px); /* cpsPlotWidth in js + scroll */
     overflow-x: scroll;
-    overflow-y: auto;
+    overflow-y: scroll;
 }
 .plot-container .cps-container {
     display: inline-block;
@@ -107,17 +112,19 @@ input[type="number"] {
     border-right: 1px dotted #777;
     width: 0;
 }
+.cps-control {
+    padding-top: 8px;
+}
 .cps-control .numeric-input {
     margin: 0 4px;
-    width: 120px;
+    width: 150px;
 }
 .cps-left-column {
     display: inline-block;
-    width: 400px;
+    width: 330px;
 }
 .export-button {
-    margin-left: 4px;
-    width: 400px;
+    width: 340px;
 }
 .error {
     color: orangered;
@@ -522,12 +529,12 @@ input[type="number"] {
 			<select name="import-channel-binning" id="import-channel-binning">
 				<option value="1">1</option>
 				<option value="2">2</option>
-				<option value="4">4</option>
-				<option value="8" selected>8</option>
+				<option value="4" selected>4</option>
+				<option value="8">8</option>
 				<option value="16">16</option>
 				<option value="32">32</option>
 			</select>
-			|<input type="checkbox" id="v-6.6.14" name="v-6.6.14"/>
+			| <input type="checkbox" id="v-6.6.14" name="v-6.6.14"/>
 			<label for="v-6.6.14">6.6.14</label>
 		</div>
 		<div id="file-info-container" class="upload-control">
@@ -544,40 +551,8 @@ input[type="number"] {
 					<label for="log">LOG</label>
 				</div>
 				<div class="col">
-					<label for="spectrum-binning">Spectrum binning:</label>
-					<input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning"/>
-				</div>
-				<div class="col">
-					<label for="channel-binning">Channel binning:</label>
-					<select name="channel-binning" id="channel-binning">
-						<option value="1">1</option>
-						<option value="2">2</option>
-						<option value="4">4</option>
-						<option value="8">8</option>
-						<option value="16">16</option>
-						<option value="32">32</option>
-					</select>
-				</div>
-				<div class="col">
-					<label for="moving-average">Moving average:</label>
-					<select name="moving-average" id="moving-average">
-						<option value="0">0</option>
-						<option value="2">2</option>
-						<option value="4">4</option>
-						<option value="8">8</option>
-						<option value="16">16</option>
-						<option value="32">32</option>
-					</select>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col">
 					<input type="checkbox" id="blur-waterfall" name="blur-waterfall"/>
-					<label for="blur-waterfall">Blur</label>
-				</div>
-				<div class="col">
-					<input type="checkbox" id="subtract-base" name="subtract-base"/>
-					<label for="subtract-base">Subtract base spectrum</label>
+					<label for="blur-waterfall">Blur waterfall image</label>
 				</div>
 				<div class="col">
 					<label for="max-cps">Scale maximum:</label>
@@ -622,12 +597,44 @@ input[type="number"] {
 					</select>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col">
+					<input type="checkbox" id="subtract-base" name="subtract-base"/>
+					<label for="subtract-base">Subtract base spectrum</label>
+				</div>
+				<div class="col">
+					<label for="spectrum-binning">Spectrum binning:</label>
+					<input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning"/>
+				</div>
+				<div class="col">
+					<label for="channel-binning">Channel binning:</label>
+					<select name="channel-binning" id="channel-binning">
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="4">4</option>
+						<option value="8">8</option>
+						<option value="16">16</option>
+						<option value="32">32</option>
+					</select>
+				</div>
+				<div class="col">
+					<label for="moving-average">Moving average:</label>
+					<select name="moving-average" id="moving-average">
+						<option value="0">0</option>
+						<option value="2">2</option>
+						<option value="4">4</option>
+						<option value="8">8</option>
+						<option value="16">16</option>
+						<option value="32">32</option>
+					</select>
+				</div>
+			</div>
 		</div>
 		<div id="plot-container" class="plot-container">
 			<div id="horizontal-cursor" class="horizontal-cursor"></div>
 			<div id="vertical-cursor" class="vertical-cursor"></div>
 			<div id="waterfall-container" class="waterfall-container">
-				<canvas id="waterfall-plot" class="plot" width="0" height="0"></canvas>
+				<canvas id="waterfall-plot" class="plot" width="662" height="0"></canvas>
 			</div>
 			<div id="cps-container" class="cps-container">
 				<canvas id="cps-plot" class="cps-plot" width="0" height="0"></canvas>
@@ -1415,20 +1422,22 @@ input[type="number"] {
     timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
     
     window.binning = {
-        resetWaterfallBinning: () => resetWaterfallBinning(),
+        resetWaterfallBinning: (...args) => resetWaterfallBinning(...args),
         resetMovingAverage: () => resetMovingAverage(),
         applyBinningAndAverage: () => applyBinningAndAverage(),
     };
 
-    function resetWaterfallBinning() {
+    function resetWaterfallBinning(channelBinning) {
         waterfallState.spectrumBinning = 1;
         spectrumBinningInput.value = waterfallState.spectrumBinning;
         
-        waterfallState.channelBinning = originalWaterfallData.channelBinning;
+        waterfallState.channelBinning = channelBinning >= originalWaterfallData.channelBinning
+            ? channelBinning
+            : originalWaterfallData.channelBinning;
         channelBinningInput.value = waterfallState.channelBinning;
         const opts = channelBinningInput.getElementsByTagName('option');
         [...opts].forEach(opt => {
-            opt.disabled = parseInt(opt.value) < waterfallState.channelBinning;
+            opt.disabled = parseInt(opt.value) < originalWaterfallData.channelBinning;
         });
     }
 
@@ -1636,11 +1645,7 @@ input[type="number"] {
         infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
             + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
         
-        window.waterfallData = { ...originalWaterfallData };
-        binning.resetWaterfallBinning();
-        waterfall.renderWaterfallImage();
-        cps.initCpsControls();
-        cps.renderCps();
+        start();
     }
 
     function onFileChange(input) {
@@ -1672,13 +1677,8 @@ input[type="number"] {
                     const spectrumBin = 1;
                     deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
                     window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-                    window.waterfallData = { ...originalWaterfallData };
-
-                    binning.resetMovingAverage();
-                    binning.resetWaterfallBinning();
-                    cps.initCpsControls();
-                    waterfall.renderWaterfallImage();
-                    cps.renderCps();
+                    
+                    start();
                 } else {
                     fileIndex++;
                     reader.readAsText(input.files[fileIndex]);
@@ -1697,17 +1697,21 @@ input[type="number"] {
                 const importChannelBin = parseInt(importChannelBinInput.value);
                 const spectrumBin = 1;
                 window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-                window.waterfallData = { ...originalWaterfallData };
 
-                binning.resetMovingAverage();
-                binning.resetWaterfallBinning();
-                cps.initCpsControls();
-                waterfall.renderWaterfallImage();
-                cps.renderCps();
+                start();
             };
 
             reader.readAsText(file);
         }
+    }
+
+    function start() {
+        binning.resetMovingAverage();
+        binning.resetWaterfallBinning(16);
+        binning.applyBinningAndAverage();
+        cps.initCpsControls();
+        waterfall.renderWaterfallImage();
+        cps.renderCps();
     }
 })();</script>
 	</body>

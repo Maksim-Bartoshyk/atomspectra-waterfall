@@ -4,7 +4,7 @@ const sp = require('./shared/spectrum.js');
 const rc = require('./shared/radiacode.js');
 const wf = require('./shared/waterfall-data.js');
 
-let channelBinningParam = 8;
+let channelBinningParam = 4;
 let spectrumBinningParam = 1;
 let rcspg = false;
 
