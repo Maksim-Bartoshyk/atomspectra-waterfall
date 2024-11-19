@@ -2,10 +2,12 @@
     // waterfall binning/average control
     const spectrumBinningInput = document.getElementById('spectrum-binning');
     const channelBinningInput = document.getElementById('channel-binning');
-    const movingAverageInput = document.getElementById('moving-average');
+    const movingAverageVerticalInput = document.getElementById('moving-average-vertical');
+    const movingAverageHorizontalInput = document.getElementById('moving-average-horizontal');
     spectrumBinningInput.addEventListener('change', e => onSpectrumBinningChange(e.target.value));
     channelBinningInput.addEventListener('change', e => onChannelBinningChange(e.target.value));
-    movingAverageInput.addEventListener('change', e => onMovingAverageChange(e.target.value));
+    movingAverageVerticalInput.addEventListener('change', e => onVerticalMovingAverageChange(e.target.value));
+    movingAverageHorizontalInput.addEventListener('change', e => onHorizontalMovingAverageChange(e.target.value));
 
     const linBtn = document.getElementById('lin');
     const sqrtBtn = document.getElementById('sqrt');
@@ -22,6 +24,9 @@
 
     const maxCpsInput = document.getElementById('max-cps');
     maxCpsInput.addEventListener('change', (e) => onMaxCpsChange(e.target.value));
+
+    const minCpsInput = document.getElementById('min-cps');
+    minCpsInput.addEventListener('change', (e) => onMinCpsChange(e.target.value));
 
     const timezoneInput = document.getElementById('timezone');
     timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
@@ -47,8 +52,10 @@
     }
 
     function resetMovingAverage() {
-        waterfallState.movingAverage = 0;
-        movingAverageInput.value = 0;
+        waterfallState.movingAverageVertical = 0;
+        waterfallState.movingAverageHorizontal = 0;
+        movingAverageVerticalInput.value = 0;
+        movingAverageHorizontalInput.value = 0;
     }
 
     function onWaterfallScaleChange(value) {
@@ -103,12 +110,24 @@
         cps.renderCps();
     }
 
-    function onMovingAverageChange(value) {
+    function onVerticalMovingAverageChange(value) {
         const windowSize = parseInt(value);
-        if (windowSize === waterfallState.movingAverage) {
+        if (windowSize === waterfallState.movingAverageVertical) {
             return;
         }
-        waterfallState.movingAverage = windowSize;
+        waterfallState.movingAverageVertical = windowSize;
+
+        binning.applyBinningAndAverage();
+        waterfall.renderWaterfallImage();
+        cps.renderCps();
+    }
+
+    function onHorizontalMovingAverageChange(value) {
+        const windowSize = parseInt(value);
+        if (windowSize === waterfallState.movingAverageHorizontal) {
+            return;
+        }
+        waterfallState.movingAverageHorizontal = windowSize;
 
         binning.applyBinningAndAverage();
         waterfall.renderWaterfallImage();
@@ -116,7 +135,34 @@
     }
 
     function onMaxCpsChange(value) {
-        waterfallState.maxCpsPercent = parseInt(value);
+        let newVal = parseInt(value);
+        if (isNaN(newVal) || newVal < 1) {
+            newVal = 100;
+            maxCpsInput.value = newVal;
+        }
+
+        waterfallState.maxCpsPercent = newVal;
+        if (waterfallState.minCpsPercent > newVal) {
+            waterfallState.minCpsPercent = newVal - 1;
+            minCpsInput.value = waterfallState.minCpsPercent;
+        }
+
+        waterfall.renderWaterfallImage();
+    }
+
+    function onMinCpsChange(value) {
+        let newVal = parseInt(value);
+        if (isNaN(newVal) || newVal < 0) {
+            newVal = 0;
+            minCpsInput.value = newVal;
+        }
+
+        waterfallState.minCpsPercent = newVal;
+        if (waterfallState.maxCpsPercent < newVal) {
+            waterfallState.maxCpsPercent = newVal + 1;
+            maxCpsInput.value = waterfallState.maxCpsPercent;
+        }
+
         waterfall.renderWaterfallImage();
     }
 
@@ -157,8 +203,8 @@
     }
 
     function applyMovingAverage() {
-        windowSize = waterfallState.movingAverage;
         // horizontal average
+        let windowSize = waterfallState.movingAverageHorizontal;
         let avgDeltas = [];
         for (let i = 0; i < waterfallData.deltas.length; i++) {
             const avgDelta = {
@@ -186,6 +232,7 @@
         waterfallData.deltas = avgDeltas;
 
         // vertical average
+        windowSize = waterfallState.movingAverageVertical;
         avgDeltas = [];
         for (let i = 0; i < waterfallData.deltas.length; i++) {
             const avgDelta = {

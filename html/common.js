@@ -22,8 +22,10 @@
         channelBinning: 1,
         blur: false,
         subtractBase: false,
-        movingAverage: 0,
+        movingAverageVertical: 0,
+        movingAverageHorizontal: 0,
         maxCpsPercent: 100,
+        minCpsPercent: 0,
         timeOffsetHours: getLocalTimeOffsetHours(),
     };
     window.common = {

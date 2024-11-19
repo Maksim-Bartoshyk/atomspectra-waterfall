@@ -20,6 +20,7 @@ select, input {
 }
 input[type="number"] {
     border: 1px solid #CCC;
+    padding-left: 4px;
 }
 input[type="checkbox"], input[type="radio"] {
     margin: 3px 3px 3px 0;
@@ -61,13 +62,13 @@ input[type="checkbox"], input[type="radio"] {
 .col {
     align-items: baseline;
     display: inline-flex;
-    width: 220px;
+    width: 175px;
 }
 .col label {
     flex-grow: 1;
 }
-.col input {
-    max-width: 64px;
+.col input[type="number"], .col select {
+    width: 64px;
 }
 .scale-switch {
     display: inline-block;
