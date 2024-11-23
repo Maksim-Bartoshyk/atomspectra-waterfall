@@ -36,6 +36,26 @@ input[type="checkbox"], input[type="radio"] {
     right: 0;
     min-width: 1024px;
 }
+.status-overlay {
+    position: absolute;
+    display: none;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    min-width: 1024px;
+}
+.status-overlay .status-text {
+    background: lightgray;
+    border: 1px solid white;
+    color: black;
+    left: 48%;
+    padding: 8px;
+    position: relative;
+    top: 50%;
+    width: fit-content;
+    z-index: 1;
+}
 .upload-control {
     border-bottom: 1px dotted;
     padding-top: 12px;
@@ -523,6 +543,9 @@ input[type="checkbox"], input[type="radio"] {
 	</head>
 	<body>
 		<div id="blocking-overlay" class="blocking-overlay"></div>
+		<div id="status-overlay" class="status-overlay">
+			<div id="status-text" class="status-text">Status...</div>
+		</div>
 		<div id="upload-control" class="upload-control">
 			<span>Atomspectra file:</span>
 			<input id="file-input" class="file-input" type="file" accept=".txt" name="files">
@@ -692,6 +715,9 @@ input[type="checkbox"], input[type="radio"] {
 			</div>
 		</div>
 		<script>(function () {
+    const statusOverlay = document.getElementById('status-overlay');
+    const statusText = document.getElementById('status-text');
+
     // display configuration/state
     window.constants = {
         timeAxisWidth: 150, // note: the same in css
@@ -739,10 +765,32 @@ input[type="checkbox"], input[type="radio"] {
             return waterfallData.baseSpectrum.calibration.reduce((e, c, i) => e += Math.pow(channel, i) * c, 0);
         },
         getLocalTimeOffsetHours: () => getLocalTimeOffsetHours(),
+        executeWithStatusAsync: (status, func) => executeWithStatusAsync(status, func),
     }
 
     function getLocalTimeOffsetHours() {
         return -(new Date().getTimezoneOffset() / 60);
+    }
+
+    function executeWithStatusAsync(status, func) {
+        return new Promise((res, rej) => {
+            requestAnimationFrame(() => {
+                statusText.innerText = status;
+                statusOverlay.style.display = 'block';
+
+                requestAnimationFrame(() => {
+                    try {
+                        func();
+                        res();
+                    } catch(e) {
+                        rej(e);
+                    } finally {
+                        statusText.innerText = '';
+                        statusOverlay.style.display = 'none';
+                    }
+                });
+            });
+        });
     }
 })();
 </script>
@@ -1741,49 +1789,53 @@ input[type="checkbox"], input[type="radio"] {
             let baseSpectrum;
             let deltas = [];
 
-            reader.onload = (e) => {
-                const fileText = e.target.result;
+            reader.onload = async (e) => {
+                await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => {
+                    const fileText = e.target.result;
                 
-                if (fileIndex === 0) {
-                    baseSpectrum = exports.deserializeSpectrum(fileText);
-                }
+                    if (fileIndex === 0) {
+                        baseSpectrum = exports.deserializeSpectrum(fileText);
+                    }
 
-                if (fileIndex < input.files.length) {
-                    deltas.push(exports.deserializeSpectrum(fileText));
-                }
+                    if (fileIndex < input.files.length) {
+                        deltas.push(exports.deserializeSpectrum(fileText));
+                    }
 
-                if (fileIndex === input.files.length - 1) {
+                    if (fileIndex === input.files.length - 1) {
+                        overlay.style.display = 'none';
+                        const importChannelBin = parseInt(importChannelBinInput.value);
+                        const spectrumBin = 1;
+                        deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+                        window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+                        
+                        start();
+                    } else {
+                        fileIndex++;
+                        reader.readAsText(input.files[fileIndex]);
+                    }
+                });
+            };
+        } else {
+            reader.onload = async (e) => {
+                await common.executeWithStatusAsync('Deserializing...', () => {
                     overlay.style.display = 'none';
+                    const fileText = e.target.result;
+                    const baseSpectrum = exports.deserializeSpectrum(fileText);
+                    const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
+                    const deltas = deltaInfo.deltas;
+
                     const importChannelBin = parseInt(importChannelBinInput.value);
                     const spectrumBin = 1;
-                    deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
                     window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-                    
-                    start();
-                } else {
-                    fileIndex++;
-                    reader.readAsText(input.files[fileIndex]);
-                }
-            };
-
-            reader.readAsText(file);
-        } else {
-            reader.onload = (e) => {
-                overlay.style.display = 'none';
-                const fileText = e.target.result;
-                const baseSpectrum = exports.deserializeSpectrum(fileText);
-                const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum);
-                const deltas = deltaInfo.deltas;
-
-                const importChannelBin = parseInt(importChannelBinInput.value);
-                const spectrumBin = 1;
-                window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+                });
 
                 start();
             };
-
-            reader.readAsText(file);
         }
+
+        common.executeWithStatusAsync('Opening file...', () => {
+            reader.readAsText(file);
+        });
     }
 
     function start() {

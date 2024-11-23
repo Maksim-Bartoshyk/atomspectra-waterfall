@@ -34,6 +34,26 @@ input[type="checkbox"], input[type="radio"] {
     right: 0;
     min-width: 1024px;
 }
+.status-overlay {
+    position: absolute;
+    display: none;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    min-width: 1024px;
+}
+.status-overlay .status-text {
+    background: lightgray;
+    border: 1px solid white;
+    color: black;
+    left: 48%;
+    padding: 8px;
+    position: relative;
+    top: 50%;
+    width: fit-content;
+    z-index: 1;
+}
 .upload-control {
     border-bottom: 1px dotted;
     padding-top: 12px;

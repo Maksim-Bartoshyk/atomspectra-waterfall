@@ -1,4 +1,7 @@
 (function () {
+    const statusOverlay = document.getElementById('status-overlay');
+    const statusText = document.getElementById('status-text');
+
     // display configuration/state
     window.constants = {
         timeAxisWidth: 150, // note: the same in css
@@ -46,9 +49,31 @@
             return waterfallData.baseSpectrum.calibration.reduce((e, c, i) => e += Math.pow(channel, i) * c, 0);
         },
         getLocalTimeOffsetHours: () => getLocalTimeOffsetHours(),
+        executeWithStatusAsync: (status, func) => executeWithStatusAsync(status, func),
     }
 
     function getLocalTimeOffsetHours() {
         return -(new Date().getTimezoneOffset() / 60);
+    }
+
+    function executeWithStatusAsync(status, func) {
+        return new Promise((res, rej) => {
+            requestAnimationFrame(() => {
+                statusText.innerText = status;
+                statusOverlay.style.display = 'block';
+
+                requestAnimationFrame(() => {
+                    try {
+                        func();
+                        res();
+                    } catch(e) {
+                        rej(e);
+                    } finally {
+                        statusText.innerText = '';
+                        statusOverlay.style.display = 'none';
+                    }
+                });
+            });
+        });
     }
 })();
