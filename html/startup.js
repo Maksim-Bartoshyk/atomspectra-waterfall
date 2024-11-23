@@ -31,7 +31,7 @@
         infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
             + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
         
-        start();
+        startupAsync();
     }
 
     function onFileChange(input) {
@@ -47,7 +47,7 @@
             let deltas = [];
 
             reader.onload = async (e) => {
-                await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => {
+                await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', async () => {
                     const fileText = e.target.result;
                 
                     if (fileIndex === 0) {
@@ -65,7 +65,7 @@
                         deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
                         window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
                         
-                        start();
+                        await startupAsync();
                     } else {
                         fileIndex++;
                         reader.readAsText(input.files[fileIndex]);
@@ -86,7 +86,7 @@
                     window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
                 });
 
-                start();
+                await startupAsync();
             };
         }
 
@@ -95,12 +95,12 @@
         });
     }
 
-    function start() {
+    async function startupAsync() {
         binning.resetMovingAverage();
         binning.resetWaterfallBinning(16);
-        binning.applyBinningAndAverage();
+        await binning.applyBinningAndAverageAsync();
         cps.initCpsControls();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 })();

@@ -43,13 +43,21 @@ input[type="checkbox"], input[type="radio"] {
     right: 0;
     min-width: 1024px;
 }
-.status-overlay .status-text {
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+.status-text.fadein {
+    animation: fadeIn 0.25s;
+}
+.status-text {
     background: lightgray;
     border: 1px solid white;
     color: black;
+    display: none;
     left: 48%;
     padding: 8px;
-    position: relative;
+    position: absolute;
     top: 50%;
     width: fit-content;
     z-index: 1;

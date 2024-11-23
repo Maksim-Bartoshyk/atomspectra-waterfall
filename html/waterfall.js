@@ -2,6 +2,9 @@
     // waterfall plot render
     window.waterfall = {
         renderWaterfallImage: () => renderWaterfallImage(),
+        renderWaterfallImageAsync: () => {
+            return common.executeWithStatusAsync('Rendering waterfall...', () => renderWaterfallImage());
+        },
     }
 
     function hexToRGB(hex) {

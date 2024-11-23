@@ -2,13 +2,23 @@
 	<head>
 		<link rel="stylesheet" href="./html/style.css" />
 		<script>
-			// error console
-			window.onerror = function(msg, url, lineNo, columnNo, error) {
-				const div = document.createElement('div');
-				div.className = "row error";
-				div.innerText = msg + ' (line: ' + lineNo + ', column: ' + columnNo + ')';
-				document.body.appendChild(div);
-			};
+			(function () {
+				// error console
+				window.onerror = function(msg, url, lineNo, columnNo, error) {
+					addError(msg + ' (line: ' + lineNo + ', column: ' + columnNo + ')');
+				};
+
+				window.addEventListener("unhandledrejection", function (e) {
+					addError(e.reason.stack);
+				});
+
+				function addError(msg) {
+					const div = document.createElement('div');
+					div.className = "row error";
+					div.innerText = msg;
+					document.body.appendChild(div);
+				}
+			})();
 		</script>
 		<script>
 			window.originalWaterfallData = 'waterfall-data-placeholder';
@@ -21,9 +31,7 @@
 	</head>
 	<body>
 		<div id="blocking-overlay" class="blocking-overlay"></div>
-		<div id="status-overlay" class="status-overlay">
-			<div id="status-text" class="status-text">Status...</div>
-		</div>
+		<div id="status-text" class="status-text">...</div>
 		<div id="upload-control" class="upload-control">
 			<span>Atomspectra file:</span>
 			<input id="file-input" class="file-input" type="file" accept=".txt" name="files">

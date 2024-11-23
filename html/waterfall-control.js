@@ -35,6 +35,9 @@
         resetWaterfallBinning: (...args) => resetWaterfallBinning(...args),
         resetMovingAverage: () => resetMovingAverage(),
         applyBinningAndAverage: () => applyBinningAndAverage(),
+        applyBinningAndAverageAsync: () => {
+            return common.executeWithStatusAsync('Processing...', () => applyBinningAndAverage());
+        }
     };
 
     function resetWaterfallBinning(channelBinning) {
@@ -58,23 +61,23 @@
         movingAverageHorizontalInput.value = 0;
     }
 
-    function onWaterfallScaleChange(value) {
+    async function onWaterfallScaleChange(value) {
         waterfallState.scale = value;
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onWaterfallBlurChange(value) {
+    async function onWaterfallBlurChange(value) {
         waterfallState.blur = value;
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onWaterfallSubtractChange(value) {
+    async function onWaterfallSubtractChange(value) {
         waterfallState.subtractBase = value;
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onSpectrumBinningChange(value) {
+    async function onSpectrumBinningChange(value) {
         let newBin = parseInt(value);
         if (isNaN(newBin) || newBin < 1) {
             newBin = 1;
@@ -83,18 +86,18 @@
 
         waterfallState.spectrumBinning = newBin;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onChannelBinningChange(value) {
+    async function onChannelBinningChange(value) {
         const newBin = parseInt(value);
         const prevBin = waterfallState.channelBinning;
         waterfallState.channelBinning = newBin;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
 
         // TODO: refactor duplicated code
         const fromChannelInput1 = document.getElementById('from-channel-1');
@@ -107,34 +110,34 @@
         updateInputChannelValue(fromChannelInput2, newBin, prevBin);
         updateInputChannelValue(toChannelInput2, newBin, prevBin);
 
-        cps.renderCps();
+        await cps.renderCpsAsync();
     }
 
-    function onVerticalMovingAverageChange(value) {
+    async function onVerticalMovingAverageChange(value) {
         const windowSize = parseInt(value);
         if (windowSize === waterfallState.movingAverageVertical) {
             return;
         }
         waterfallState.movingAverageVertical = windowSize;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onHorizontalMovingAverageChange(value) {
+    async function onHorizontalMovingAverageChange(value) {
         const windowSize = parseInt(value);
         if (windowSize === waterfallState.movingAverageHorizontal) {
             return;
         }
         waterfallState.movingAverageHorizontal = windowSize;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onMaxCpsChange(value) {
+    async function onMaxCpsChange(value) {
         let newVal = parseInt(value);
         if (isNaN(newVal) || newVal < 1) {
             newVal = 100;
@@ -147,10 +150,10 @@
             minCpsInput.value = waterfallState.minCpsPercent;
         }
 
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onMinCpsChange(value) {
+    async function onMinCpsChange(value) {
         let newVal = parseInt(value);
         if (isNaN(newVal) || newVal < 0) {
             newVal = 0;
@@ -163,17 +166,17 @@
             maxCpsInput.value = waterfallState.maxCpsPercent;
         }
 
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onTimezoneChange(value) {
+    async function onTimezoneChange(value) {
         if (value === 'local') {
             waterfallState.timeOffsetHours = common.getLocalTimeOffsetHours();
         } else {
             waterfallState.timeOffsetHours = parseInt(value);
         }
         
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
     
     function updateInputChannelValue(input, newBin, prevBin) {

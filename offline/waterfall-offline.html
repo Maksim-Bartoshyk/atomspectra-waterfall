@@ -45,13 +45,21 @@ input[type="checkbox"], input[type="radio"] {
     right: 0;
     min-width: 1024px;
 }
-.status-overlay .status-text {
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+.status-text.fadein {
+    animation: fadeIn 0.25s;
+}
+.status-text {
     background: lightgray;
     border: 1px solid white;
     color: black;
+    display: none;
     left: 48%;
     padding: 8px;
-    position: relative;
+    position: absolute;
     top: 50%;
     width: fit-content;
     z-index: 1;
@@ -152,13 +160,23 @@ input[type="checkbox"], input[type="radio"] {
 }
 </style>
 		<script>
-			// error console
-			window.onerror = function(msg, url, lineNo, columnNo, error) {
-				const div = document.createElement('div');
-				div.className = "row error";
-				div.innerText = msg + ' (line: ' + lineNo + ', column: ' + columnNo + ')';
-				document.body.appendChild(div);
-			};
+			(function () {
+				// error console
+				window.onerror = function(msg, url, lineNo, columnNo, error) {
+					addError(msg + ' (line: ' + lineNo + ', column: ' + columnNo + ')');
+				};
+
+				window.addEventListener("unhandledrejection", function (e) {
+					addError(e.reason.stack);
+				});
+
+				function addError(msg) {
+					const div = document.createElement('div');
+					div.className = "row error";
+					div.innerText = msg;
+					document.body.appendChild(div);
+				}
+			})();
 		</script>
 		<script>
 			window.originalWaterfallData = 'waterfall-data-placeholder';
@@ -543,9 +561,7 @@ input[type="checkbox"], input[type="radio"] {
 	</head>
 	<body>
 		<div id="blocking-overlay" class="blocking-overlay"></div>
-		<div id="status-overlay" class="status-overlay">
-			<div id="status-text" class="status-text">Status...</div>
-		</div>
+		<div id="status-text" class="status-text">...</div>
 		<div id="upload-control" class="upload-control">
 			<span>Atomspectra file:</span>
 			<input id="file-input" class="file-input" type="file" accept=".txt" name="files">
@@ -715,7 +731,6 @@ input[type="checkbox"], input[type="radio"] {
 			</div>
 		</div>
 		<script>(function () {
-    const statusOverlay = document.getElementById('status-overlay');
     const statusText = document.getElementById('status-text');
 
     // display configuration/state
@@ -772,11 +787,14 @@ input[type="checkbox"], input[type="radio"] {
         return -(new Date().getTimezoneOffset() / 60);
     }
 
+    let hideOverlayTimeout = -1;
     function executeWithStatusAsync(status, func) {
         return new Promise((res, rej) => {
             requestAnimationFrame(() => {
+                clearTimeout(hideOverlayTimeout);
                 statusText.innerText = status;
-                statusOverlay.style.display = 'block';
+                statusText.style.display = 'block';
+                statusText.classList.add('fadein');
 
                 requestAnimationFrame(() => {
                     try {
@@ -785,8 +803,11 @@ input[type="checkbox"], input[type="radio"] {
                     } catch(e) {
                         rej(e);
                     } finally {
-                        statusText.innerText = '';
-                        statusOverlay.style.display = 'none';
+                        hideOverlayTimeout = setTimeout(() => { // debounce time to avoid flickering
+                            statusText.innerText = '';
+                            statusText.classList.remove('fadein');
+                            statusText.style.display = 'none';
+                        }, 250);
                     }
                 });
             });
@@ -798,6 +819,9 @@ input[type="checkbox"], input[type="radio"] {
     // waterfall plot render
     window.waterfall = {
         renderWaterfallImage: () => renderWaterfallImage(),
+        renderWaterfallImageAsync: () => {
+            return common.executeWithStatusAsync('Rendering waterfall...', () => renderWaterfallImage());
+        },
     }
 
     function hexToRGB(hex) {
@@ -1070,11 +1094,12 @@ input[type="checkbox"], input[type="radio"] {
     cpsToMapButton.addEventListener('click', () => exportCpsMap());
     comparisonToMapButton.addEventListener('click', () => exportComparisonMap());
     spectrogramToSpectrumButton.addEventListener('click', () => exportSpectrumRange());
-    renderCpsButton.addEventListener('click', () => renderCps());
+    renderCpsButton.addEventListener('click', async () => await cps.renderCpsAsync());
     
     window.cps = {
         initCpsControls: () => initCpsControls(),
-        renderCps: () => renderCps()
+        renderCps: () => renderCps(),
+        renderCpsAsync: () => common.executeWithStatusAsync('Rendering cps...', () => renderCps()),
     }
 
     function initCpsControls() {
@@ -1512,6 +1537,9 @@ input[type="checkbox"], input[type="radio"] {
         resetWaterfallBinning: (...args) => resetWaterfallBinning(...args),
         resetMovingAverage: () => resetMovingAverage(),
         applyBinningAndAverage: () => applyBinningAndAverage(),
+        applyBinningAndAverageAsync: () => {
+            return common.executeWithStatusAsync('Processing...', () => applyBinningAndAverage());
+        }
     };
 
     function resetWaterfallBinning(channelBinning) {
@@ -1535,23 +1563,23 @@ input[type="checkbox"], input[type="radio"] {
         movingAverageHorizontalInput.value = 0;
     }
 
-    function onWaterfallScaleChange(value) {
+    async function onWaterfallScaleChange(value) {
         waterfallState.scale = value;
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onWaterfallBlurChange(value) {
+    async function onWaterfallBlurChange(value) {
         waterfallState.blur = value;
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onWaterfallSubtractChange(value) {
+    async function onWaterfallSubtractChange(value) {
         waterfallState.subtractBase = value;
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onSpectrumBinningChange(value) {
+    async function onSpectrumBinningChange(value) {
         let newBin = parseInt(value);
         if (isNaN(newBin) || newBin < 1) {
             newBin = 1;
@@ -1560,18 +1588,18 @@ input[type="checkbox"], input[type="radio"] {
 
         waterfallState.spectrumBinning = newBin;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onChannelBinningChange(value) {
+    async function onChannelBinningChange(value) {
         const newBin = parseInt(value);
         const prevBin = waterfallState.channelBinning;
         waterfallState.channelBinning = newBin;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
 
         // TODO: refactor duplicated code
         const fromChannelInput1 = document.getElementById('from-channel-1');
@@ -1584,34 +1612,34 @@ input[type="checkbox"], input[type="radio"] {
         updateInputChannelValue(fromChannelInput2, newBin, prevBin);
         updateInputChannelValue(toChannelInput2, newBin, prevBin);
 
-        cps.renderCps();
+        await cps.renderCpsAsync();
     }
 
-    function onVerticalMovingAverageChange(value) {
+    async function onVerticalMovingAverageChange(value) {
         const windowSize = parseInt(value);
         if (windowSize === waterfallState.movingAverageVertical) {
             return;
         }
         waterfallState.movingAverageVertical = windowSize;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onHorizontalMovingAverageChange(value) {
+    async function onHorizontalMovingAverageChange(value) {
         const windowSize = parseInt(value);
         if (windowSize === waterfallState.movingAverageHorizontal) {
             return;
         }
         waterfallState.movingAverageHorizontal = windowSize;
 
-        binning.applyBinningAndAverage();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await binning.applyBinningAndAverageAsync();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
-    function onMaxCpsChange(value) {
+    async function onMaxCpsChange(value) {
         let newVal = parseInt(value);
         if (isNaN(newVal) || newVal < 1) {
             newVal = 100;
@@ -1624,10 +1652,10 @@ input[type="checkbox"], input[type="radio"] {
             minCpsInput.value = waterfallState.minCpsPercent;
         }
 
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onMinCpsChange(value) {
+    async function onMinCpsChange(value) {
         let newVal = parseInt(value);
         if (isNaN(newVal) || newVal < 0) {
             newVal = 0;
@@ -1640,17 +1668,17 @@ input[type="checkbox"], input[type="radio"] {
             maxCpsInput.value = waterfallState.maxCpsPercent;
         }
 
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
 
-    function onTimezoneChange(value) {
+    async function onTimezoneChange(value) {
         if (value === 'local') {
             waterfallState.timeOffsetHours = common.getLocalTimeOffsetHours();
         } else {
             waterfallState.timeOffsetHours = parseInt(value);
         }
         
-        waterfall.renderWaterfallImage();
+        await waterfall.renderWaterfallImageAsync();
     }
     
     function updateInputChannelValue(input, newBin, prevBin) {
@@ -1774,7 +1802,7 @@ input[type="checkbox"], input[type="radio"] {
         infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
             + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
         
-        start();
+        startupAsync();
     }
 
     function onFileChange(input) {
@@ -1790,7 +1818,7 @@ input[type="checkbox"], input[type="radio"] {
             let deltas = [];
 
             reader.onload = async (e) => {
-                await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => {
+                await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', async () => {
                     const fileText = e.target.result;
                 
                     if (fileIndex === 0) {
@@ -1808,7 +1836,7 @@ input[type="checkbox"], input[type="radio"] {
                         deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
                         window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
                         
-                        start();
+                        await startupAsync();
                     } else {
                         fileIndex++;
                         reader.readAsText(input.files[fileIndex]);
@@ -1829,7 +1857,7 @@ input[type="checkbox"], input[type="radio"] {
                     window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
                 });
 
-                start();
+                await startupAsync();
             };
         }
 
@@ -1838,13 +1866,13 @@ input[type="checkbox"], input[type="radio"] {
         });
     }
 
-    function start() {
+    async function startupAsync() {
         binning.resetMovingAverage();
         binning.resetWaterfallBinning(16);
-        binning.applyBinningAndAverage();
+        await binning.applyBinningAndAverageAsync();
         cps.initCpsControls();
-        waterfall.renderWaterfallImage();
-        cps.renderCps();
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 })();</script>
 	</body>

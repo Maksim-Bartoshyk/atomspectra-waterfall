@@ -16,11 +16,12 @@
     cpsToMapButton.addEventListener('click', () => exportCpsMap());
     comparisonToMapButton.addEventListener('click', () => exportComparisonMap());
     spectrogramToSpectrumButton.addEventListener('click', () => exportSpectrumRange());
-    renderCpsButton.addEventListener('click', () => renderCps());
+    renderCpsButton.addEventListener('click', async () => await cps.renderCpsAsync());
     
     window.cps = {
         initCpsControls: () => initCpsControls(),
-        renderCps: () => renderCps()
+        renderCps: () => renderCps(),
+        renderCpsAsync: () => common.executeWithStatusAsync('Rendering cps...', () => renderCps()),
     }
 
     function initCpsControls() {

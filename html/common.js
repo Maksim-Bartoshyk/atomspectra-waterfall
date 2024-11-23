@@ -1,5 +1,4 @@
 (function () {
-    const statusOverlay = document.getElementById('status-overlay');
     const statusText = document.getElementById('status-text');
 
     // display configuration/state
@@ -56,11 +55,14 @@
         return -(new Date().getTimezoneOffset() / 60);
     }
 
+    let hideOverlayTimeout = -1;
     function executeWithStatusAsync(status, func) {
         return new Promise((res, rej) => {
             requestAnimationFrame(() => {
+                clearTimeout(hideOverlayTimeout);
                 statusText.innerText = status;
-                statusOverlay.style.display = 'block';
+                statusText.style.display = 'block';
+                statusText.classList.add('fadein');
 
                 requestAnimationFrame(() => {
                     try {
@@ -69,8 +71,11 @@
                     } catch(e) {
                         rej(e);
                     } finally {
-                        statusText.innerText = '';
-                        statusOverlay.style.display = 'none';
+                        hideOverlayTimeout = setTimeout(() => { // debounce time to avoid flickering
+                            statusText.innerText = '';
+                            statusText.classList.remove('fadein');
+                            statusText.style.display = 'none';
+                        }, 250);
                     }
                 });
             });
