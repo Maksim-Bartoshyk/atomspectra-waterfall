@@ -34,15 +34,6 @@ input[type="checkbox"], input[type="radio"] {
     right: 0;
     min-width: 1024px;
 }
-.status-overlay {
-    position: absolute;
-    display: none;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: 1024px;
-}
 @keyframes fadeIn {
     0% { opacity: 0; }
     100% { opacity: 1; }
@@ -55,7 +46,7 @@ input[type="checkbox"], input[type="radio"] {
     border: 1px solid white;
     color: black;
     display: none;
-    left: 48%;
+    left: 500px;
     padding: 8px;
     position: absolute;
     top: 50%;
