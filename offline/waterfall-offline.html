@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.11.24</title>
+		<title>AS Waterfall v2024.11.26</title>
 		<style>body {
     background: #444;
     box-sizing: border-box;
@@ -782,13 +782,13 @@ input[type="checkbox"], input[type="radio"] {
     let hideOverlayTimeout = -1;
     function executeWithStatusAsync(status, func) {
         return new Promise((res, rej) => {
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 clearTimeout(hideOverlayTimeout);
                 statusText.innerText = status;
                 statusText.style.display = 'block';
                 statusText.classList.add('fadein');
 
-                requestAnimationFrame(() => {
+                setTimeout(() => {
                     try {
                         func();
                         res();
@@ -801,8 +801,8 @@ input[type="checkbox"], input[type="radio"] {
                             statusText.style.display = 'none';
                         }, 250);
                     }
-                });
-            });
+                }, 25); // let status to be rendered
+            }, 0);
         });
     }
 })();
@@ -1810,30 +1810,32 @@ input[type="checkbox"], input[type="radio"] {
             let deltas = [];
 
             reader.onload = async (e) => {
-                await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', async () => {
-                    const fileText = e.target.result;
-                
-                    if (fileIndex === 0) {
-                        baseSpectrum = exports.deserializeSpectrum(fileText);
-                    }
+				const fileText = e.target.result;
+			
+				if (fileIndex === 0) {
+					baseSpectrum = exports.deserializeSpectrum(fileText);
+				}
 
-                    if (fileIndex < input.files.length) {
-                        deltas.push(exports.deserializeSpectrum(fileText));
-                    }
+				if (fileIndex < input.files.length) {
+					deltas.push(exports.deserializeSpectrum(fileText));
+				}
+				
+				if ((fileIndex + 1) % 25 === 0) {
+					await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => {});
+				}
 
-                    if (fileIndex === input.files.length - 1) {
-                        overlay.style.display = 'none';
-                        const importChannelBin = parseInt(importChannelBinInput.value);
-                        const spectrumBin = 1;
-                        deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-                        window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-                        
-                        await startupAsync();
-                    } else {
-                        fileIndex++;
-                        reader.readAsText(input.files[fileIndex]);
-                    }
-                });
+				if (fileIndex === input.files.length - 1) {
+					overlay.style.display = 'none';
+					const importChannelBin = parseInt(importChannelBinInput.value);
+					const spectrumBin = 1;
+					deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+					
+					await startupAsync();
+				} else {
+					fileIndex++;
+					reader.readAsText(input.files[fileIndex]);
+				}
             };
         } else {
             reader.onload = async (e) => {

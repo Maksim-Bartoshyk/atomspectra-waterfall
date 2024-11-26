@@ -58,13 +58,13 @@
     let hideOverlayTimeout = -1;
     function executeWithStatusAsync(status, func) {
         return new Promise((res, rej) => {
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 clearTimeout(hideOverlayTimeout);
                 statusText.innerText = status;
                 statusText.style.display = 'block';
                 statusText.classList.add('fadein');
 
-                requestAnimationFrame(() => {
+                setTimeout(() => {
                     try {
                         func();
                         res();
@@ -77,8 +77,8 @@
                             statusText.style.display = 'none';
                         }, 250);
                     }
-                });
-            });
+                }, 25); // let status to be rendered
+            }, 0);
         });
     }
 })();

@@ -47,30 +47,32 @@
             let deltas = [];
 
             reader.onload = async (e) => {
-                await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', async () => {
-                    const fileText = e.target.result;
-                
-                    if (fileIndex === 0) {
-                        baseSpectrum = exports.deserializeSpectrum(fileText);
-                    }
+				const fileText = e.target.result;
+			
+				if (fileIndex === 0) {
+					baseSpectrum = exports.deserializeSpectrum(fileText);
+				}
 
-                    if (fileIndex < input.files.length) {
-                        deltas.push(exports.deserializeSpectrum(fileText));
-                    }
+				if (fileIndex < input.files.length) {
+					deltas.push(exports.deserializeSpectrum(fileText));
+				}
+				
+				if ((fileIndex + 1) % 25 === 0) {
+					await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => {});
+				}
 
-                    if (fileIndex === input.files.length - 1) {
-                        overlay.style.display = 'none';
-                        const importChannelBin = parseInt(importChannelBinInput.value);
-                        const spectrumBin = 1;
-                        deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-                        window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-                        
-                        await startupAsync();
-                    } else {
-                        fileIndex++;
-                        reader.readAsText(input.files[fileIndex]);
-                    }
-                });
+				if (fileIndex === input.files.length - 1) {
+					overlay.style.display = 'none';
+					const importChannelBin = parseInt(importChannelBinInput.value);
+					const spectrumBin = 1;
+					deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+					window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+					
+					await startupAsync();
+				} else {
+					fileIndex++;
+					reader.readAsText(input.files[fileIndex]);
+				}
             };
         } else {
             reader.onload = async (e) => {
