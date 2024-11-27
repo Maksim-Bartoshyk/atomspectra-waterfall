@@ -49,7 +49,8 @@
         const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
             + '\n' + 'channel: ' + channelIndex
             + '\n' + 'energy: ' + common.channelToEnergy(channelIndex).toFixed(1) + ' keV'
-            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
+            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
         waterfallPlot.setAttribute('title', tooltipText);
 
         // vertical line
@@ -83,7 +84,8 @@
         // tooltip
         const spectrumIndex = offsetX;
         let tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
-            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
+            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
         if (cpsData.range1 && cpsData.range1[spectrumIndex] !== undefined) {
             tooltipText += '\n' + 'range1: ' + formatFloat(cpsData.range1[spectrumIndex]) + ' cps';
         }

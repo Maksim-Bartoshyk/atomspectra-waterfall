@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.11.26</title>
+		<title>AS Waterfall v2024.11.28</title>
 		<style>body {
     background: #444;
     box-sizing: border-box;
@@ -930,11 +930,13 @@ input[type="checkbox"], input[type="radio"] {
                     }
                 }
 
-                cps -= maxCps * waterfallState.minCpsPercent / 100;
+                const lowerCpsBound = maxCps * waterfallState.minCpsPercent / 100;
+                const upperCpsBound = maxCps * waterfallState.maxCpsPercent / 100;
+                cps -= lowerCpsBound;
                 if (cps < 0) {
                     cps = 0;
                 }
-                let linearColorIndex = Math.round((cps / (maxCps * waterfallState.maxCpsPercent / 100)) * (ironPaletteRGB.length - 1));
+                let linearColorIndex = Math.round((cps / (upperCpsBound - lowerCpsBound)) * (ironPaletteRGB.length - 1));
                 if (linearColorIndex > ironPaletteRGB.length - 1) {
                     linearColorIndex = ironPaletteRGB.length - 1;
                 }
@@ -1419,7 +1421,8 @@ input[type="checkbox"], input[type="radio"] {
         const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
             + '\n' + 'channel: ' + channelIndex
             + '\n' + 'energy: ' + common.channelToEnergy(channelIndex).toFixed(1) + ' keV'
-            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
+            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
         waterfallPlot.setAttribute('title', tooltipText);
 
         // vertical line
@@ -1453,7 +1456,8 @@ input[type="checkbox"], input[type="radio"] {
         // tooltip
         const spectrumIndex = offsetX;
         let tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
-            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp);
+            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
+            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
         if (cpsData.range1 && cpsData.range1[spectrumIndex] !== undefined) {
             tooltipText += '\n' + 'range1: ' + formatFloat(cpsData.range1[spectrumIndex]) + ' cps';
         }

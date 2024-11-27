@@ -121,11 +121,13 @@
                     }
                 }
 
-                cps -= maxCps * waterfallState.minCpsPercent / 100;
+                const lowerCpsBound = maxCps * waterfallState.minCpsPercent / 100;
+                const upperCpsBound = maxCps * waterfallState.maxCpsPercent / 100;
+                cps -= lowerCpsBound;
                 if (cps < 0) {
                     cps = 0;
                 }
-                let linearColorIndex = Math.round((cps / (maxCps * waterfallState.maxCpsPercent / 100)) * (ironPaletteRGB.length - 1));
+                let linearColorIndex = Math.round((cps / (upperCpsBound - lowerCpsBound)) * (ironPaletteRGB.length - 1));
                 if (linearColorIndex > ironPaletteRGB.length - 1) {
                     linearColorIndex = ironPaletteRGB.length - 1;
                 }
