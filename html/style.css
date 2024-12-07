@@ -144,6 +144,9 @@ input[type="checkbox"], input[type="radio"] {
 .export-button {
     width: 340px;
 }
+.spg-range-button {
+    width: 169px;
+}
 .error {
     color: orangered;
 }

@@ -10,12 +10,14 @@
     const compareCheckbox = document.getElementById('cps-comparison');
     const cpsToMapButton = document.getElementById('export-cps-map');
     const comparisonToMapButton = document.getElementById('export-comparison-map');
-    const spectrogramToSpectrumButton = document.getElementById('export-spectrum-range');
+    const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
+    const spgAsBaseButton = document.getElementById('spg-range-as-base');
     const renderCpsButton = document.getElementById('render-cps');
 
     cpsToMapButton.addEventListener('click', () => exportCpsMap());
     comparisonToMapButton.addEventListener('click', () => exportComparisonMap());
-    spectrogramToSpectrumButton.addEventListener('click', () => exportSpectrumRange());
+    spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
+    spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
     renderCpsButton.addEventListener('click', async () => await cps.renderCpsAsync());
     
     window.cps = {
@@ -29,6 +31,8 @@
         toChannelInput1.value = waterfallData.baseSpectrum.channelCount - 1;
         fromChannelInput2.value = 0;
         toChannelInput2.value = waterfallData.baseSpectrum.channelCount - 1;
+        fromSpectrumInput.value = 0;
+        toSpectrumInput.value = waterfallData.deltas.length - 1;
     }
 
     function getCountsInRange(from, to) {
@@ -281,6 +285,31 @@
         const filename = originalWaterfallData.baseSpectrum.name + '-[' + fromSpectrum + ', ' + toSpectrum + ']';
 
         saveFile(filename + '-combined.txt', spectrumText, 'text/plain');
+    }
+
+    async function spectrumRangeAsBase() {
+        // TODO: duplicated code
+        const fromSpectrum = parseInt(fromSpectrumInput.value);
+        const toSpectrum = parseInt(toSpectrumInput.value);
+        if (isNaN(fromSpectrum) || isNaN(toSpectrum) || fromSpectrum > toSpectrum) {
+            // TODO: implement UI validation
+            throw new Error('invalid from or to spectrum index');
+        }
+        
+        let combinedSpectrum = exports.combineSpectrums(
+            originalWaterfallData.deltas, 
+            fromSpectrum, 
+            toSpectrum, 
+            originalWaterfallData.baseSpectrum, 
+            originalWaterfallData.filename
+        );
+        originalWaterfallData.baseSpectrum = combinedSpectrum;
+
+        waterfallControl.setSubstractBase(true);
+        waterfallControl.markBaseChanged();
+        await waterfallControl.applyBinningAndAverageAsync();        
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
     }
 
     function saveFile(filename, data, type) {

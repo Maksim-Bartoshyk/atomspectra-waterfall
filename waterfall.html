@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.11.28</title>
+		<title>AS Waterfall v2024.12.07</title>
 		<link rel="stylesheet" href="./html/style.css" />
 		<script>
 			(function () {
@@ -127,7 +127,7 @@
 				</div>
 				<div class="col">
 					<input type="checkbox" id="subtract-base" name="subtract-base"/>
-					<label for="subtract-base">Subtract base</label>
+					<label for="subtract-base" id="subtract-base-label">Subtract base</label>
 				</div>
 				<div class="col">
 					<label for="channel-binning">Channel bin:</label>
@@ -198,7 +198,8 @@
 					<label for="dotted-trend">Dotted</label>
 				</div>
 				<input type="number" id="from-spectrum" class="numeric-input" placeholder="from index"/>-<input type="number" id="to-spectrum" class="numeric-input" placeholder="to index"/>
-				<button id="export-spectrum-range" class="export-button">Spectrogram range to spectrum</button>
+				<button id="spg-range-as-base" class="spg-range-button">Spg range as base</button>
+				<button id="spg-range-to-file" class="spg-range-button">Spg range to file</button>
 			</div>
 		</div>
 		<script src="./html/common.js"></script>

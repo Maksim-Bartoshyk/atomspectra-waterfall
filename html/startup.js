@@ -98,9 +98,11 @@
     }
 
     async function startupAsync() {
-        binning.resetMovingAverage();
-        binning.resetWaterfallBinning(16);
-        await binning.applyBinningAndAverageAsync();
+        waterfallControl.setSubstractBase(false);
+        waterfallControl.resetBaseChanged();
+        waterfallControl.resetMovingAverage();
+        waterfallControl.resetWaterfallBinning(16);
+        await waterfallControl.applyBinningAndAverageAsync();
         cps.initCpsControls();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();

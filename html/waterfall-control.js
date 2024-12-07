@@ -20,6 +20,7 @@
     blurCheckbox.addEventListener('change', (e) => onWaterfallBlurChange(e.target.checked));
 
     const subtractCheckbox = document.getElementById('subtract-base');
+    const substractLabel = document.getElementById('subtract-base-label');
     subtractCheckbox.addEventListener('change', (e) => onWaterfallSubtractChange(e.target.checked));
 
     const maxCpsInput = document.getElementById('max-cps');
@@ -31,14 +32,36 @@
     const timezoneInput = document.getElementById('timezone');
     timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
     
-    window.binning = {
-        resetWaterfallBinning: (...args) => resetWaterfallBinning(...args),
+    window.waterfallControl = {
+        setSubstractBase: (value) => setSubstractBase(value),
+        markBaseChanged: () => markBaseChanged(),
+        resetBaseChanged: () => resetBaseChanged(),
+        resetWaterfallBinning: (channelBinning) => resetWaterfallBinning(channelBinning),
         resetMovingAverage: () => resetMovingAverage(),
         applyBinningAndAverage: () => applyBinningAndAverage(),
         applyBinningAndAverageAsync: () => {
             return common.executeWithStatusAsync('Processing...', () => applyBinningAndAverage());
         }
     };
+
+    function setSubstractBase(value) {
+        subtractCheckbox.checked = value;
+        waterfallState.subtractBase = value;
+    }
+
+    function markBaseChanged() {
+        if (substractLabel.innerText.indexOf('*') === -1) {
+            substractLabel.innerText += '*';
+            substractLabel.title = 'base has been set from spectrogram';
+        }
+    }
+
+    function resetBaseChanged() {
+        if (substractLabel.innerText.indexOf('*') !== -1) {
+            substractLabel.innerText = substractLabel.innerText.replace('*', '');
+            substractLabel.title = '';
+        }
+    }
 
     function resetWaterfallBinning(channelBinning) {
         waterfallState.spectrumBinning = 1;
@@ -86,7 +109,7 @@
 
         waterfallState.spectrumBinning = newBin;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();
     }
@@ -96,7 +119,7 @@
         const prevBin = waterfallState.channelBinning;
         waterfallState.channelBinning = newBin;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
 
         // TODO: refactor duplicated code
@@ -120,7 +143,7 @@
         }
         waterfallState.movingAverageVertical = windowSize;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();
     }
@@ -132,7 +155,7 @@
         }
         waterfallState.movingAverageHorizontal = windowSize;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();
     }

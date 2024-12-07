@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.11.28</title>
+		<title>AS Waterfall v2024.12.07</title>
 		<style>body {
     background: #444;
     box-sizing: border-box;
@@ -146,6 +146,9 @@ input[type="checkbox"], input[type="radio"] {
 }
 .export-button {
     width: 340px;
+}
+.spg-range-button {
+    width: 169px;
 }
 .error {
     color: orangered;
@@ -648,7 +651,7 @@ input[type="checkbox"], input[type="radio"] {
 				</div>
 				<div class="col">
 					<input type="checkbox" id="subtract-base" name="subtract-base"/>
-					<label for="subtract-base">Subtract base</label>
+					<label for="subtract-base" id="subtract-base-label">Subtract base</label>
 				</div>
 				<div class="col">
 					<label for="channel-binning">Channel bin:</label>
@@ -719,7 +722,8 @@ input[type="checkbox"], input[type="radio"] {
 					<label for="dotted-trend">Dotted</label>
 				</div>
 				<input type="number" id="from-spectrum" class="numeric-input" placeholder="from index"/>-<input type="number" id="to-spectrum" class="numeric-input" placeholder="to index"/>
-				<button id="export-spectrum-range" class="export-button">Spectrogram range to spectrum</button>
+				<button id="spg-range-as-base" class="spg-range-button">Spg range as base</button>
+				<button id="spg-range-to-file" class="spg-range-button">Spg range to file</button>
 			</div>
 		</div>
 		<script>(function () {
@@ -1082,12 +1086,14 @@ input[type="checkbox"], input[type="radio"] {
     const compareCheckbox = document.getElementById('cps-comparison');
     const cpsToMapButton = document.getElementById('export-cps-map');
     const comparisonToMapButton = document.getElementById('export-comparison-map');
-    const spectrogramToSpectrumButton = document.getElementById('export-spectrum-range');
+    const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
+    const spgAsBaseButton = document.getElementById('spg-range-as-base');
     const renderCpsButton = document.getElementById('render-cps');
 
     cpsToMapButton.addEventListener('click', () => exportCpsMap());
     comparisonToMapButton.addEventListener('click', () => exportComparisonMap());
-    spectrogramToSpectrumButton.addEventListener('click', () => exportSpectrumRange());
+    spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
+    spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
     renderCpsButton.addEventListener('click', async () => await cps.renderCpsAsync());
     
     window.cps = {
@@ -1101,6 +1107,8 @@ input[type="checkbox"], input[type="radio"] {
         toChannelInput1.value = waterfallData.baseSpectrum.channelCount - 1;
         fromChannelInput2.value = 0;
         toChannelInput2.value = waterfallData.baseSpectrum.channelCount - 1;
+        fromSpectrumInput.value = 0;
+        toSpectrumInput.value = waterfallData.deltas.length - 1;
     }
 
     function getCountsInRange(from, to) {
@@ -1355,6 +1363,31 @@ input[type="checkbox"], input[type="radio"] {
         saveFile(filename + '-combined.txt', spectrumText, 'text/plain');
     }
 
+    async function spectrumRangeAsBase() {
+        // TODO: duplicated code
+        const fromSpectrum = parseInt(fromSpectrumInput.value);
+        const toSpectrum = parseInt(toSpectrumInput.value);
+        if (isNaN(fromSpectrum) || isNaN(toSpectrum) || fromSpectrum > toSpectrum) {
+            // TODO: implement UI validation
+            throw new Error('invalid from or to spectrum index');
+        }
+        
+        let combinedSpectrum = exports.combineSpectrums(
+            originalWaterfallData.deltas, 
+            fromSpectrum, 
+            toSpectrum, 
+            originalWaterfallData.baseSpectrum, 
+            originalWaterfallData.filename
+        );
+        originalWaterfallData.baseSpectrum = combinedSpectrum;
+
+        waterfallControl.setSubstractBase(true);
+        waterfallControl.markBaseChanged();
+        await waterfallControl.applyBinningAndAverageAsync();        
+        await waterfall.renderWaterfallImageAsync();
+        await cps.renderCpsAsync();
+    }
+
     function saveFile(filename, data, type) {
         const blob = new Blob([data], { type: type });
         const elem = window.document.createElement('a');
@@ -1518,6 +1551,7 @@ input[type="checkbox"], input[type="radio"] {
     blurCheckbox.addEventListener('change', (e) => onWaterfallBlurChange(e.target.checked));
 
     const subtractCheckbox = document.getElementById('subtract-base');
+    const substractLabel = document.getElementById('subtract-base-label');
     subtractCheckbox.addEventListener('change', (e) => onWaterfallSubtractChange(e.target.checked));
 
     const maxCpsInput = document.getElementById('max-cps');
@@ -1529,14 +1563,36 @@ input[type="checkbox"], input[type="radio"] {
     const timezoneInput = document.getElementById('timezone');
     timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
     
-    window.binning = {
-        resetWaterfallBinning: (...args) => resetWaterfallBinning(...args),
+    window.waterfallControl = {
+        setSubstractBase: (value) => setSubstractBase(value),
+        markBaseChanged: () => markBaseChanged(),
+        resetBaseChanged: () => resetBaseChanged(),
+        resetWaterfallBinning: (channelBinning) => resetWaterfallBinning(channelBinning),
         resetMovingAverage: () => resetMovingAverage(),
         applyBinningAndAverage: () => applyBinningAndAverage(),
         applyBinningAndAverageAsync: () => {
             return common.executeWithStatusAsync('Processing...', () => applyBinningAndAverage());
         }
     };
+
+    function setSubstractBase(value) {
+        subtractCheckbox.checked = value;
+        waterfallState.subtractBase = value;
+    }
+
+    function markBaseChanged() {
+        if (substractLabel.innerText.indexOf('*') === -1) {
+            substractLabel.innerText += '*';
+            substractLabel.title = 'base has been set from spectrogram';
+        }
+    }
+
+    function resetBaseChanged() {
+        if (substractLabel.innerText.indexOf('*') !== -1) {
+            substractLabel.innerText = substractLabel.innerText.replace('*', '');
+            substractLabel.title = '';
+        }
+    }
 
     function resetWaterfallBinning(channelBinning) {
         waterfallState.spectrumBinning = 1;
@@ -1584,7 +1640,7 @@ input[type="checkbox"], input[type="radio"] {
 
         waterfallState.spectrumBinning = newBin;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();
     }
@@ -1594,7 +1650,7 @@ input[type="checkbox"], input[type="radio"] {
         const prevBin = waterfallState.channelBinning;
         waterfallState.channelBinning = newBin;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
 
         // TODO: refactor duplicated code
@@ -1618,7 +1674,7 @@ input[type="checkbox"], input[type="radio"] {
         }
         waterfallState.movingAverageVertical = windowSize;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();
     }
@@ -1630,7 +1686,7 @@ input[type="checkbox"], input[type="radio"] {
         }
         waterfallState.movingAverageHorizontal = windowSize;
 
-        await binning.applyBinningAndAverageAsync();
+        await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();
     }
@@ -1865,9 +1921,11 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     async function startupAsync() {
-        binning.resetMovingAverage();
-        binning.resetWaterfallBinning(16);
-        await binning.applyBinningAndAverageAsync();
+        waterfallControl.setSubstractBase(false);
+        waterfallControl.resetBaseChanged();
+        waterfallControl.resetMovingAverage();
+        waterfallControl.resetWaterfallBinning(16);
+        await waterfallControl.applyBinningAndAverageAsync();
         cps.initCpsControls();
         await waterfall.renderWaterfallImageAsync();
         await cps.renderCpsAsync();
