@@ -98,7 +98,7 @@ input[type="checkbox"], input[type="radio"] {
     max-width: calc(100% - 320px);
     overflow-x: hidden;
     overflow-y: scroll;
-    scrollbar-color: #000 #000;
+    scrollbar-color: #444 #444;
     width: fit-content;
 }
 .black-stub {

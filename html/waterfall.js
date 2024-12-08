@@ -99,7 +99,7 @@
         canvas.width = waterfallData.baseSpectrum.channelCount + constants.timeAxisWidth;
         canvas.height = constants.previewHeight;
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        ctx.fillStyle = constants.backgroundColor;
+        ctx.fillStyle = '#444';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const combinedSpectrum = exports.combineSpectrums(
