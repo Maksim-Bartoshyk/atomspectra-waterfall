@@ -9,7 +9,7 @@
         channelAxisHeight: 32,
         channelAxisTickHeight: 4,
         backgroundColor: 'black',
-        previewHeight: 150,
+        previewHeight: 125,
         textColor: 'lightgray',
         lineColor: 'lightgray',
         separatorLineColor: '#777777',

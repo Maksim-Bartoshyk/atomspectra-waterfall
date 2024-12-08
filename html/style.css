@@ -95,25 +95,19 @@ input[type="checkbox"], input[type="radio"] {
 }
 .preview-container {
     display: none;
+    height: 125px;
     max-width: calc(100% - 320px);
     overflow-x: hidden;
     overflow-y: scroll;
+    padding-left: 150px;
     scrollbar-color: #444 #444;
     width: fit-content;
-}
-.black-stub {
-    background: black;
-    width: 320px;    
-}
-.preview-container, .black-stub {
-    height: 150px;
-    display: none;
 }
 .plot-container, .plot-container .cps-container {
     height: calc(100% - 212px); /* - other controls height */
 }
 .plot-container.with-preview, .plot-container.with-preview .cps-container {
-    height: calc(100% - 212px - 150px); /* - other controls height + preview heigth */
+    height: calc(100% - 212px - 125px); /* - other controls height + preview heigth */
 }
 .plot-container .waterfall-container {
     display: inline-block;

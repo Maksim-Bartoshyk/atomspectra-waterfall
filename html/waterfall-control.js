@@ -35,7 +35,6 @@
 
     const plotContainer = document.getElementById('plot-container');
     const previewContainer = document.getElementById('preview-container');
-    const previewBlackStub = document.getElementById('black-stub');
     const previewCanvas = document.getElementById('preview-plot');
     
     window.waterfallControl = {
@@ -285,6 +284,25 @@
             avgDeltas.push(avgDelta);
         }
         waterfallData.deltas = avgDeltas;
+
+        // base spectrum
+        const channels = new Float32Array(waterfallData.baseSpectrum.channelCount);
+        for (let j = 0; j < waterfallData.baseSpectrum.channels.length; j++) {
+            channels[j] = waterfallData.baseSpectrum.channels[j];
+            let appliedSize = 0;
+            for (let k = j - windowSize / 2; k <= j + windowSize / 2; k++) {
+                if (k < 0 || k === j) {
+                    continue;
+                }
+                if (k >= waterfallData.baseSpectrum.channels.length) {
+                    break;
+                }
+                channels[j] += waterfallData.baseSpectrum.channels[k];
+                appliedSize++;
+            }
+            channels[j] /= appliedSize + 1;
+        }
+        waterfallData.baseSpectrum.channels = channels;
 
         // vertical average
         windowSize = waterfallState.movingAverageVertical;

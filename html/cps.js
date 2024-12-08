@@ -85,6 +85,7 @@
         waterfallState.spectrumRange = getSpectrumRange();
         if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
             await waterfall.renderSpectrumImageAsync();
+            await waterfall.renderWaterfallImageAsync();
         }
     }
 
@@ -120,6 +121,7 @@
             waterfallControl.showPreview();
             if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
                 await waterfall.renderSpectrumImageAsync();
+                await waterfall.renderWaterfallImageAsync();
             }
         } else {
             waterfallControl.hidePreview();

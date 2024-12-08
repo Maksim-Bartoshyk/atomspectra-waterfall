@@ -8,7 +8,7 @@
         renderSpectrumImage: () => renderSpectrumImage(),
         renderSpectrumImageAsync: () => {
             if (!waterfallState.previewEnabled) {
-                return new Promise(() => resolve());
+                return new Promise((r) => r());
             }
 
             return common.executeWithStatusAsync('Rendering spectrum...', () => {
@@ -96,7 +96,7 @@
         }
         
         const canvas = document.getElementById('preview-plot');
-        canvas.width = waterfallData.baseSpectrum.channelCount + constants.timeAxisWidth;
+        canvas.width = waterfallData.baseSpectrum.channelCount;
         canvas.height = constants.previewHeight;
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
         ctx.fillStyle = '#444';
@@ -132,7 +132,7 @@
 
         // spectrum render
         const spectrumHeight = canvas.height;// - constants.channelAxisHeight;
-        const imageData = ctx.getImageData(constants.timeAxisWidth, 0, waterfallData.baseSpectrum.channelCount, spectrumHeight);
+        const imageData = ctx.getImageData(0, 0, waterfallData.baseSpectrum.channelCount, spectrumHeight);
         const lineColor = hexToRGB('#ABABAB');
         cpsInChannel.forEach((cps, channelIndex) => {
             const counts = Math.round(cps * combinedSpectrum.duration);
@@ -160,8 +160,7 @@
             }
         });
         
-        ctx.putImageData(imageData, constants.timeAxisWidth, 0);
-        //renderEnergyAxis(canvas, ctx, spectrumHeight);
+        ctx.putImageData(imageData, 0, 0);
     }
 
     function renderWaterfallImage() {
@@ -270,6 +269,15 @@
                 : constants.timestampTickWidth / 2;
             for (let x = constants.timeAxisWidth - tickWidth; x < constants.timeAxisWidth; x++) {
                 ctx.fillRect(x, tsIndex, 1, 1);
+            }
+        }
+
+        // display selection
+        if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+            const fromY = Math.floor(waterfallState.spectrumRange[0] / waterfallState.spectrumBinning);
+            const toY = Math.floor(waterfallState.spectrumRange[1] / waterfallState.spectrumBinning);
+            for (let y = fromY; y <= toY; y++) {
+                ctx.fillRect(constants.timeAxisWidth - 2, y, 2, 1);
             }
         }
 

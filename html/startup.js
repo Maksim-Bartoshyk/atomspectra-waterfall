@@ -105,6 +105,7 @@
         await waterfallControl.applyBinningAndAverageAsync();
         cps.initCpsControls();
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
         await cps.renderCpsAsync();
     }
 })();
