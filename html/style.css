@@ -95,7 +95,19 @@ input[type="checkbox"], input[type="radio"] {
 }
 .preview-container {
     display: none;
+    max-width: calc(100% - 320px);
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-color: #000 #000;
+    width: fit-content;
+}
+.black-stub {
+    background: black;
+    width: 320px;    
+}
+.preview-container, .black-stub {
     height: 150px;
+    display: none;
 }
 .plot-container, .plot-container .cps-container {
     height: calc(100% - 212px); /* - other controls height */

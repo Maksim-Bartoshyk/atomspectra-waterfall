@@ -1,5 +1,6 @@
 (function(){
     // mouse cursor render
+    const previewContainer = document.getElementById('preview-container');
     const wfContainer = document.getElementById('waterfall-container');
     const cpsContainer = document.getElementById('cps-container');
     const waterfallPlot = document.getElementById('waterfall-plot');
@@ -114,6 +115,10 @@
     function onWfContainerScroll(event) {
         if (cpsContainer.scrollTop !== wfContainer.scrollTop) {
             cpsContainer.scrollTop = wfContainer.scrollTop;
+        }
+
+        if (previewContainer.scrollLeft !== wfContainer.scrollLeft) {
+            previewContainer.scrollLeft = wfContainer.scrollLeft;
         }
     }
 

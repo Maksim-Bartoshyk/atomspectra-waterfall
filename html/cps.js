@@ -394,6 +394,7 @@
         waterfallControl.markBaseChanged();
         await waterfallControl.applyBinningAndAverageAsync();        
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
         await cps.renderCpsAsync();
     }
 

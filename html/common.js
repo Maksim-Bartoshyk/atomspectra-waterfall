@@ -9,7 +9,6 @@
         channelAxisHeight: 32,
         channelAxisTickHeight: 4,
         backgroundColor: 'black',
-        previewColor: '#AAAAAA', // full hex only
         previewHeight: 150,
         textColor: 'lightgray',
         lineColor: 'lightgray',

@@ -35,6 +35,7 @@
 
     const plotContainer = document.getElementById('plot-container');
     const previewContainer = document.getElementById('preview-container');
+    const previewBlackStub = document.getElementById('black-stub');
     const previewCanvas = document.getElementById('preview-plot');
     
     window.waterfallControl = {
@@ -107,6 +108,7 @@
     async function onWaterfallScaleChange(value) {
         waterfallState.scale = value;
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
     }
 
     async function onWaterfallBlurChange(value) {
@@ -117,6 +119,7 @@
     async function onWaterfallSubtractChange(value) {
         waterfallState.subtractBase = value;
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
         await cps.renderCpsAsync();
     }
 
@@ -131,6 +134,7 @@
 
         await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
         await cps.renderCpsAsync();
     }
 
@@ -141,6 +145,7 @@
 
         await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
 
         // TODO: refactor duplicated code
         const fromChannelInput1 = document.getElementById('from-channel-1');
@@ -165,6 +170,7 @@
 
         await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
         await cps.renderCpsAsync();
     }
 
@@ -177,6 +183,7 @@
 
         await waterfallControl.applyBinningAndAverageAsync();
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
         await cps.renderCpsAsync();
     }
 
@@ -194,6 +201,7 @@
         }
 
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
     }
 
     async function onMinCpsChange(value) {
@@ -210,6 +218,7 @@
         }
 
         await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
     }
 
     async function onTimezoneChange(value) {
