@@ -1,8 +1,9 @@
 (function(){
+    // TODO: refactor: move state control to waterfall-control.js, keep only rendering here
     // cps plot render
     const fromChannelInput1 = document.getElementById('from-channel-1');
     const toChannelInput1 = document.getElementById('to-channel-1');
-    const dottedCheckbox = document.getElementById('dotted-trend');
+    const previewCheckbox = document.getElementById('preview-enabled');
     const fromChannelInput2 = document.getElementById('from-channel-2');
     const toChannelInput2 = document.getElementById('to-channel-2');
     const fromSpectrumInput = document.getElementById('from-spectrum');
@@ -12,13 +13,19 @@
     const comparisonToMapButton = document.getElementById('export-comparison-map');
     const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
     const spgAsBaseButton = document.getElementById('spg-range-as-base');
-    const renderCpsButton = document.getElementById('render-cps');
 
+    compareCheckbox.addEventListener('change', async () => await cps.renderCpsAsync());
     cpsToMapButton.addEventListener('click', () => exportCpsMap());
     comparisonToMapButton.addEventListener('click', () => exportComparisonMap());
     spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
     spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
-    renderCpsButton.addEventListener('click', async () => await cps.renderCpsAsync());
+    previewCheckbox.addEventListener('change', async () => await previewEnabledChange());
+    fromChannelInput1.addEventListener('change', async () => await onChannelIndexInputChange());
+    toChannelInput1.addEventListener('change', async () => await onChannelIndexInputChange());
+    fromChannelInput2.addEventListener('change', async () => await onChannelIndexInputChange());
+    toChannelInput2.addEventListener('change', async () => await onChannelIndexInputChange());
+    fromSpectrumInput.addEventListener('change', async () => await onSpectrumIndexInputChange());
+    toSpectrumInput.addEventListener('change', async () => await onSpectrumIndexInputChange());
     
     window.cps = {
         initCpsControls: () => initCpsControls(),
@@ -27,12 +34,96 @@
     }
 
     function initCpsControls() {
-        fromChannelInput1.value = 0;
-        toChannelInput1.value = waterfallData.baseSpectrum.channelCount - 1;
-        fromChannelInput2.value = 0;
-        toChannelInput2.value = waterfallData.baseSpectrum.channelCount - 1;
-        fromSpectrumInput.value = 0;
-        toSpectrumInput.value = waterfallData.deltas.length - 1;
+        waterfallState.channelRange1 = [0, waterfallData.baseSpectrum.channelCount - 1];
+        waterfallState.channelRange2 = [0, waterfallData.baseSpectrum.channelCount - 1];
+        waterfallState.spectrumRange = [0, waterfallData.deltas.length - 1];
+
+        fromChannelInput1.value = waterfallState.channelRange1[0];
+        toChannelInput1.value = waterfallState.channelRange1[1];
+        fromChannelInput2.value = waterfallState.channelRange2[0];
+        toChannelInput2.value = waterfallState.channelRange2[1];
+        fromSpectrumInput.value = waterfallState.spectrumRange[0];
+        toSpectrumInput.value = waterfallState.spectrumRange[1];
+    }
+
+    async function onChannelIndexInputChange() {
+        waterfallState.channelRange1 = getChannelRange(fromChannelInput1, toChannelInput1);
+        waterfallState.channelRange2 = getChannelRange(fromChannelInput2, toChannelInput2);
+
+        await cps.renderCpsAsync();
+    }
+
+    function getChannelRange(fromInput, toInput) {
+        let fromChannel = parseInt(fromInput.value);
+        let toChannel = parseInt(toInput.value);
+
+        if (isNaN(fromChannel) || fromChannel < 0) {
+            fromChannel = 0;
+            fromInput.value = 0;
+        }
+
+        if (fromChannel > waterfallData.baseSpectrum.channelCount - 1) {
+            fromChannel = waterfallData.baseSpectrum.channelCount - 1;
+            fromInput.value = waterfallData.baseSpectrum.channelCount - 1;
+        }
+        
+        if (isNaN(toChannel) || toChannel > waterfallData.baseSpectrum.channelCount - 1) {
+            toChannel = waterfallData.baseSpectrum.channelCount - 1;
+            toInput.value = waterfallData.baseSpectrum.channelCount - 1;
+        }
+
+        if (fromChannel > toChannel) {
+            toChannel = fromChannel;
+            fromInput.value = fromChannel;
+            toInput.value = toChannel;
+        }
+
+        return [fromChannel, toChannel];
+    }
+
+    async function onSpectrumIndexInputChange() {
+        waterfallState.spectrumRange = getSpectrumRange();
+        if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+            await waterfall.renderSpectrumImageAsync();
+        }
+    }
+
+    function getSpectrumRange() {
+        let fromSpectrum = parseInt(fromSpectrumInput.value);
+        let toSpectrum = parseInt(toSpectrumInput.value);
+        if (isNaN(fromSpectrum) || fromSpectrum < 0) {
+            fromSpectrum = 0;
+            fromSpectrumInput.value = 0;
+        }
+
+        if (fromSpectrum > originalWaterfallData.deltas.length - 1) {
+            fromSpectrum = originalWaterfallData.deltas.length - 1;
+            fromSpectrumInput.value = originalWaterfallData.deltas.length - 1;
+        }
+        
+        if (isNaN(toSpectrum) || toSpectrum > originalWaterfallData.deltas.length - 1) {
+            toSpectrum = originalWaterfallData.deltas.length - 1;
+            toSpectrumInput.value = originalWaterfallData.deltas.length - 1;
+        }
+
+        if (fromSpectrum > toSpectrum) {
+            toSpectrum = fromSpectrum;
+            fromSpectrumInput.value = fromSpectrum;
+            toSpectrumInput.value = toSpectrum;
+        }
+
+        return [fromSpectrum, toSpectrum];
+    }
+
+    async function previewEnabledChange() {
+        if (previewCheckbox.checked) {
+            waterfallControl.showPreview();
+            if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+                await waterfall.renderSpectrumImageAsync();
+            }
+        } else {
+            waterfallControl.hidePreview();
+        }
     }
 
     function getCountsInRange(from, to) {
@@ -96,18 +187,16 @@
         cpsCanvas.width = waterfallData.deltas.length + constants.channelAxisHeight;
         cpsCanvas.height = constants.cpsPlotHeight;
     
-        const fromChannel1 = parseInt(fromChannelInput1.value);
-        const toChannel1 = parseInt(toChannelInput1.value);
-        if (isNaN(fromChannel1) || isNaN(toChannel1) || fromChannel1 > toChannel1) {
+        const range1 = waterfallState.channelRange1;
+        if (!range1 || range1.length !== 2) {
             cpsToMapButton.disabled = true;
             comparisonToMapButton.disabled = true;
             renderCpsData(cpsCanvas);
             return;
         }
         
-        const fromChannel2 = parseInt(fromChannelInput2.value);
-        const toChannel2 = parseInt(toChannelInput2.value);
-        if (compareCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
+        const range2 = waterfallState.channelRange2;
+        if (compareCheckbox.checked && (!range2 || range2.length !== 2)) {
             cpsToMapButton.disabled = true;
             comparisonToMapButton.disabled = true;
             renderCpsData(cpsCanvas);
@@ -117,9 +206,9 @@
         if (compareCheckbox.checked) {
             comparisonToMapButton.disabled = false;
             cpsToMapButton.disabled = false;
-            const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
+            const countsInRange1 = getCountsInRange(range1[0], range1[1]);
             const cpsInRange1 = countsToCps(countsInRange1);
-            const countsInRange2 = getCountsInRange(fromChannel2, toChannel2);
+            const countsInRange2 = getCountsInRange(range2[0], range2[1]);
             const cpsInRange2 = countsToCps(countsInRange2);
             const ratio = {};
             for (let i = 0; i < waterfallData.deltas.length; i++) {
@@ -142,7 +231,7 @@
         } else {
             cpsToMapButton.disabled = false;
             comparisonToMapButton.disabled = true;
-            const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
+            const countsInRange1 = getCountsInRange(range1[0], range1[1]);
             const cpsInRange1 = countsToCps(countsInRange1);
             const renderData = getRenderData(cpsInRange1);
 
@@ -174,41 +263,28 @@
         displayMin -= constants.cpsExtendRange * (displayRange === 0 ? displayMax : displayRange);
         displayRange = displayMax - displayMin;
 
-        if (dottedCheckbox.checked) {
-            // points
-            ctx.fillStyle = constants.dotColor;
-            for (let x = 0; x < waterfallData.deltas.length; x++) {
-                if (data.values[x] === undefined) {
-                    continue;
-                }
-
-                const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
-                ctx.fillRect(x, y, 1, 1);
+        // line
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.setLineDash([1, 0]);
+        ctx.strokeStyle = constants.lineColor;
+        let firstMove = true;
+        for (let x = 0; x < waterfallData.deltas.length; x++) {
+            if (data.values[x] === undefined) {
+                continue;
             }
-        } else {
-            // lines
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.setLineDash([1, 0]);
-            ctx.strokeStyle = constants.lineColor;
-            let firstMove = true;
-            for (let x = 0; x < waterfallData.deltas.length; x++) {
-                if (data.values[x] === undefined) {
-                    continue;
-                }
 
-                const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
+            const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
 
-                if (firstMove) {
-                    ctx.moveTo(x, y);
-                    firstMove = false;
-                } else {
-                    ctx.lineTo(x, y);
-                    ctx.moveTo(x, y);
-                }
+            if (firstMove) {
+                ctx.moveTo(x, y);
+                firstMove = false;
+            } else {
+                ctx.lineTo(x, y);
+                ctx.moveTo(x, y);
             }
-            ctx.stroke();
         }
+        ctx.stroke();
 
         // separator line
         if (offset > 0) {
@@ -233,7 +309,11 @@
     }
 
     function exportCpsMap() {
-        const range = [fromChannelInput1.value, toChannelInput1.value];
+        const range = waterfallState.channelRange1;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid channel range 1.');
+            return;
+        }
         const energyRange = getEnergyRangeStr(range);
         const description = originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range ' + energyRange;
         const data = exports.getRctrkData(
@@ -249,8 +329,16 @@
     }
 
     function exportComparisonMap() {
-        const range = [fromChannelInput1.value, toChannelInput1.value];
-        const compareRange = [fromChannelInput2.value, toChannelInput2.value];
+        const range = waterfallState.channelRange1;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid channel range 1.');
+            return;
+        }
+        const compareRange = waterfallState.channelRange2;
+        if (!compareRange || compareRange.length !== 2) {
+            alert('Error: invalid channel range 2.');
+            return;
+        }
         const energyRange = getEnergyRangeStr(range);
         const compareEnergyRange = getEnergyRangeStr(compareRange);
         const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + 
@@ -263,11 +351,10 @@
     }
 
     function exportSpectrumRange() {
-        const fromSpectrum = parseInt(fromSpectrumInput.value);
-        const toSpectrum = parseInt(toSpectrumInput.value);
-        if (isNaN(fromSpectrum) || isNaN(toSpectrum) || fromSpectrum > toSpectrum) {
-            // TODO: implement UI validation
-            throw new Error('invalid from or to spectrum index');
+        const range = waterfallState.spectrumRange;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid from or to spectrum index.');
+            return;
         }
 
         if (originalWaterfallData.channelBinning !== 1) {
@@ -276,30 +363,28 @@
         
         const combinedSpectrum = exports.combineSpectrums(
             originalWaterfallData.deltas, 
-            fromSpectrum, 
-            toSpectrum, 
+            range[0], 
+            range[1], 
             originalWaterfallData.baseSpectrum, 
             originalWaterfallData.filename
         );
         const spectrumText = exports.serializeSpectrum(combinedSpectrum);
-        const filename = originalWaterfallData.baseSpectrum.name + '-[' + fromSpectrum + ', ' + toSpectrum + ']';
+        const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + ']';
 
         saveFile(filename + '-combined.txt', spectrumText, 'text/plain');
     }
 
     async function spectrumRangeAsBase() {
-        // TODO: duplicated code
-        const fromSpectrum = parseInt(fromSpectrumInput.value);
-        const toSpectrum = parseInt(toSpectrumInput.value);
-        if (isNaN(fromSpectrum) || isNaN(toSpectrum) || fromSpectrum > toSpectrum) {
-            // TODO: implement UI validation
-            throw new Error('invalid from or to spectrum index');
+        const range = waterfallState.spectrumRange;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid from or to spectrum index.');
+            return;
         }
         
-        let combinedSpectrum = exports.combineSpectrums(
+        const combinedSpectrum = exports.combineSpectrums(
             originalWaterfallData.deltas, 
-            fromSpectrum, 
-            toSpectrum, 
+            range[0], 
+            range[1], 
             originalWaterfallData.baseSpectrum, 
             originalWaterfallData.filename
         );

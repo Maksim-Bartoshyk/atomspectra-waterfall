@@ -96,8 +96,15 @@ input[type="checkbox"], input[type="radio"] {
     display: inline-block;
     margin-right: 16px;
 }
+.preview-container {
+    display: none;
+    height: 150px;
+}
 .plot-container, .plot-container .cps-container {
     height: calc(100% - 212px); /* - other controls height */
+}
+.plot-container.with-preview, .plot-container.with-preview .cps-container {
+    height: calc(100% - 212px - 150px); /* - other controls height + preview heigth */
 }
 .plot-container .waterfall-container {
     display: inline-block;
@@ -596,15 +603,6 @@ input[type="checkbox"], input[type="radio"] {
 				<div class="col">
 					<label for="max-cps">Scale max(%):</label>
 					<input type="number" name="max-cps" id="max-cps" min="1" max="100" value="100"/>
-					<!-- <select name="max-cps" id="max-cps">
-						<option selected value="100">100%</option>
-						<option value="75">75%</option>
-						<option value="50">50%</option>
-						<option value="25">25%</option>
-						<option value="10">10%</option>
-						<option value="5">5%</option>
-						<option value="1">1%</option>
-					</select> -->
 				</div>
 				<div class="col">
 					<label for="moving-average-vertical">Moving avg(v):</label>
@@ -667,17 +665,6 @@ input[type="checkbox"], input[type="radio"] {
 				<div class="col">
 					<label for="min-cps">Scale min(%):</label>
 					<input type="number" name="min-cps" id="min-cps" min="0" max="99" value="0"/>
-					<!-- <select name="min-cps" id="min-cps">
-						<option value="90">90%</option>
-						<option value="75">75%</option>
-						<option value="50">50%</option>
-						<option value="25">25%</option>
-						<option value="10">10%</option>
-						<option value="5">5%</option>
-						<option value="2">2%</option>
-						<option value="1">1%</option>
-						<option selected value="0">0%</option>
-					</select> -->
 				</div>
 				<div class="col">
 					<label for="moving-average-horizontal">Moving avg(h):</label>
@@ -692,6 +679,9 @@ input[type="checkbox"], input[type="radio"] {
 				</div>
 			</div>
 		</div>
+		<div id="preview-container" class="preview-container">
+			<canvas id="preview-plot" class="plot" width="662" height="0"></canvas>
+		</div>
 		<div id="plot-container" class="plot-container">
 			<div id="horizontal-cursor" class="horizontal-cursor"></div>
 			<div id="vertical-cursor" class="vertical-cursor"></div>
@@ -704,7 +694,7 @@ input[type="checkbox"], input[type="radio"] {
 		</div>
 		<div id="cps-control" class="cps-control">
 			<div class="row">
-				<button id="render-cps" class="cps-left-column">CPS trend in channel range_1:</button> 
+				<label id="render-cps" class="cps-left-column">CPS trend in channel range_1:</label> 
 				<input type="number" id="from-channel-1" class="numeric-input"/>-<input type="number" id="to-channel-1" class="numeric-input"/>
 				<button id="export-cps-map" class="export-button" disabled>Range_1 cps to map</button>
 			</div>
@@ -718,8 +708,8 @@ input[type="checkbox"], input[type="radio"] {
 			</div>
 			<div class="row">
 				<div class="cps-left-column">
-					<input type="checkbox" id="dotted-trend" name="dotted-trend"/>
-					<label for="dotted-trend">Dotted</label>
+					<input type="checkbox" id="preview-enabled" name="preview-enabled"/>
+					<label for="preview-enabled">Preview spectrum in spectrorgam range:</label>
 				</div>
 				<input type="number" id="from-spectrum" class="numeric-input" placeholder="from index"/>-<input type="number" id="to-spectrum" class="numeric-input" placeholder="to index"/>
 				<button id="spg-range-as-base" class="spg-range-button">Spg range as base</button>
@@ -737,9 +727,11 @@ input[type="checkbox"], input[type="radio"] {
         channelAxisHeight: 32,
         channelAxisTickHeight: 4,
         backgroundColor: 'black',
+        previewColor: '#AAAAAA', // full hex only
+        previewHeight: 150,
         textColor: 'lightgray',
         lineColor: 'lightgray',
-        separatorLineColor: '#777',
+        separatorLineColor: '#777777',
         dotColor: 'white',
         cpsPlotHeight: 300,
         cpsExtendRange: 0.1,
@@ -757,6 +749,10 @@ input[type="checkbox"], input[type="radio"] {
         maxCpsPercent: 100,
         minCpsPercent: 0,
         timeOffsetHours: getLocalTimeOffsetHours(),
+        previewEnebled: false,
+        channelRange1: [],
+        channelRange2: [],
+        spectrumRange: [],
     };
     window.common = {
         timeToString: timestamp => {
@@ -818,6 +814,10 @@ input[type="checkbox"], input[type="radio"] {
         renderWaterfallImageAsync: () => {
             return common.executeWithStatusAsync('Rendering waterfall...', () => renderWaterfallImage());
         },
+        renderSpectrumImage: () => renderSpectrumImage(),
+        renderSpectrumImageAsync: () => {
+            return common.executeWithStatusAsync('Rendering spectrum...', () => renderSpectrumImage());
+        },
     }
 
     function hexToRGB(hex) {
@@ -826,7 +826,69 @@ input[type="checkbox"], input[type="radio"] {
             b = parseInt(hex.slice(5, 7), 16);
         
             return [r, g, b];
-    }		
+    }
+
+    function renderSpectrumImage() {
+        const range = waterfallState.spectrumRange;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid from or to spectrum index.');
+            return;
+        }
+        
+        const canvas = document.getElementById('preview-plot');
+        canvas.width = waterfallData.baseSpectrum.channelCount + constants.timeAxisWidth;
+        canvas.height = constants.previewHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.fillStyle = constants.backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const combinedSpectrum = exports.combineSpectrums(
+            waterfallData.deltas,
+            Math.floor(range[0] / waterfallState.spectrumBinning),
+            Math.floor(range[1] / waterfallState.spectrumBinning),
+            waterfallData.baseSpectrum, 
+            'preview',
+        );
+
+        const cpsInChannel = [];
+        let maxCps = 0;
+        combinedSpectrum.channels.forEach((channelValue, channelIndex) => {
+            let cps = channelValue / combinedSpectrum.duration;
+            // TODO: duplicated code
+            if (waterfallState.subtractBase) {
+                const baseCps = waterfallData.baseSpectrum.channels[channelIndex] / waterfallData.baseSpectrum.duration;
+                cps -= baseCps;
+                if (cps < 0) {
+                    cps = 0;
+                }
+            }
+
+            cpsInChannel.push(cps);
+
+            if (cps > maxCps) {
+                maxCps = cps;
+            }
+        });
+
+        // waterfall render
+        const spectrumHeight = canvas.height;
+        const imageData = ctx.getImageData(constants.timeAxisWidth, 0, waterfallData.baseSpectrum.channelCount, spectrumHeight);
+        const rgbColor = hexToRGB(constants.previewColor);
+        cpsInChannel.forEach((cps, channelIndex) => {
+            let barHeight = Math.floor((cps / (maxCps * 1.05)) * spectrumHeight);
+            // todo: log/sqrt
+
+            for (let y = spectrumHeight - barHeight; y <= spectrumHeight; y++) {
+                const pxOffset = (y * waterfallData.baseSpectrum.channelCount + channelIndex) * 4;
+                imageData.data[pxOffset + 0] = rgbColor[0];
+                imageData.data[pxOffset + 1] = rgbColor[1];
+                imageData.data[pxOffset + 2] = rgbColor[2];
+                imageData.data[pxOffset + 3] = 255;
+            }
+        });
+        
+        ctx.putImageData(imageData, constants.timeAxisWidth, 0);
+    }
 
     function renderWaterfallImage() {
         const canvas = document.getElementById('waterfall-plot');
@@ -1075,10 +1137,11 @@ input[type="checkbox"], input[type="radio"] {
     }
 })();</script>
 		<script>(function(){
+    // TODO: refactor: move state control to waterfall-control.js, keep only rendering here
     // cps plot render
     const fromChannelInput1 = document.getElementById('from-channel-1');
     const toChannelInput1 = document.getElementById('to-channel-1');
-    const dottedCheckbox = document.getElementById('dotted-trend');
+    const previewCheckbox = document.getElementById('preview-enabled');
     const fromChannelInput2 = document.getElementById('from-channel-2');
     const toChannelInput2 = document.getElementById('to-channel-2');
     const fromSpectrumInput = document.getElementById('from-spectrum');
@@ -1088,13 +1151,19 @@ input[type="checkbox"], input[type="radio"] {
     const comparisonToMapButton = document.getElementById('export-comparison-map');
     const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
     const spgAsBaseButton = document.getElementById('spg-range-as-base');
-    const renderCpsButton = document.getElementById('render-cps');
 
+    compareCheckbox.addEventListener('change', async () => await cps.renderCpsAsync());
     cpsToMapButton.addEventListener('click', () => exportCpsMap());
     comparisonToMapButton.addEventListener('click', () => exportComparisonMap());
     spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
     spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
-    renderCpsButton.addEventListener('click', async () => await cps.renderCpsAsync());
+    previewCheckbox.addEventListener('change', async () => await previewEnabledChange());
+    fromChannelInput1.addEventListener('change', async () => await onChannelIndexInputChange());
+    toChannelInput1.addEventListener('change', async () => await onChannelIndexInputChange());
+    fromChannelInput2.addEventListener('change', async () => await onChannelIndexInputChange());
+    toChannelInput2.addEventListener('change', async () => await onChannelIndexInputChange());
+    fromSpectrumInput.addEventListener('change', async () => await onSpectrumIndexInputChange());
+    toSpectrumInput.addEventListener('change', async () => await onSpectrumIndexInputChange());
     
     window.cps = {
         initCpsControls: () => initCpsControls(),
@@ -1103,12 +1172,96 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     function initCpsControls() {
-        fromChannelInput1.value = 0;
-        toChannelInput1.value = waterfallData.baseSpectrum.channelCount - 1;
-        fromChannelInput2.value = 0;
-        toChannelInput2.value = waterfallData.baseSpectrum.channelCount - 1;
-        fromSpectrumInput.value = 0;
-        toSpectrumInput.value = waterfallData.deltas.length - 1;
+        waterfallState.channelRange1 = [0, waterfallData.baseSpectrum.channelCount - 1];
+        waterfallState.channelRange2 = [0, waterfallData.baseSpectrum.channelCount - 1];
+        waterfallState.spectrumRange = [0, waterfallData.deltas.length - 1];
+
+        fromChannelInput1.value = waterfallState.channelRange1[0];
+        toChannelInput1.value = waterfallState.channelRange1[1];
+        fromChannelInput2.value = waterfallState.channelRange2[0];
+        toChannelInput2.value = waterfallState.channelRange2[1];
+        fromSpectrumInput.value = waterfallState.spectrumRange[0];
+        toSpectrumInput.value = waterfallState.spectrumRange[1];
+    }
+
+    async function onChannelIndexInputChange() {
+        waterfallState.channelRange1 = getChannelRange(fromChannelInput1, toChannelInput1);
+        waterfallState.channelRange2 = getChannelRange(fromChannelInput2, toChannelInput2);
+
+        await cps.renderCpsAsync();
+    }
+
+    function getChannelRange(fromInput, toInput) {
+        let fromChannel = parseInt(fromInput.value);
+        let toChannel = parseInt(toInput.value);
+
+        if (isNaN(fromChannel) || fromChannel < 0) {
+            fromChannel = 0;
+            fromInput.value = 0;
+        }
+
+        if (fromChannel > waterfallData.baseSpectrum.channelCount - 1) {
+            fromChannel = waterfallData.baseSpectrum.channelCount - 1;
+            fromInput.value = waterfallData.baseSpectrum.channelCount - 1;
+        }
+        
+        if (isNaN(toChannel) || toChannel > waterfallData.baseSpectrum.channelCount - 1) {
+            toChannel = waterfallData.baseSpectrum.channelCount - 1;
+            toInput.value = waterfallData.baseSpectrum.channelCount - 1;
+        }
+
+        if (fromChannel > toChannel) {
+            toChannel = fromChannel;
+            fromInput.value = fromChannel;
+            toInput.value = toChannel;
+        }
+
+        return [fromChannel, toChannel];
+    }
+
+    async function onSpectrumIndexInputChange() {
+        waterfallState.spectrumRange = getSpectrumRange();
+        if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+            await waterfall.renderSpectrumImageAsync();
+        }
+    }
+
+    function getSpectrumRange() {
+        let fromSpectrum = parseInt(fromSpectrumInput.value);
+        let toSpectrum = parseInt(toSpectrumInput.value);
+        if (isNaN(fromSpectrum) || fromSpectrum < 0) {
+            fromSpectrum = 0;
+            fromSpectrumInput.value = 0;
+        }
+
+        if (fromSpectrum > originalWaterfallData.deltas.length - 1) {
+            fromSpectrum = originalWaterfallData.deltas.length - 1;
+            fromSpectrumInput.value = originalWaterfallData.deltas.length - 1;
+        }
+        
+        if (isNaN(toSpectrum) || toSpectrum > originalWaterfallData.deltas.length - 1) {
+            toSpectrum = originalWaterfallData.deltas.length - 1;
+            toSpectrumInput.value = originalWaterfallData.deltas.length - 1;
+        }
+
+        if (fromSpectrum > toSpectrum) {
+            toSpectrum = fromSpectrum;
+            fromSpectrumInput.value = fromSpectrum;
+            toSpectrumInput.value = toSpectrum;
+        }
+
+        return [fromSpectrum, toSpectrum];
+    }
+
+    async function previewEnabledChange() {
+        if (previewCheckbox.checked) {
+            waterfallControl.showPreview();
+            if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+                await waterfall.renderSpectrumImageAsync();
+            }
+        } else {
+            waterfallControl.hidePreview();
+        }
     }
 
     function getCountsInRange(from, to) {
@@ -1172,18 +1325,16 @@ input[type="checkbox"], input[type="radio"] {
         cpsCanvas.width = waterfallData.deltas.length + constants.channelAxisHeight;
         cpsCanvas.height = constants.cpsPlotHeight;
     
-        const fromChannel1 = parseInt(fromChannelInput1.value);
-        const toChannel1 = parseInt(toChannelInput1.value);
-        if (isNaN(fromChannel1) || isNaN(toChannel1) || fromChannel1 > toChannel1) {
+        const range1 = waterfallState.channelRange1;
+        if (!range1 || range1.length !== 2) {
             cpsToMapButton.disabled = true;
             comparisonToMapButton.disabled = true;
             renderCpsData(cpsCanvas);
             return;
         }
         
-        const fromChannel2 = parseInt(fromChannelInput2.value);
-        const toChannel2 = parseInt(toChannelInput2.value);
-        if (compareCheckbox.checked && (isNaN(fromChannel2) || isNaN(toChannel2) || fromChannel2 > toChannel2)) {
+        const range2 = waterfallState.channelRange2;
+        if (compareCheckbox.checked && (!range2 || range2.length !== 2)) {
             cpsToMapButton.disabled = true;
             comparisonToMapButton.disabled = true;
             renderCpsData(cpsCanvas);
@@ -1193,9 +1344,9 @@ input[type="checkbox"], input[type="radio"] {
         if (compareCheckbox.checked) {
             comparisonToMapButton.disabled = false;
             cpsToMapButton.disabled = false;
-            const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
+            const countsInRange1 = getCountsInRange(range1[0], range1[1]);
             const cpsInRange1 = countsToCps(countsInRange1);
-            const countsInRange2 = getCountsInRange(fromChannel2, toChannel2);
+            const countsInRange2 = getCountsInRange(range2[0], range2[1]);
             const cpsInRange2 = countsToCps(countsInRange2);
             const ratio = {};
             for (let i = 0; i < waterfallData.deltas.length; i++) {
@@ -1218,7 +1369,7 @@ input[type="checkbox"], input[type="radio"] {
         } else {
             cpsToMapButton.disabled = false;
             comparisonToMapButton.disabled = true;
-            const countsInRange1 = getCountsInRange(fromChannel1, toChannel1);
+            const countsInRange1 = getCountsInRange(range1[0], range1[1]);
             const cpsInRange1 = countsToCps(countsInRange1);
             const renderData = getRenderData(cpsInRange1);
 
@@ -1250,41 +1401,28 @@ input[type="checkbox"], input[type="radio"] {
         displayMin -= constants.cpsExtendRange * (displayRange === 0 ? displayMax : displayRange);
         displayRange = displayMax - displayMin;
 
-        if (dottedCheckbox.checked) {
-            // points
-            ctx.fillStyle = constants.dotColor;
-            for (let x = 0; x < waterfallData.deltas.length; x++) {
-                if (data.values[x] === undefined) {
-                    continue;
-                }
-
-                const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
-                ctx.fillRect(x, y, 1, 1);
+        // line
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.setLineDash([1, 0]);
+        ctx.strokeStyle = constants.lineColor;
+        let firstMove = true;
+        for (let x = 0; x < waterfallData.deltas.length; x++) {
+            if (data.values[x] === undefined) {
+                continue;
             }
-        } else {
-            // lines
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.setLineDash([1, 0]);
-            ctx.strokeStyle = constants.lineColor;
-            let firstMove = true;
-            for (let x = 0; x < waterfallData.deltas.length; x++) {
-                if (data.values[x] === undefined) {
-                    continue;
-                }
 
-                const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
+            const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
 
-                if (firstMove) {
-                    ctx.moveTo(x, y);
-                    firstMove = false;
-                } else {
-                    ctx.lineTo(x, y);
-                    ctx.moveTo(x, y);
-                }
+            if (firstMove) {
+                ctx.moveTo(x, y);
+                firstMove = false;
+            } else {
+                ctx.lineTo(x, y);
+                ctx.moveTo(x, y);
             }
-            ctx.stroke();
         }
+        ctx.stroke();
 
         // separator line
         if (offset > 0) {
@@ -1309,7 +1447,11 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     function exportCpsMap() {
-        const range = [fromChannelInput1.value, toChannelInput1.value];
+        const range = waterfallState.channelRange1;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid channel range 1.');
+            return;
+        }
         const energyRange = getEnergyRangeStr(range);
         const description = originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range ' + energyRange;
         const data = exports.getRctrkData(
@@ -1325,8 +1467,16 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     function exportComparisonMap() {
-        const range = [fromChannelInput1.value, toChannelInput1.value];
-        const compareRange = [fromChannelInput2.value, toChannelInput2.value];
+        const range = waterfallState.channelRange1;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid channel range 1.');
+            return;
+        }
+        const compareRange = waterfallState.channelRange2;
+        if (!compareRange || compareRange.length !== 2) {
+            alert('Error: invalid channel range 2.');
+            return;
+        }
         const energyRange = getEnergyRangeStr(range);
         const compareEnergyRange = getEnergyRangeStr(compareRange);
         const data = exports.getRctrkData(originalWaterfallData.baseSpectrum.name + 
@@ -1339,11 +1489,10 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     function exportSpectrumRange() {
-        const fromSpectrum = parseInt(fromSpectrumInput.value);
-        const toSpectrum = parseInt(toSpectrumInput.value);
-        if (isNaN(fromSpectrum) || isNaN(toSpectrum) || fromSpectrum > toSpectrum) {
-            // TODO: implement UI validation
-            throw new Error('invalid from or to spectrum index');
+        const range = waterfallState.spectrumRange;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid from or to spectrum index.');
+            return;
         }
 
         if (originalWaterfallData.channelBinning !== 1) {
@@ -1352,30 +1501,28 @@ input[type="checkbox"], input[type="radio"] {
         
         const combinedSpectrum = exports.combineSpectrums(
             originalWaterfallData.deltas, 
-            fromSpectrum, 
-            toSpectrum, 
+            range[0], 
+            range[1], 
             originalWaterfallData.baseSpectrum, 
             originalWaterfallData.filename
         );
         const spectrumText = exports.serializeSpectrum(combinedSpectrum);
-        const filename = originalWaterfallData.baseSpectrum.name + '-[' + fromSpectrum + ', ' + toSpectrum + ']';
+        const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + ']';
 
         saveFile(filename + '-combined.txt', spectrumText, 'text/plain');
     }
 
     async function spectrumRangeAsBase() {
-        // TODO: duplicated code
-        const fromSpectrum = parseInt(fromSpectrumInput.value);
-        const toSpectrum = parseInt(toSpectrumInput.value);
-        if (isNaN(fromSpectrum) || isNaN(toSpectrum) || fromSpectrum > toSpectrum) {
-            // TODO: implement UI validation
-            throw new Error('invalid from or to spectrum index');
+        const range = waterfallState.spectrumRange;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid from or to spectrum index.');
+            return;
         }
         
-        let combinedSpectrum = exports.combineSpectrums(
+        const combinedSpectrum = exports.combineSpectrums(
             originalWaterfallData.deltas, 
-            fromSpectrum, 
-            toSpectrum, 
+            range[0], 
+            range[1], 
             originalWaterfallData.baseSpectrum, 
             originalWaterfallData.filename
         );
@@ -1540,6 +1687,7 @@ input[type="checkbox"], input[type="radio"] {
     movingAverageVerticalInput.addEventListener('change', e => onVerticalMovingAverageChange(e.target.value));
     movingAverageHorizontalInput.addEventListener('change', e => onHorizontalMovingAverageChange(e.target.value));
 
+    // scale control
     const linBtn = document.getElementById('lin');
     const sqrtBtn = document.getElementById('sqrt');
     const logBtn = document.getElementById('log');
@@ -1562,6 +1710,10 @@ input[type="checkbox"], input[type="radio"] {
 
     const timezoneInput = document.getElementById('timezone');
     timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
+
+    const plotContainer = document.getElementById('plot-container');
+    const previewContainer = document.getElementById('preview-container');
+    const previewCanvas = document.getElementById('preview-plot');
     
     window.waterfallControl = {
         setSubstractBase: (value) => setSubstractBase(value),
@@ -1572,8 +1724,23 @@ input[type="checkbox"], input[type="radio"] {
         applyBinningAndAverage: () => applyBinningAndAverage(),
         applyBinningAndAverageAsync: () => {
             return common.executeWithStatusAsync('Processing...', () => applyBinningAndAverage());
-        }
+        },
+        showPreview: () => showPreview(),
+        hidePreview: () => hidePreview()
     };
+
+    function showPreview() {
+        waterfallState.previewEnabled = true;
+        plotContainer.classList.add('with-preview');
+        previewContainer.style.display = 'block';
+        previewCanvas.height = 0;
+    }
+
+    function hidePreview() {
+        waterfallState.previewEnabled = false;
+        plotContainer.classList.remove('with-preview');
+        previewContainer.style.display = 'none';
+    }
 
     function setSubstractBase(value) {
         subtractCheckbox.checked = value;

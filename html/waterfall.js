@@ -5,6 +5,10 @@
         renderWaterfallImageAsync: () => {
             return common.executeWithStatusAsync('Rendering waterfall...', () => renderWaterfallImage());
         },
+        renderSpectrumImage: () => renderSpectrumImage(),
+        renderSpectrumImageAsync: () => {
+            return common.executeWithStatusAsync('Rendering spectrum...', () => renderSpectrumImage());
+        },
     }
 
     function hexToRGB(hex) {
@@ -13,7 +17,69 @@
             b = parseInt(hex.slice(5, 7), 16);
         
             return [r, g, b];
-    }		
+    }
+
+    function renderSpectrumImage() {
+        const range = waterfallState.spectrumRange;
+        if (!range || range.length !== 2) {
+            alert('Error: invalid from or to spectrum index.');
+            return;
+        }
+        
+        const canvas = document.getElementById('preview-plot');
+        canvas.width = waterfallData.baseSpectrum.channelCount + constants.timeAxisWidth;
+        canvas.height = constants.previewHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.fillStyle = constants.backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const combinedSpectrum = exports.combineSpectrums(
+            waterfallData.deltas,
+            Math.floor(range[0] / waterfallState.spectrumBinning),
+            Math.floor(range[1] / waterfallState.spectrumBinning),
+            waterfallData.baseSpectrum, 
+            'preview',
+        );
+
+        const cpsInChannel = [];
+        let maxCps = 0;
+        combinedSpectrum.channels.forEach((channelValue, channelIndex) => {
+            let cps = channelValue / combinedSpectrum.duration;
+            // TODO: duplicated code
+            if (waterfallState.subtractBase) {
+                const baseCps = waterfallData.baseSpectrum.channels[channelIndex] / waterfallData.baseSpectrum.duration;
+                cps -= baseCps;
+                if (cps < 0) {
+                    cps = 0;
+                }
+            }
+
+            cpsInChannel.push(cps);
+
+            if (cps > maxCps) {
+                maxCps = cps;
+            }
+        });
+
+        // waterfall render
+        const spectrumHeight = canvas.height;
+        const imageData = ctx.getImageData(constants.timeAxisWidth, 0, waterfallData.baseSpectrum.channelCount, spectrumHeight);
+        const rgbColor = hexToRGB(constants.previewColor);
+        cpsInChannel.forEach((cps, channelIndex) => {
+            let barHeight = Math.floor((cps / (maxCps * 1.05)) * spectrumHeight);
+            // todo: log/sqrt
+
+            for (let y = spectrumHeight - barHeight; y <= spectrumHeight; y++) {
+                const pxOffset = (y * waterfallData.baseSpectrum.channelCount + channelIndex) * 4;
+                imageData.data[pxOffset + 0] = rgbColor[0];
+                imageData.data[pxOffset + 1] = rgbColor[1];
+                imageData.data[pxOffset + 2] = rgbColor[2];
+                imageData.data[pxOffset + 3] = 255;
+            }
+        });
+        
+        ctx.putImageData(imageData, constants.timeAxisWidth, 0);
+    }
 
     function renderWaterfallImage() {
         const canvas = document.getElementById('waterfall-plot');

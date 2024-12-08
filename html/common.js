@@ -9,9 +9,11 @@
         channelAxisHeight: 32,
         channelAxisTickHeight: 4,
         backgroundColor: 'black',
+        previewColor: '#AAAAAA', // full hex only
+        previewHeight: 150,
         textColor: 'lightgray',
         lineColor: 'lightgray',
-        separatorLineColor: '#777',
+        separatorLineColor: '#777777',
         dotColor: 'white',
         cpsPlotHeight: 300,
         cpsExtendRange: 0.1,
@@ -29,6 +31,10 @@
         maxCpsPercent: 100,
         minCpsPercent: 0,
         timeOffsetHours: getLocalTimeOffsetHours(),
+        previewEnebled: false,
+        channelRange1: [],
+        channelRange2: [],
+        spectrumRange: [],
     };
     window.common = {
         timeToString: timestamp => {

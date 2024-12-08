@@ -93,8 +93,15 @@ input[type="checkbox"], input[type="radio"] {
     display: inline-block;
     margin-right: 16px;
 }
+.preview-container {
+    display: none;
+    height: 150px;
+}
 .plot-container, .plot-container .cps-container {
     height: calc(100% - 212px); /* - other controls height */
+}
+.plot-container.with-preview, .plot-container.with-preview .cps-container {
+    height: calc(100% - 212px - 150px); /* - other controls height + preview heigth */
 }
 .plot-container .waterfall-container {
     display: inline-block;

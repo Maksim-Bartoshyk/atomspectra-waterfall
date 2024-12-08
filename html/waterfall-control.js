@@ -9,6 +9,7 @@
     movingAverageVerticalInput.addEventListener('change', e => onVerticalMovingAverageChange(e.target.value));
     movingAverageHorizontalInput.addEventListener('change', e => onHorizontalMovingAverageChange(e.target.value));
 
+    // scale control
     const linBtn = document.getElementById('lin');
     const sqrtBtn = document.getElementById('sqrt');
     const logBtn = document.getElementById('log');
@@ -31,6 +32,10 @@
 
     const timezoneInput = document.getElementById('timezone');
     timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
+
+    const plotContainer = document.getElementById('plot-container');
+    const previewContainer = document.getElementById('preview-container');
+    const previewCanvas = document.getElementById('preview-plot');
     
     window.waterfallControl = {
         setSubstractBase: (value) => setSubstractBase(value),
@@ -41,8 +46,23 @@
         applyBinningAndAverage: () => applyBinningAndAverage(),
         applyBinningAndAverageAsync: () => {
             return common.executeWithStatusAsync('Processing...', () => applyBinningAndAverage());
-        }
+        },
+        showPreview: () => showPreview(),
+        hidePreview: () => hidePreview()
     };
+
+    function showPreview() {
+        waterfallState.previewEnabled = true;
+        plotContainer.classList.add('with-preview');
+        previewContainer.style.display = 'block';
+        previewCanvas.height = 0;
+    }
+
+    function hidePreview() {
+        waterfallState.previewEnabled = false;
+        plotContainer.classList.remove('with-preview');
+        previewContainer.style.display = 'none';
+    }
 
     function setSubstractBase(value) {
         subtractCheckbox.checked = value;
