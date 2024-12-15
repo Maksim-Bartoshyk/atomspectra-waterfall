@@ -74,8 +74,24 @@
         "#fffcdf","#fffde2","#fffde5","#fffde8","#fffeeb","#fffeee","#fffef1","#fffef4",
         "#fffff6"
     ];
-    const ironPaletteRGB = ironPaletteHex.map(c => hexToRGB(c));    
-
+    const ironPaletteRGB = [];
+    const colors = ironPaletteHex.map(c => hexToRGB(c));
+    colors.forEach((color, index) => {
+        ironPaletteRGB.push(color);
+        if(index < colors.length - 1) {
+            const nextColor = colors[index + 1];
+            const multFactor = 2;
+            for(let i = 1; i < multFactor; i++) {
+                const intermColor = [
+                    Math.round(color[0] + (nextColor[0] - color[0]) / multFactor * i),
+                    Math.round(color[1] + (nextColor[1] - color[1]) / multFactor * i),
+                    Math.round(color[2] + (nextColor[2] - color[2]) / multFactor * i)
+                ];
+                ironPaletteRGB.push(intermColor);
+            } 
+        }
+    });
+    
     function hexToRGB(hex) {
         var r = parseInt(hex.slice(1, 3), 16),
             g = parseInt(hex.slice(3, 5), 16),
@@ -302,7 +318,7 @@
                 colorIndex = Math.round((Math.log(linearColorIndex + 2) / Math.log(ironPaletteRGB.length)) * (ironPaletteRGB.length - 1));
                 break;
             case 'sqrt':
-                colorIndex = Math.round((Math.sqrt(linearColorIndex + 2) / Math.sqrt(ironPaletteRGB.length)) * (ironPaletteRGB.length - 1));
+                colorIndex = Math.round((Math.sqrt(linearColorIndex + 1) / Math.sqrt(ironPaletteRGB.length)) * (ironPaletteRGB.length - 1));
                 break;
             default:
                 colorIndex = linearColorIndex;
