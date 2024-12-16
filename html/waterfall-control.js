@@ -187,7 +187,7 @@
     }
 
     async function onMaxCpsChange(value) {
-        let newVal = parseInt(value);
+        let newVal = parseFloat(value);
         if (isNaN(newVal) || newVal < 1) {
             newVal = 100;
             maxCpsInput.value = newVal;
@@ -204,7 +204,7 @@
     }
 
     async function onMinCpsChange(value) {
-        let newVal = parseInt(value);
+        let newVal = parseFloat(value);
         if (isNaN(newVal) || newVal < 0) {
             newVal = 0;
             minCpsInput.value = newVal;

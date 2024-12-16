@@ -608,7 +608,7 @@ input[type="checkbox"], input[type="radio"] {
 				</div>
 				<div class="col">
 					<label for="max-cps">Scale max(%):</label>
-					<input type="number" name="max-cps" id="max-cps" min="1" max="100" value="100"/>
+					<input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100"/>
 				</div>
 				<div class="col">
 					<label for="moving-average-vertical">Moving avg(v):</label>
@@ -670,7 +670,7 @@ input[type="checkbox"], input[type="radio"] {
 				</div>
 				<div class="col">
 					<label for="min-cps">Scale min(%):</label>
-					<input type="number" name="min-cps" id="min-cps" min="0" max="99" value="0"/>
+					<input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0"/>
 				</div>
 				<div class="col">
 					<label for="moving-average-horizontal">Moving avg(h):</label>
@@ -888,23 +888,9 @@ input[type="checkbox"], input[type="radio"] {
         "#fffcdf","#fffde2","#fffde5","#fffde8","#fffeeb","#fffeee","#fffef1","#fffef4",
         "#fffff6"
     ];
-    const ironPaletteRGB = [];
-    const colors = ironPaletteHex.map(c => hexToRGB(c));
-    colors.forEach((color, index) => {
-        ironPaletteRGB.push(color);
-        if(index < colors.length - 1) {
-            const nextColor = colors[index + 1];
-            const multFactor = 2;
-            for(let i = 1; i < multFactor; i++) {
-                const intermColor = [
-                    Math.round(color[0] + (nextColor[0] - color[0]) / multFactor * i),
-                    Math.round(color[1] + (nextColor[1] - color[1]) / multFactor * i),
-                    Math.round(color[2] + (nextColor[2] - color[2]) / multFactor * i)
-                ];
-                ironPaletteRGB.push(intermColor);
-            } 
-        }
-    });
+    const ironPaletteRGBLin = ironPaletteHex.map(c => hexToRGB(c));
+    const ironPaletteRGBSqrt = ironPaletteRGBLin.slice(10);
+    const ironPaletteRGBLog = ironPaletteRGBLin.slice(40);
     
     function hexToRGB(hex) {
         var r = parseInt(hex.slice(1, 3), 16),
@@ -1121,25 +1107,25 @@ input[type="checkbox"], input[type="radio"] {
         if (cps < 0) {
             cps = 0;
         }
-        let linearColorIndex = Math.round((cps / (upperCpsBound - lowerCpsBound)) * (ironPaletteRGB.length - 1));
-        if (linearColorIndex > ironPaletteRGB.length - 1) {
-            linearColorIndex = ironPaletteRGB.length - 1;
-        }
-    
-        let colorIndex;
+
+        const ratio = cps / (upperCpsBound - lowerCpsBound);
+        let linColorIndex;
         switch (waterfallState.scale) {
             case 'log':
-                colorIndex = Math.round((Math.log(linearColorIndex + 2) / Math.log(ironPaletteRGB.length)) * (ironPaletteRGB.length - 1));
-                break;
+                linColorIndex = Math.round(ratio * (ironPaletteRGBLog.length - 1));
+                const logColorIndex = Math.round((Math.log(linColorIndex + 1) / Math.log(ironPaletteRGBLog.length)) * (ironPaletteRGBLog.length - 1));
+
+                return ironPaletteRGBLog[logColorIndex] || ironPaletteRGBLog[ironPaletteRGBLog.length - 1];
             case 'sqrt':
-                colorIndex = Math.round((Math.sqrt(linearColorIndex + 1) / Math.sqrt(ironPaletteRGB.length)) * (ironPaletteRGB.length - 1));
-                break;
+                linColorIndex = Math.round(ratio * (ironPaletteRGBSqrt.length - 1));
+                const sqrtColorIndex = Math.round((Math.sqrt(linColorIndex) / Math.sqrt(ironPaletteRGBSqrt.length)) * (ironPaletteRGBSqrt.length - 1));
+                
+                return ironPaletteRGBSqrt[sqrtColorIndex] || ironPaletteRGBSqrt[ironPaletteRGBSqrt.length - 1];
             default:
-                colorIndex = linearColorIndex;
+                linColorIndex = Math.round(ratio * (ironPaletteRGBLin.length - 1));
+
+                return ironPaletteRGBLin[linColorIndex] || ironPaletteRGBLin[ironPaletteRGBLin.length - 1];
         }
-    
-        const rgbColor = ironPaletteRGB[colorIndex];
-        return rgbColor;
     }
 
     function renderEnergyAxis(canvas, ctx, baseline) {
@@ -1936,7 +1922,7 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     async function onMaxCpsChange(value) {
-        let newVal = parseInt(value);
+        let newVal = parseFloat(value);
         if (isNaN(newVal) || newVal < 1) {
             newVal = 100;
             maxCpsInput.value = newVal;
@@ -1953,7 +1939,7 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     async function onMinCpsChange(value) {
-        let newVal = parseInt(value);
+        let newVal = parseFloat(value);
         if (isNaN(newVal) || newVal < 0) {
             newVal = 0;
             minCpsInput.value = newVal;
