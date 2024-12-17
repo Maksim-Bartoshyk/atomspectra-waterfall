@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.12.17</title>
+		<title>AS Waterfall v2024.12.18</title>
 		<style>body {
     background: #444;
     box-sizing: border-box;
@@ -1432,8 +1432,8 @@ input[type="checkbox"], input[type="radio"] {
         let displayMin = data.min;
         switch (waterfallState.scale) {
             case 'log':
-                displayMax = Math.log(displayMax);
-                displayMin = Math.log(displayMin);
+                displayMax = Math.log(displayMax + 0.1);
+                displayMin = Math.log(displayMin + 0.1);
                 break;
             case 'sqrt':
                 displayMax = Math.sqrt(displayMax);
@@ -1465,7 +1465,7 @@ input[type="checkbox"], input[type="radio"] {
             let displayValue = data.values[x];
             switch (waterfallState.scale) {
                 case 'log':
-                    displayValue = Math.log(displayValue);
+                    displayValue = Math.log(displayValue + 0.1);
                     break;
                 case 'sqrt':
                     displayValue = Math.sqrt(displayValue);

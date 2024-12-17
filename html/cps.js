@@ -258,8 +258,8 @@
         let displayMin = data.min;
         switch (waterfallState.scale) {
             case 'log':
-                displayMax = Math.log(displayMax);
-                displayMin = Math.log(displayMin);
+                displayMax = Math.log(displayMax + 0.1);
+                displayMin = Math.log(displayMin + 0.1);
                 break;
             case 'sqrt':
                 displayMax = Math.sqrt(displayMax);
@@ -291,7 +291,7 @@
             let displayValue = data.values[x];
             switch (waterfallState.scale) {
                 case 'log':
-                    displayValue = Math.log(displayValue);
+                    displayValue = Math.log(displayValue + 0.1);
                     break;
                 case 'sqrt':
                     displayValue = Math.sqrt(displayValue);
