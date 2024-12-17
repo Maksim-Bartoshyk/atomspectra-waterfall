@@ -256,6 +256,18 @@
 
         let displayMax = data.max;
         let displayMin = data.min;
+        switch (waterfallState.scale) {
+            case 'log':
+                displayMax = Math.log(displayMax);
+                displayMin = Math.log(displayMin);
+                break;
+            case 'sqrt':
+                displayMax = Math.sqrt(displayMax);
+                displayMin = Math.sqrt(displayMin);
+                break;
+            default:
+                break;
+        }
         if (displayMax === 0 && displayMin === 0) {
             displayMax = 1;
             displayMin = -1;
@@ -276,7 +288,19 @@
                 continue;
             }
 
-            const y = height - ((data.values[x] - displayMin) / displayRange) * height + offset;
+            let displayValue = data.values[x];
+            switch (waterfallState.scale) {
+                case 'log':
+                    displayValue = Math.log(displayValue);
+                    break;
+                case 'sqrt':
+                    displayValue = Math.sqrt(displayValue);
+                    break;
+                default:
+                    break;
+            }
+
+            const y = height - ((displayValue - displayMin) / displayRange) * height + offset;
 
             if (firstMove) {
                 ctx.moveTo(x, y);
@@ -307,7 +331,7 @@
         ctx.textBaseline = 'bottom';
         ctx.fillText(data.min.toFixed(range < 0.01 ? 4 : 2) + ' (min)', 0, offset + height);
         ctx.textBaseline = 'top';
-        ctx.fillText(label, canvas.width / 2 - label.length * 2, offset);
+        ctx.fillText(label + ' (' + waterfallState.scale + ')', canvas.width / 2 - label.length * 2, offset);
     }
 
     function exportCpsMap() {

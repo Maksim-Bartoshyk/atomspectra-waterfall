@@ -131,6 +131,7 @@
         waterfallState.scale = value;
         await waterfall.renderWaterfallImageAsync();
         await waterfall.renderSpectrumImageAsync();
+        await cps.renderCpsAsync();
     }
 
     async function onWaterfallBlurChange(value) {
