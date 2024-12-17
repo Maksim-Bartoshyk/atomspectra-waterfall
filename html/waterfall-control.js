@@ -56,7 +56,7 @@
     };
 
     async function onWaterfallPaletteChange(value) {
-        const paletteList = ['iron', 'glow', 'yellow', 'gray', 'arctic', 'lava'];
+        const paletteList = ['iron', 'ygb', 'yellow', 'glow', 'gray'];
         if (value) {
             waterfallState.palette = value;   
         } else {
