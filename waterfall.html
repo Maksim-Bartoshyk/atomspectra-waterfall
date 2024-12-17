@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.12.16</title>
+		<title>AS Waterfall v2024.12.17</title>
 		<link rel="stylesheet" href="./html/style.css" />
 		<script>
 			(function () {
@@ -87,33 +87,41 @@
 			</div>
 			<div class="row">
 				<div class="col">
-					<label for="timezone">Show time as:</label>
-					<select name="timezone" id="timezone">
-						<option value="-11">-11</option>
-						<option value="-10">-10</option>
-						<option value="-9">-9</option>
-						<option value="-8">-8</option>
-						<option value="-7">-7</option>
-						<option value="-6">-6</option>
-						<option value="-5">-5</option>
-						<option value="-4">-4</option>
-						<option value="-3">-3</option>
-						<option value="-2">-2</option>
-						<option value="-1">-1</option>
+					<select name="palette" id="palette" class="palette">
+						<option value="iron" selected>Iron</option>
+						<option value="glow">Glow</option>
+						<option value="yellow">Yellow</option>
+						<option value="gray">Gray</option>
+						<option value="arctic">Arctic</option>
+						<option value="lava">Lava</option>
+					</select>
+					&nbsp;
+					<select name="timezone" id="timezone" class="timezone">
+						<option value="-11">-11 h</option>
+						<option value="-10">-10 h</option>
+						<option value="-9">-9 h</option>
+						<option value="-8">-8 h</option>
+						<option value="-7">-7 h</option>
+						<option value="-6">-6 h</option>
+						<option value="-5">-5 h</option>
+						<option value="-4">-4 h</option>
+						<option value="-3">-3 h</option>
+						<option value="-2">-2 h</option>
+						<option value="-1">-1 h</option>
 						<option value="0">UTC</option>
-						<option value="local" selected>Local</option>
-						<option value="1">+1</option>
-						<option value="2">+2</option>
-						<option value="3">+3</option>
-						<option value="4">+4</option>
-						<option value="5">+5</option>
-						<option value="6">+6</option>
-						<option value="7">+7</option>
-						<option value="8">+8</option>
-						<option value="9">+9</option>
-						<option value="10">+10</option>
-						<option value="11">+11</option>
-						<option value="12">+12</option>
+						<option value="local" selected>Local time</option>
+						<option value="1">+1 h</option>
+						<option value="2">+2 h</option>
+						<option value="3">+3 h</option>
+						<option value="4">+4 h</option>
+						<option value="5">+5 h</option>
+						<option value="6">+6 h</option>
+						<option value="7">+7 h</option>
+						<option value="8">+8 h</option>
+						<option value="9">+9 h</option>
+						<option value="10">+10 h</option>
+						<option value="11">+11 h</option>
+						<option value="12">+12 h</option>
 					</select>
 				</div>
 				<div class="col">

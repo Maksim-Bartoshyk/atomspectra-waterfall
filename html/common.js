@@ -21,6 +21,7 @@
     };
     window.waterfallState = {
         scale: 'sqrt',
+        palette: 'iron',
         spectrumBinning: 1,
         channelBinning: 1,
         blur: false,

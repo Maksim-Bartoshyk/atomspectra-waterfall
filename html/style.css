@@ -72,6 +72,13 @@ input[type="checkbox"], input[type="radio"] {
 .waterfall-control {
     padding-top: 12px;
 }
+.col .timezone {
+    width: 97px;
+    text-align: right;
+}
+.col .palette {
+    width: 68px;
+}
 .row {
     display: flex;
     justify-content: space-between;

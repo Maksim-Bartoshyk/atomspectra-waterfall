@@ -36,6 +36,10 @@
     const plotContainer = document.getElementById('plot-container');
     const previewContainer = document.getElementById('preview-container');
     const previewCanvas = document.getElementById('preview-plot');
+
+    const palette = document.getElementById('palette');
+    plotContainer.addEventListener('dblclick', (e) => onWaterfallPaletteChange());
+    palette.addEventListener('change', (e) => onWaterfallPaletteChange(palette.value));
     
     window.waterfallControl = {
         setSubstractBase: (value) => setSubstractBase(value),
@@ -50,6 +54,25 @@
         showPreview: () => showPreview(),
         hidePreview: () => hidePreview()
     };
+
+    async function onWaterfallPaletteChange(value) {
+        const paletteList = ['iron', 'glow', 'yellow', 'gray', 'arctic', 'lava'];
+        if (value) {
+            waterfallState.palette = value;   
+        } else {
+            const selected = paletteList.indexOf(waterfallState.palette);
+            if (selected === paletteList.length - 1) {
+                waterfallState.palette = paletteList[0];
+            } else {
+                waterfallState.palette = paletteList[selected + 1];
+            }
+
+            palette.value = waterfallState.palette;
+        }
+
+        await waterfall.renderWaterfallImageAsync();
+        await waterfall.renderSpectrumImageAsync();
+    }
 
     function showPreview() {
         waterfallState.previewEnabled = true;
