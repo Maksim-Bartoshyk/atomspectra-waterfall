@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.12.18</title>
+		<title>AS Waterfall v2024.12.19.0</title>
 		<link rel="stylesheet" href="./html/style.css" />
 		<script>
 			(function () {
@@ -75,14 +75,7 @@
 				</div>
 				<div class="col">
 					<label for="moving-average-vertical">Moving avg(v):</label>
-					<select name="moving-average-vertical" id="moving-average-vertical">
-						<option value="0">0</option>
-						<option value="2">2</option>
-						<option value="4">4</option>
-						<option value="8">8</option>
-						<option value="16">16</option>
-						<option value="32">32</option>
-					</select>
+					<input type="number" name="moving-average-vertical" id="moving-average-vertical" min="0" step="1" value="0"/>
 				</div>
 			</div>
 			<div class="row">
@@ -144,14 +137,7 @@
 				</div>
 				<div class="col">
 					<label for="moving-average-horizontal">Moving avg(h):</label>
-					<select name="moving-average-horizontal" id="moving-average-horizontal">
-						<option value="0">0</option>
-						<option value="2">2</option>
-						<option value="4">4</option>
-						<option value="8">8</option>
-						<option value="16">16</option>
-						<option value="32">32</option>
-					</select>
+					<input type="number" name="moving-average-horizontal" id="moving-average-horizontal" min="0" step="1" value="0"/>
 				</div>
 			</div>
 		</div>
@@ -172,7 +158,7 @@
 			<div class="row">
 				<label id="render-cps" class="cps-left-column">CPS trend in channel range_1:</label> 
 				<input type="number" id="from-channel-1" class="numeric-input"/>-<input type="number" id="to-channel-1" class="numeric-input"/>
-				<button id="export-cps-map" class="export-button" disabled>Range_1 cps to map</button>
+				<button id="export-cps-map" class="export-button">Range_1 cps to map</button>
 			</div>
 			<div class="row">
 				<div class="cps-left-column">
@@ -193,10 +179,10 @@
 			</div>
 		</div>
 		<script src="./html/common.js"></script>
-		<script src="./html/waterfall.js"></script>
-		<script src="./html/cps.js"></script>
+		<script src="./html/waterfall-plot.js"></script>
+		<script src="./html/cps-plot.js"></script>
 		<script src="./html/cursor.js"></script>
-		<script src="./html/waterfall-control.js"></script>
+		<script src="./html/control-panel.js"></script>
 		<script src="./html/startup.js"></script>
 	</body>
 </html>

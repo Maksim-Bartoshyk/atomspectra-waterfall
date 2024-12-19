@@ -32,6 +32,7 @@
         minCpsPercent: 0,
         timeOffsetHours: getLocalTimeOffsetHours(),
         previewEnebled: false,
+        compareCps: false,
         channelRange1: [],
         channelRange2: [],
         spectrumRange: [],

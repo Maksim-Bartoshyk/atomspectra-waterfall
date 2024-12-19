@@ -98,14 +98,14 @@
     }
 
     async function startupAsync() {
-        waterfallControl.setSubstractBase(false);
-        waterfallControl.resetBaseChanged();
-        waterfallControl.resetMovingAverage();
-        waterfallControl.resetWaterfallBinning(16);
-        await waterfallControl.applyBinningAndAverageAsync();
-        cps.initCpsControls();
-        await waterfall.renderWaterfallImageAsync();
-        await waterfall.renderSpectrumImageAsync();
-        await cps.renderCpsAsync();
+        controlPanel.setSubstractBase(false);
+        controlPanel.resetBaseChanged();
+        controlPanel.resetMovingAverage();
+        controlPanel.resetWaterfallBinning(16);
+        await controlPanel.applyBinningAndAverageAsync(); // first setup of waterfall data
+        controlPanel.initCpsControls(); // depends on waterfall data
+        await waterfallPlot.renderWaterfallImageAsync();
+        await waterfallPlot.renderSpectrumImageAsync();
+        await cpsPlot.renderCpsAsync();
     }
 })();

@@ -17,7 +17,7 @@ Usage (advanced, mostly for large spectrograms):
 1) install nodejs - https://nodejs.org/
 2) download repository
 3) save delta-spectrum file on computer
-4) open folder containing waterfall.js in console
+4) open folder containing waterfall-cli.js in console
 5) run ```node waterfall-cli.js <delta spectrum file>```, for example ```node waterfall-cli.js "sample-data/nano-3/Spectrum-2024-09-29_20-48-55-Spectrum_auto.txt"```
 6) open generated ```Spectrum-2024-09-29_20-48-55-Spectrum_auto.html``` in web browser
 7) right mouse click on spectrogram - save image as

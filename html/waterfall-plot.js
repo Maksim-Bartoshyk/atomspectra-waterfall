@@ -1,6 +1,6 @@
 (function(){
     // waterfall plot render
-    window.waterfall = {
+    window.waterfallPlot = {
         renderWaterfallImage: () => renderWaterfallImage(),
         renderWaterfallImageAsync: () => {
             return common.executeWithStatusAsync('Rendering waterfall...', () => renderWaterfallImage());

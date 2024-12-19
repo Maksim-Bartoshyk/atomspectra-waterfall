@@ -6,10 +6,10 @@ waterfall = waterfall.replace('<script src="./shared/spectrum.js"></script>', '<
 waterfall = waterfall.replace('<script src="./shared/waterfall-data.js"></script>', '<script>' + fs.readFileSync('./shared/waterfall-data.js') + '</script>');
 waterfall = waterfall.replace('<script src="./shared/radiacode.js"></script>', '<script>' + fs.readFileSync('./shared/radiacode.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/common.js"></script>', '<script>' + fs.readFileSync('./html/common.js') + '</script>');
-waterfall = waterfall.replace('<script src="./html/waterfall.js"></script>', '<script>' + fs.readFileSync('./html/waterfall.js') + '</script>');
-waterfall = waterfall.replace('<script src="./html/cps.js"></script>', '<script>' + fs.readFileSync('./html/cps.js') + '</script>');
+waterfall = waterfall.replace('<script src="./html/waterfall-plot.js"></script>', '<script>' + fs.readFileSync('./html/waterfall-plot.js') + '</script>');
+waterfall = waterfall.replace('<script src="./html/cps-plot.js"></script>', '<script>' + fs.readFileSync('./html/cps-plot.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/cursor.js"></script>', '<script>' + fs.readFileSync('./html/cursor.js') + '</script>');
-waterfall = waterfall.replace('<script src="./html/waterfall-control.js"></script>', '<script>' + fs.readFileSync('./html/waterfall-control.js') + '</script>');
+waterfall = waterfall.replace('<script src="./html/control-panel.js"></script>', '<script>' + fs.readFileSync('./html/control-panel.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/startup.js"></script>', '<script>' + fs.readFileSync('./html/startup.js') + '</script>');
 fs.writeFileSync('./offline/waterfall-offline.html', waterfall);
 
