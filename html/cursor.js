@@ -18,6 +18,7 @@
     window.cursorControl = {
         getWFOriginalSpectrumIndex: (mouseEvent) => getWFOriginalSpectrumIndex(mouseEvent),
         getWFChannelIndex: (mouseEvent) => getWFChannelIndex(mouseEvent),
+        getCpsOriginalSpectrumIndex: (mouseEvent) => getCpsOriginalSpectrumIndex(mouseEvent),
     };
 
     function getWFSpectrumOffset(mouseEvent) {
@@ -32,6 +33,17 @@
         return offsetY;
     }
 
+    function getCpsSpectrumOffset(mouseEvent) {
+        let offsetX = mouseEvent.offsetX - constants.cursorOffset;
+        if (offsetX < 0) {
+            offsetX = 0;
+        } else if (offsetX > waterfallData.deltas.length - 1) {
+            offsetX = waterfallData.deltas.length - 1;
+        }
+
+        return offsetX;
+    }
+
     function getWFChannelOffset(mouseEvent) {
         let offsetX = mouseEvent.offsetX - constants.cursorOffset;
         if (offsetX < constants.timeAxisWidth) {
@@ -44,7 +56,13 @@
     }
 
     function getWFOriginalSpectrumIndex(mouseEvent) {
-        const spectrumIndex = getWFSpectrumIndex(mouseEvent);
+        const spectrumIndex = getWFSpectrumOffset(mouseEvent);
+
+        return spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
+    }
+
+    function getCpsOriginalSpectrumIndex(mouseEvent) {
+        const spectrumIndex = getCpsSpectrumIndex(mouseEvent);
 
         return spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
     }
@@ -53,6 +71,12 @@
         const offsetY = getWFSpectrumOffset(mouseEvent);
 
         return offsetY;
+    }
+
+    function getCpsSpectrumIndex(mouseEvent) {
+        const offsetX = getCpsSpectrumOffset(mouseEvent);
+
+        return offsetX;
     }
 
     function getWFChannelIndex(mouseEvent) {
@@ -79,8 +103,9 @@
         const offsetY = getWFSpectrumOffset(e);
         // tooltip
         const spectrumIndex = getWFSpectrumIndex(e);
+        const originalSpectrumIndex = getWFOriginalSpectrumIndex(e);
         const channelIndex = getWFChannelIndex(e);
-        let tooltipText = spectrumInfoText(spectrumIndex);
+        let tooltipText = spectrumInfoText(spectrumIndex, originalSpectrumIndex);
         tooltipText += '\n' + 'channel: ' + channelIndex;
         tooltipText += '\n' + 'energy: ' + common.channelToEnergy(channelIndex).toFixed(1) + ' keV';
         tooltipText = appendCpsInfoText(tooltipText, spectrumIndex);
@@ -107,16 +132,12 @@
         wfVerticalCursor.style.display = 'none';
 
         // spectrum cursor
-        let offsetX = e.offsetX - constants.cursorOffset;
-        if (offsetX < 0) {
-            offsetX = 0;
-        } else if (offsetX > waterfallData.deltas.length - 1) {
-            offsetX = waterfallData.deltas.length - 1;
-        }
+        let offsetX = getCpsSpectrumOffset(e);
 
         // tooltip
-        const spectrumIndex = offsetX;
-        let tooltipText = spectrumInfoText(spectrumIndex);
+        const spectrumIndex = getCpsSpectrumIndex(e);
+        const originalSpectrumIndex = getCpsOriginalSpectrumIndex(e);
+        let tooltipText = spectrumInfoText(spectrumIndex, originalSpectrumIndex);
         tooltipText = appendCpsInfoText(tooltipText, spectrumIndex);
         cpsPlot.setAttribute('title', tooltipText);
 
@@ -144,8 +165,8 @@
         }
     }
 
-    function spectrumInfoText(spectrumIndex) {
-        return 'spectrum: ' + spectrumIndex
+    function spectrumInfoText(spectrumIndex, originalSpectrumIndex) {
+        return 'spectrum: ' + originalSpectrumIndex
             + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
             + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
     }

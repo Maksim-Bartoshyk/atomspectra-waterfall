@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AS Waterfall v2024.12.20.0</title>
+		<title>AS Waterfall v2024.12.20.1</title>
 		<style>body {
     background: #444;
     box-sizing: border-box;
@@ -1046,11 +1046,11 @@ input[type="checkbox"], input[type="radio"] {
         }
 
         // display selection
-        if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+        if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
             const fromY = Math.floor(waterfallState.spectrumRange[0] / waterfallState.spectrumBinning);
             const toY = Math.floor(waterfallState.spectrumRange[1] / waterfallState.spectrumBinning);
             for (let y = fromY; y <= toY; y++) {
-                ctx.fillRect(constants.timeAxisWidth - 2, y, 2, 1);
+                ctx.fillRect(constants.timeAxisWidth - 1, y, 1, 1);
             }
         }
 
@@ -1154,6 +1154,24 @@ input[type="checkbox"], input[type="radio"] {
                 for (let y = channelAxisBaseline; y < channelAxisBaseline + tickHeight; y++) {
                     ctx.fillRect(x, y, 1, 1);
                 }
+            }
+        }
+
+        // channel range 1
+        if (waterfallState.channelRange1 && waterfallState.channelRange1.length === 2) {
+            const fromX = waterfallState.channelRange1[0] + constants.timeAxisWidth;
+            const toX = waterfallState.channelRange1[1] + constants.timeAxisWidth;
+            for (let x = fromX; x <= toX; x++) {
+                ctx.fillRect(x, baseline + constants.channelAxisHeight / 2, 1, 1);
+            }
+        }
+
+        // channel range 2
+        if (waterfallState.compareCps && waterfallState.channelRange2 && waterfallState.channelRange2.length === 2) {
+            const fromX = waterfallState.channelRange2[0] + constants.timeAxisWidth;
+            const toX = waterfallState.channelRange2[1] + constants.timeAxisWidth;
+            for (let x = fromX; x <= toX; x++) {
+                ctx.fillRect(x, baseline + constants.channelAxisHeight - 1, 1, 1);
             }
         }
     }
@@ -1385,6 +1403,7 @@ input[type="checkbox"], input[type="radio"] {
     window.cursorControl = {
         getWFOriginalSpectrumIndex: (mouseEvent) => getWFOriginalSpectrumIndex(mouseEvent),
         getWFChannelIndex: (mouseEvent) => getWFChannelIndex(mouseEvent),
+        getCpsOriginalSpectrumIndex: (mouseEvent) => getCpsOriginalSpectrumIndex(mouseEvent),
     };
 
     function getWFSpectrumOffset(mouseEvent) {
@@ -1399,6 +1418,17 @@ input[type="checkbox"], input[type="radio"] {
         return offsetY;
     }
 
+    function getCpsSpectrumOffset(mouseEvent) {
+        let offsetX = mouseEvent.offsetX - constants.cursorOffset;
+        if (offsetX < 0) {
+            offsetX = 0;
+        } else if (offsetX > waterfallData.deltas.length - 1) {
+            offsetX = waterfallData.deltas.length - 1;
+        }
+
+        return offsetX;
+    }
+
     function getWFChannelOffset(mouseEvent) {
         let offsetX = mouseEvent.offsetX - constants.cursorOffset;
         if (offsetX < constants.timeAxisWidth) {
@@ -1411,7 +1441,13 @@ input[type="checkbox"], input[type="radio"] {
     }
 
     function getWFOriginalSpectrumIndex(mouseEvent) {
-        const spectrumIndex = getWFSpectrumIndex(mouseEvent);
+        const spectrumIndex = getWFSpectrumOffset(mouseEvent);
+
+        return spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
+    }
+
+    function getCpsOriginalSpectrumIndex(mouseEvent) {
+        const spectrumIndex = getCpsSpectrumIndex(mouseEvent);
 
         return spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
     }
@@ -1420,6 +1456,12 @@ input[type="checkbox"], input[type="radio"] {
         const offsetY = getWFSpectrumOffset(mouseEvent);
 
         return offsetY;
+    }
+
+    function getCpsSpectrumIndex(mouseEvent) {
+        const offsetX = getCpsSpectrumOffset(mouseEvent);
+
+        return offsetX;
     }
 
     function getWFChannelIndex(mouseEvent) {
@@ -1446,8 +1488,9 @@ input[type="checkbox"], input[type="radio"] {
         const offsetY = getWFSpectrumOffset(e);
         // tooltip
         const spectrumIndex = getWFSpectrumIndex(e);
+        const originalSpectrumIndex = getWFOriginalSpectrumIndex(e);
         const channelIndex = getWFChannelIndex(e);
-        let tooltipText = spectrumInfoText(spectrumIndex);
+        let tooltipText = spectrumInfoText(spectrumIndex, originalSpectrumIndex);
         tooltipText += '\n' + 'channel: ' + channelIndex;
         tooltipText += '\n' + 'energy: ' + common.channelToEnergy(channelIndex).toFixed(1) + ' keV';
         tooltipText = appendCpsInfoText(tooltipText, spectrumIndex);
@@ -1474,16 +1517,12 @@ input[type="checkbox"], input[type="radio"] {
         wfVerticalCursor.style.display = 'none';
 
         // spectrum cursor
-        let offsetX = e.offsetX - constants.cursorOffset;
-        if (offsetX < 0) {
-            offsetX = 0;
-        } else if (offsetX > waterfallData.deltas.length - 1) {
-            offsetX = waterfallData.deltas.length - 1;
-        }
+        let offsetX = getCpsSpectrumOffset(e);
 
         // tooltip
-        const spectrumIndex = offsetX;
-        let tooltipText = spectrumInfoText(spectrumIndex);
+        const spectrumIndex = getCpsSpectrumIndex(e);
+        const originalSpectrumIndex = getCpsOriginalSpectrumIndex(e);
+        let tooltipText = spectrumInfoText(spectrumIndex, originalSpectrumIndex);
         tooltipText = appendCpsInfoText(tooltipText, spectrumIndex);
         cpsPlot.setAttribute('title', tooltipText);
 
@@ -1511,8 +1550,8 @@ input[type="checkbox"], input[type="radio"] {
         }
     }
 
-    function spectrumInfoText(spectrumIndex) {
-        return 'spectrum: ' + spectrumIndex
+    function spectrumInfoText(spectrumIndex, originalSpectrumIndex) {
+        return 'spectrum: ' + originalSpectrumIndex
             + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
             + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
     }
@@ -1612,19 +1651,20 @@ input[type="checkbox"], input[type="radio"] {
 
     const plotContainer = document.getElementById('plot-container');
     const waterfallCanvas = document.getElementById('waterfall-plot');
+    const cpsCanvas = document.getElementById('cps-plot');
     const previewContainer = document.getElementById('preview-container');
     const previewCanvas = document.getElementById('preview-plot');
 
     // hotkeys
     const keyboardState = {
-        pressedKey: undefined,
+        pressedKeyCode: undefined,
         alt: false
     };
     document.body.addEventListener('keydown', (e) => onKeyDown(e));
     document.body.addEventListener('keyup', (e) => onKeyUp(e));
     waterfallCanvas.addEventListener('dblclick', (e) => onWaterfallPaletteChange());
-    waterfallCanvas.addEventListener('mousedown', (e) => onWaterfallMouseDown(e));
-    waterfallCanvas.addEventListener('contextmenu', (e) => onWaterfallContextMenu(e));
+    waterfallCanvas.addEventListener('click', (e) => onWaterfallClick(e));
+    cpsCanvas.addEventListener('click', (e) => onCpsClick(e));
     // end
     
     window.controlPanel = {
@@ -1642,71 +1682,92 @@ input[type="checkbox"], input[type="radio"] {
         initCpsControls: () => initCpsControls(),
     };
 
+    let tmpRangeStart = -1;
     function onKeyDown(e) {
         if (e.code.startsWith('Key')) {
-            keyboardState.pressedKey = e.key.toLowerCase();
-        }
-        
-        if (e.key === 'Alt') {
-            keyboardState.alt = true;
+            const previousCode = keyboardState.pressedKeyCode;
+            keyboardState.pressedKeyCode = e.code;
+
+            switch (e.code) {
+                case 'KeyS':
+                case 'KeyC':
+                case 'KeyA':
+                    if (previousCode !== e.code) {
+                        tmpRangeStart = -1;
+                    }
+
+                    break;
+            }
         }
     }
 
     function onKeyUp(e) {
         if (e.code.startsWith('Key')) {
-            keyboardState.pressedKey = undefined;
-        }
-        
-        if (e.key === 'Alt') {
-            keyboardState.alt = false;
+            keyboardState.pressedKeyCode = undefined;
         }
     }
 
-    async function onWaterfallMouseDown(e) {
-        if (keyboardState.pressedKey === 's') {
+    async function onWaterfallClick(e) {
+        if (keyboardState.pressedKeyCode === 'KeyS') {
             const spectrumIndex = cursorControl.getWFOriginalSpectrumIndex(e);
-            if (e.button === 0) {
+            if (tmpRangeStart === -1) {
                 fromSpectrumInput.value = spectrumIndex;
-                await onSpectrumIndexInputChange();
-            }
-
-            if (e.button === 2) {
                 toSpectrumInput.value = spectrumIndex;
-                await onSpectrumIndexInputChange();
+                tmpRangeStart = spectrumIndex;
+            } else {
+                fromSpectrumInput.value = spectrumIndex < tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                toSpectrumInput.value = spectrumIndex > tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                tmpRangeStart = -1;
             }
+
+            await onSpectrumIndexInputChange();
         }
 
-        if (keyboardState.pressedKey === 'c') {
+        if (keyboardState.pressedKeyCode === 'KeyC') {
             const channelIndex = cursorControl.getWFChannelIndex(e);
-            if (e.button === 0) {
+            if (tmpRangeStart === -1) {
                 fromChannelInput1.value = channelIndex;
-                await onChannelIndexInputChange();
+                toChannelInput1.value = channelIndex;
+                tmpRangeStart = channelIndex;
+            } else {
+                fromChannelInput1.value = channelIndex < tmpRangeStart ? channelIndex : tmpRangeStart;
+                toChannelInput1.value = channelIndex > tmpRangeStart ? channelIndex : tmpRangeStart;
+                tmpRangeStart = -1;
             }
 
-            if (e.button === 2) {
-                toChannelInput1.value = channelIndex;
-                await onChannelIndexInputChange();
-            }
+            await onChannelIndexInputChange();
         }
 
-        if (keyboardState.pressedKey === 'a') {
+        if (keyboardState.pressedKeyCode === 'KeyA') {
             const channelIndex = cursorControl.getWFChannelIndex(e);
-            if (e.button === 0) {
+            if (tmpRangeStart === -1) {
                 fromChannelInput2.value = channelIndex;
-                await onChannelIndexInputChange();
-            }
-
-            if (e.button === 2) {
                 toChannelInput2.value = channelIndex;
-                await onChannelIndexInputChange();
+                tmpRangeStart = channelIndex;
+            } else {
+                fromChannelInput2.value = channelIndex < tmpRangeStart ? channelIndex : tmpRangeStart;
+                toChannelInput2.value = channelIndex > tmpRangeStart ? channelIndex : tmpRangeStart;
+                tmpRangeStart = -1;
             }
+            
+            await onChannelIndexInputChange();
         }
     }
 
-    function onWaterfallContextMenu(e) {
-        if (keyboardState.pressedKey === 's' || keyboardState.pressedKey === 'c') {
-            e.preventDefault();
-            e.stopPropagation();
+    async function onCpsClick(e) {
+        if (keyboardState.pressedKeyCode === 'KeyS') {
+            const spectrumIndex = cursorControl.getCpsOriginalSpectrumIndex(e);
+            if (tmpRangeStart === -1) {
+                fromSpectrumInput.value = spectrumIndex;
+                toSpectrumInput.value = spectrumIndex;
+                tmpRangeStart = spectrumIndex;
+            } else {
+                fromSpectrumInput.value = spectrumIndex < tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                toSpectrumInput.value = spectrumIndex > tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                tmpRangeStart = -1;
+            }
+            
+            await onSpectrumIndexInputChange();
         }
     }
 
@@ -2048,6 +2109,7 @@ input[type="checkbox"], input[type="radio"] {
         waterfallState.compareCps = compareCheckbox.checked;
         comparisonToMapButton.disabled = !waterfallState.compareCps;
         await cpsPlot.renderCpsAsync();
+        await waterfallPlot.renderWaterfallImageAsync(); // TODO: only render selection
     }
 
     async function onChannelIndexInputChange() {
@@ -2055,6 +2117,7 @@ input[type="checkbox"], input[type="radio"] {
         waterfallState.channelRange2 = getChannelRange(fromChannelInput2, toChannelInput2);
 
         await cpsPlot.renderCpsAsync();
+        await waterfallPlot.renderWaterfallImageAsync(); // TODO: only render selection
     }
 
     function getChannelRange(fromInput, toInput) {
@@ -2087,7 +2150,7 @@ input[type="checkbox"], input[type="radio"] {
 
     async function onSpectrumIndexInputChange() {
         waterfallState.spectrumRange = getSpectrumRange();
-        if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+        if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
             await waterfallPlot.renderSpectrumImageAsync();
             await waterfallPlot.renderWaterfallImageAsync();
         }

@@ -68,19 +68,20 @@
 
     const plotContainer = document.getElementById('plot-container');
     const waterfallCanvas = document.getElementById('waterfall-plot');
+    const cpsCanvas = document.getElementById('cps-plot');
     const previewContainer = document.getElementById('preview-container');
     const previewCanvas = document.getElementById('preview-plot');
 
     // hotkeys
     const keyboardState = {
-        pressedKey: undefined,
+        pressedKeyCode: undefined,
         alt: false
     };
     document.body.addEventListener('keydown', (e) => onKeyDown(e));
     document.body.addEventListener('keyup', (e) => onKeyUp(e));
     waterfallCanvas.addEventListener('dblclick', (e) => onWaterfallPaletteChange());
-    waterfallCanvas.addEventListener('mousedown', (e) => onWaterfallMouseDown(e));
-    waterfallCanvas.addEventListener('contextmenu', (e) => onWaterfallContextMenu(e));
+    waterfallCanvas.addEventListener('click', (e) => onWaterfallClick(e));
+    cpsCanvas.addEventListener('click', (e) => onCpsClick(e));
     // end
     
     window.controlPanel = {
@@ -98,71 +99,92 @@
         initCpsControls: () => initCpsControls(),
     };
 
+    let tmpRangeStart = -1;
     function onKeyDown(e) {
         if (e.code.startsWith('Key')) {
-            keyboardState.pressedKey = e.key.toLowerCase();
-        }
-        
-        if (e.key === 'Alt') {
-            keyboardState.alt = true;
+            const previousCode = keyboardState.pressedKeyCode;
+            keyboardState.pressedKeyCode = e.code;
+
+            switch (e.code) {
+                case 'KeyS':
+                case 'KeyC':
+                case 'KeyA':
+                    if (previousCode !== e.code) {
+                        tmpRangeStart = -1;
+                    }
+
+                    break;
+            }
         }
     }
 
     function onKeyUp(e) {
         if (e.code.startsWith('Key')) {
-            keyboardState.pressedKey = undefined;
-        }
-        
-        if (e.key === 'Alt') {
-            keyboardState.alt = false;
+            keyboardState.pressedKeyCode = undefined;
         }
     }
 
-    async function onWaterfallMouseDown(e) {
-        if (keyboardState.pressedKey === 's') {
+    async function onWaterfallClick(e) {
+        if (keyboardState.pressedKeyCode === 'KeyS') {
             const spectrumIndex = cursorControl.getWFOriginalSpectrumIndex(e);
-            if (e.button === 0) {
+            if (tmpRangeStart === -1) {
                 fromSpectrumInput.value = spectrumIndex;
-                await onSpectrumIndexInputChange();
-            }
-
-            if (e.button === 2) {
                 toSpectrumInput.value = spectrumIndex;
-                await onSpectrumIndexInputChange();
+                tmpRangeStart = spectrumIndex;
+            } else {
+                fromSpectrumInput.value = spectrumIndex < tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                toSpectrumInput.value = spectrumIndex > tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                tmpRangeStart = -1;
             }
+
+            await onSpectrumIndexInputChange();
         }
 
-        if (keyboardState.pressedKey === 'c') {
+        if (keyboardState.pressedKeyCode === 'KeyC') {
             const channelIndex = cursorControl.getWFChannelIndex(e);
-            if (e.button === 0) {
+            if (tmpRangeStart === -1) {
                 fromChannelInput1.value = channelIndex;
-                await onChannelIndexInputChange();
+                toChannelInput1.value = channelIndex;
+                tmpRangeStart = channelIndex;
+            } else {
+                fromChannelInput1.value = channelIndex < tmpRangeStart ? channelIndex : tmpRangeStart;
+                toChannelInput1.value = channelIndex > tmpRangeStart ? channelIndex : tmpRangeStart;
+                tmpRangeStart = -1;
             }
 
-            if (e.button === 2) {
-                toChannelInput1.value = channelIndex;
-                await onChannelIndexInputChange();
-            }
+            await onChannelIndexInputChange();
         }
 
-        if (keyboardState.pressedKey === 'a') {
+        if (keyboardState.pressedKeyCode === 'KeyA') {
             const channelIndex = cursorControl.getWFChannelIndex(e);
-            if (e.button === 0) {
+            if (tmpRangeStart === -1) {
                 fromChannelInput2.value = channelIndex;
-                await onChannelIndexInputChange();
-            }
-
-            if (e.button === 2) {
                 toChannelInput2.value = channelIndex;
-                await onChannelIndexInputChange();
+                tmpRangeStart = channelIndex;
+            } else {
+                fromChannelInput2.value = channelIndex < tmpRangeStart ? channelIndex : tmpRangeStart;
+                toChannelInput2.value = channelIndex > tmpRangeStart ? channelIndex : tmpRangeStart;
+                tmpRangeStart = -1;
             }
+            
+            await onChannelIndexInputChange();
         }
     }
 
-    function onWaterfallContextMenu(e) {
-        if (keyboardState.pressedKey === 's' || keyboardState.pressedKey === 'c') {
-            e.preventDefault();
-            e.stopPropagation();
+    async function onCpsClick(e) {
+        if (keyboardState.pressedKeyCode === 'KeyS') {
+            const spectrumIndex = cursorControl.getCpsOriginalSpectrumIndex(e);
+            if (tmpRangeStart === -1) {
+                fromSpectrumInput.value = spectrumIndex;
+                toSpectrumInput.value = spectrumIndex;
+                tmpRangeStart = spectrumIndex;
+            } else {
+                fromSpectrumInput.value = spectrumIndex < tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                toSpectrumInput.value = spectrumIndex > tmpRangeStart ? spectrumIndex : tmpRangeStart;
+                tmpRangeStart = -1;
+            }
+            
+            await onSpectrumIndexInputChange();
         }
     }
 
@@ -504,6 +526,7 @@
         waterfallState.compareCps = compareCheckbox.checked;
         comparisonToMapButton.disabled = !waterfallState.compareCps;
         await cpsPlot.renderCpsAsync();
+        await waterfallPlot.renderWaterfallImageAsync(); // TODO: only render selection
     }
 
     async function onChannelIndexInputChange() {
@@ -511,6 +534,7 @@
         waterfallState.channelRange2 = getChannelRange(fromChannelInput2, toChannelInput2);
 
         await cpsPlot.renderCpsAsync();
+        await waterfallPlot.renderWaterfallImageAsync(); // TODO: only render selection
     }
 
     function getChannelRange(fromInput, toInput) {
@@ -543,7 +567,7 @@
 
     async function onSpectrumIndexInputChange() {
         waterfallState.spectrumRange = getSpectrumRange();
-        if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+        if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
             await waterfallPlot.renderSpectrumImageAsync();
             await waterfallPlot.renderWaterfallImageAsync();
         }

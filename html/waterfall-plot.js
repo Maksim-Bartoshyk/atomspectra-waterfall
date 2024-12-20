@@ -230,11 +230,11 @@
         }
 
         // display selection
-        if (waterfallState.previewEnabled && waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+        if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
             const fromY = Math.floor(waterfallState.spectrumRange[0] / waterfallState.spectrumBinning);
             const toY = Math.floor(waterfallState.spectrumRange[1] / waterfallState.spectrumBinning);
             for (let y = fromY; y <= toY; y++) {
-                ctx.fillRect(constants.timeAxisWidth - 2, y, 2, 1);
+                ctx.fillRect(constants.timeAxisWidth - 1, y, 1, 1);
             }
         }
 
@@ -338,6 +338,24 @@
                 for (let y = channelAxisBaseline; y < channelAxisBaseline + tickHeight; y++) {
                     ctx.fillRect(x, y, 1, 1);
                 }
+            }
+        }
+
+        // channel range 1
+        if (waterfallState.channelRange1 && waterfallState.channelRange1.length === 2) {
+            const fromX = waterfallState.channelRange1[0] + constants.timeAxisWidth;
+            const toX = waterfallState.channelRange1[1] + constants.timeAxisWidth;
+            for (let x = fromX; x <= toX; x++) {
+                ctx.fillRect(x, baseline + constants.channelAxisHeight / 2, 1, 1);
+            }
+        }
+
+        // channel range 2
+        if (waterfallState.compareCps && waterfallState.channelRange2 && waterfallState.channelRange2.length === 2) {
+            const fromX = waterfallState.channelRange2[0] + constants.timeAxisWidth;
+            const toX = waterfallState.channelRange2[1] + constants.timeAxisWidth;
+            for (let x = fromX; x <= toX; x++) {
+                ctx.fillRect(x, baseline + constants.channelAxisHeight - 1, 1, 1);
             }
         }
     }

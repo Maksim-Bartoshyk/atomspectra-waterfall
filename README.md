@@ -13,7 +13,7 @@ Provided as is, use at your own risk. This software is not sertified as a measur
 6) right mouse click on spectrogram - save image as
 7) to convert your atomstectra spectrogram to radiacode format use ```offline/rcspg-ofline.html```
 
-# Advanced Usage (mostly for large spectrograms, when broswer version fails to render it):
+# Advanced Usage (mostly for large spectrograms):
 1) install nodejs - https://nodejs.org/
 2) download repository
 3) save spectrogram file on computer
@@ -91,21 +91,18 @@ Tip: if you want to check what is recorded to spectrogram at the moment:
 ## CPS plot range
 CPS plot displays count rate for a specific range of channels.
 1) CPS trend in channel range_1 - defines main range as [from channel index, to channel index]
-'c' key + left mouse click - set channel under cursor as range_1 start
-'c' key + right mouse click - set channel under cursor as range_1 end
+`hold 'c' key + two left mouse clicks` - set channels under cursor as range_1
 2) Compare to CPS in channel range_2 - enables comparison mode, renders 3 plots:
   a. count rate in range_1
   b. count rate in range_2
   c. ratio of count rate in range_1 to count rate in range_2 (range_1/range_2)
-'a' key + left mouse click - set channel under cursor as range_2 start
-'a' key + right mouse click - set channel under cursor as range_2 end
+`hold 'a' key + two left mouse clicks` - set channels under cursor as range_2
 3) Range_1 cps to map - click to generate .rctrk map file, count rate in selected range will be used as value for CPS channel (use if AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application
 4) Range_1/range_2 comparison to map - click to generate .rctrk map file, range_1/range_2 rate in selected range will be used as value for CPS channel (use if AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application
 
 ## Spectrum preview and export
 Preview shows spectrum combined from selected spectrogram range as [from delta index, to delta index], index is always original, despite binning applied
 1) Preview spectrum in spectrorgam range - enables spectrum preview
-'s' key + left mouse click - set delta spectrum index under cursor as spectrum range start
-'s' key + right mouse click - set delta spectrum index under cursor as spectrum range end
+`hold 's' key + two left mouse clicks` - set delta spectrum indexes under cursor as spectrum range
 2) Spg range as base - overrides base spectrum, sets it from selected spectrogram range
 3) Spg range to file - exports spectrum combined from selected spectrogram range (with channel binning applied during spectrogram import)
