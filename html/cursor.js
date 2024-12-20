@@ -15,6 +15,52 @@
     cpsPlot.addEventListener('mouseleave', e => plotOnMouseLeave(e));
     cpsPlot.addEventListener('mousemove', e => cpsOnMouseMove(e));
 
+    window.cursorControl = {
+        getWFOriginalSpectrumIndex: (mouseEvent) => getWFOriginalSpectrumIndex(mouseEvent),
+        getWFChannelIndex: (mouseEvent) => getWFChannelIndex(mouseEvent),
+    };
+
+    function getWFSpectrumOffset(mouseEvent) {
+        let offsetY = mouseEvent.offsetY - constants.cursorOffset;
+        if (offsetY < 0) {
+            offsetY = 0;
+        } else if (mouseEvent.offsetY >= waterfallData.deltas.length) {
+            offsetY = waterfallData.deltas.length - 1;
+            offsetY = waterfallData.deltas.length - 1;
+        }
+
+        return offsetY;
+    }
+
+    function getWFChannelOffset(mouseEvent) {
+        let offsetX = mouseEvent.offsetX - constants.cursorOffset;
+        if (offsetX < constants.timeAxisWidth) {
+            offsetX = constants.timeAxisWidth;
+        } else if (offsetX > constants.timeAxisWidth + waterfallData.baseSpectrum.channelCount - 1) {
+            offsetX = constants.timeAxisWidth + waterfallData.baseSpectrum.channelCount - 1;
+        }
+
+        return offsetX;
+    }
+
+    function getWFOriginalSpectrumIndex(mouseEvent) {
+        const spectrumIndex = getWFSpectrumIndex(mouseEvent);
+
+        return spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
+    }
+
+    function getWFSpectrumIndex(mouseEvent) {
+        const offsetY = getWFSpectrumOffset(mouseEvent);
+
+        return offsetY;
+    }
+
+    function getWFChannelIndex(mouseEvent) {
+        const offsetX = getWFChannelOffset(mouseEvent);
+
+        return offsetX - constants.timeAxisWidth;
+    }
+
     function plotOnMouseLeave(e) {
         wfHorizontalCursor.style.display = 'none';
         wfVerticalCursor.style.display = 'none';
@@ -28,30 +74,16 @@
         wfVerticalCursor.style.display = 'block';
 
         // channel cursor
-        let offsetX = e.offsetX - constants.cursorOffset;
-        if (offsetX < constants.timeAxisWidth) {
-            offsetX = constants.timeAxisWidth;
-        } else if (offsetX > constants.timeAxisWidth + waterfallData.baseSpectrum.channelCount - 1) {
-            offsetX = constants.timeAxisWidth + waterfallData.baseSpectrum.channelCount - 1;
-        }
-
+        const offsetX = getWFChannelOffset(e);
         // spectrum cursor
-        let offsetY = e.offsetY - constants.cursorOffset;
-        if (offsetY < 0) {
-            offsetY = 0;
-        } else if (e.offsetY >= waterfallData.deltas.length) {
-            offsetY = waterfallData.deltas.length - 1;
-            offsetY = waterfallData.deltas.length - 1;
-        }
-        
+        const offsetY = getWFSpectrumOffset(e);
         // tooltip
-        const spectrumIndex = offsetY;
-        const channelIndex = offsetX - constants.timeAxisWidth;
-        const tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
-            + '\n' + 'channel: ' + channelIndex
-            + '\n' + 'energy: ' + common.channelToEnergy(channelIndex).toFixed(1) + ' keV'
-            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
-            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
+        const spectrumIndex = getWFSpectrumIndex(e);
+        const channelIndex = getWFChannelIndex(e);
+        let tooltipText = spectrumInfoText(spectrumIndex);
+        tooltipText += '\n' + 'channel: ' + channelIndex;
+        tooltipText += '\n' + 'energy: ' + common.channelToEnergy(channelIndex).toFixed(1) + ' keV';
+        tooltipText = appendCpsInfoText(tooltipText, spectrumIndex);
         waterfallPlot.setAttribute('title', tooltipText);
 
         // vertical line
@@ -84,18 +116,8 @@
 
         // tooltip
         const spectrumIndex = offsetX;
-        let tooltipText = 'spectrum: ' + spectrumIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning
-            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
-            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
-        if (cpsData.range1 && cpsData.range1[spectrumIndex] !== undefined) {
-            tooltipText += '\n' + 'range1: ' + formatFloat(cpsData.range1[spectrumIndex]) + ' cps';
-        }
-        if (cpsData.range2 && cpsData.range2[spectrumIndex] !== undefined) {
-            tooltipText += '\n' + 'range2: ' + formatFloat(cpsData.range2[spectrumIndex]) + ' cps';
-        }
-        if (cpsData.ratio && cpsData.ratio[spectrumIndex] !== undefined) {
-            tooltipText += '\n' + 'ratio: ' + formatFloat(cpsData.ratio[spectrumIndex]);
-        }
+        let tooltipText = spectrumInfoText(spectrumIndex);
+        tooltipText = appendCpsInfoText(tooltipText, spectrumIndex);
         cpsPlot.setAttribute('title', tooltipText);
 
         // horizontal line
@@ -121,6 +143,30 @@
             previewContainer.scrollLeft = wfContainer.scrollLeft;
         }
     }
+
+    function spectrumInfoText(spectrumIndex) {
+        return 'spectrum: ' + spectrumIndex
+            + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
+            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
+    }
+
+    function appendCpsInfoText(tooltipText, spectrumIndex) {
+        if (!window.cpsData) {
+            return tooltipText;
+        }
+
+        if (window.cpsData.range1 && window.cpsData.range1[spectrumIndex] !== undefined) {
+            tooltipText += '\n' + 'range1: ' + formatFloat(window.cpsData.range1[spectrumIndex]) + ' cps';
+        }
+        if (window.cpsData.range2 && window.cpsData.range2[spectrumIndex] !== undefined) {
+            tooltipText += '\n' + 'range2: ' + formatFloat(window.cpsData.range2[spectrumIndex]) + ' cps';
+        }
+        if (window.cpsData.ratio && window.cpsData.ratio[spectrumIndex] !== undefined) {
+            tooltipText += '\n' + 'ratio: ' + formatFloat(window.cpsData.ratio[spectrumIndex]);
+        }
+
+        return tooltipText;
+    }    
 
     function formatFloat(val) {
         return val > 0.1

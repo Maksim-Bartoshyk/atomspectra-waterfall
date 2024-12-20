@@ -80,6 +80,7 @@
     document.body.addEventListener('keyup', (e) => onKeyUp(e));
     waterfallCanvas.addEventListener('dblclick', (e) => onWaterfallPaletteChange());
     waterfallCanvas.addEventListener('mousedown', (e) => onWaterfallMouseDown(e));
+    waterfallCanvas.addEventListener('contextmenu', (e) => onWaterfallContextMenu(e));
     // end
     
     window.controlPanel = {
@@ -117,21 +118,51 @@
         }
     }
 
-    function onWaterfallMouseDown(e) {
+    async function onWaterfallMouseDown(e) {
         if (keyboardState.pressedKey === 's') {
-            console.log('change spectrum range', e);
+            const spectrumIndex = cursorControl.getWFOriginalSpectrumIndex(e);
+            if (e.button === 0) {
+                fromSpectrumInput.value = spectrumIndex;
+                await onSpectrumIndexInputChange();
+            }
+
+            if (e.button === 2) {
+                toSpectrumInput.value = spectrumIndex;
+                await onSpectrumIndexInputChange();
+            }
+        }
+
+        if (keyboardState.pressedKey === 'c') {
+            const channelIndex = cursorControl.getWFChannelIndex(e);
+            if (e.button === 0) {
+                fromChannelInput1.value = channelIndex;
+                await onChannelIndexInputChange();
+            }
+
+            if (e.button === 2) {
+                toChannelInput1.value = channelIndex;
+                await onChannelIndexInputChange();
+            }
+        }
+
+        if (keyboardState.pressedKey === 'a') {
+            const channelIndex = cursorControl.getWFChannelIndex(e);
+            if (e.button === 0) {
+                fromChannelInput2.value = channelIndex;
+                await onChannelIndexInputChange();
+            }
+
+            if (e.button === 2) {
+                toChannelInput2.value = channelIndex;
+                await onChannelIndexInputChange();
+            }
+        }
+    }
+
+    function onWaterfallContextMenu(e) {
+        if (keyboardState.pressedKey === 's' || keyboardState.pressedKey === 'c') {
             e.preventDefault();
             e.stopPropagation();
-        }
-
-        if (keyboardState.pressedKey === 'c' && !keyboardState.alt) {
-            console.log('change channel range 1', e);
-            e.preventDefault();
-        }
-
-        if (keyboardState.pressedKey === 'c' && keyboardState.alt) {
-            console.log('change channel range 2', e);
-            e.preventDefault();
         }
     }
 

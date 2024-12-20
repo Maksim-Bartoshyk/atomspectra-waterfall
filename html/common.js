@@ -31,7 +31,7 @@
         maxCpsPercent: 100,
         minCpsPercent: 0,
         timeOffsetHours: getLocalTimeOffsetHours(),
-        previewEnebled: false,
+        previewEnabled: false,
         compareCps: false,
         channelRange1: [],
         channelRange2: [],
