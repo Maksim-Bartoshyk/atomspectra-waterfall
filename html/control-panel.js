@@ -303,18 +303,12 @@
         await waterfallPlot.renderWaterfallImageAsync();
         await waterfallPlot.renderSpectrumImageAsync();
 
-        // TODO: refactor duplicated code
-        const fromChannelInput1 = document.getElementById('from-channel-1');
-        const toChannelInput1 = document.getElementById('to-channel-1');
-        const fromChannelInput2 = document.getElementById('from-channel-2');
-        const toChannelInput2 = document.getElementById('to-channel-2');
-
         updateInputChannelValue(fromChannelInput1, newBin, prevBin);
         updateInputChannelValue(toChannelInput1, newBin, prevBin);
         updateInputChannelValue(fromChannelInput2, newBin, prevBin);
         updateInputChannelValue(toChannelInput2, newBin, prevBin);
 
-        await cpsPlot.renderCpsAsync();
+        await onChannelIndexInputChange();
     }
 
     async function onVerticalMovingAverageChange(value) {
@@ -396,7 +390,8 @@
             waterfallState.timeOffsetHours = parseInt(value);
         }
         
-        await waterfallPlot.renderWaterfallImageAsync();
+        // TODO: call 'render axis' would be better here
+        await waterfallPlot.renderSpectrumSelectionAsync();
     }
     
     function updateInputChannelValue(input, newBin, prevBin) {
@@ -525,16 +520,17 @@
     async function onCompareCheckboxChange() {
         waterfallState.compareCps = compareCheckbox.checked;
         comparisonToMapButton.disabled = !waterfallState.compareCps;
+
+        await waterfallPlot.renderChannelSelectionAsync();
         await cpsPlot.renderCpsAsync();
-        await waterfallPlot.renderWaterfallImageAsync(); // TODO: only render selection
     }
 
     async function onChannelIndexInputChange() {
         waterfallState.channelRange1 = getChannelRange(fromChannelInput1, toChannelInput1);
         waterfallState.channelRange2 = getChannelRange(fromChannelInput2, toChannelInput2);
 
+        await waterfallPlot.renderChannelSelectionAsync();
         await cpsPlot.renderCpsAsync();
-        await waterfallPlot.renderWaterfallImageAsync(); // TODO: only render selection
     }
 
     function getChannelRange(fromInput, toInput) {
@@ -568,8 +564,8 @@
     async function onSpectrumIndexInputChange() {
         waterfallState.spectrumRange = getSpectrumRange();
         if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
+            await waterfallPlot.renderSpectrumSelectionAsync();
             await waterfallPlot.renderSpectrumImageAsync();
-            await waterfallPlot.renderWaterfallImageAsync();
         }
     }
 
@@ -605,7 +601,6 @@
             controlPanel.showPreview();
             if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
                 await waterfallPlot.renderSpectrumImageAsync();
-                await waterfallPlot.renderWaterfallImageAsync();
             }
         } else {
             controlPanel.hidePreview();

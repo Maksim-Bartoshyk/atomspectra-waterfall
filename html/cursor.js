@@ -166,6 +166,11 @@
     }
 
     function spectrumInfoText(spectrumIndex, originalSpectrumIndex) {
+        if (spectrumIndex < 0 || spectrumIndex >= waterfallData.deltas.length) {
+            console.warn('invalid spectrum index', spectrumIndex, waterfallData);
+            return '';
+        }
+
         return 'spectrum: ' + originalSpectrumIndex
             + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
             + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
