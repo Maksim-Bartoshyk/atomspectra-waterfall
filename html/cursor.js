@@ -173,7 +173,9 @@
 
         return 'spectrum: ' + originalSpectrumIndex
             + '\n' + 'time: ' + common.timeToString(waterfallData.deltas[spectrumIndex].timestamp)
-            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s';
+            + '\n' + 'duration: ' + waterfallData.deltas[spectrumIndex].duration.toFixed(1) + ' s'
+            + '\n' + 'lat: ' + waterfallData.deltas[spectrumIndex].lat.toFixed(6)
+            + '\n' + 'lon: ' + waterfallData.deltas[spectrumIndex].lon.toFixed(6);
     }
 
     function appendCpsInfoText(tooltipText, spectrumIndex) {
