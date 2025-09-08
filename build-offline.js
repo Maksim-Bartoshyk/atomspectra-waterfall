@@ -5,6 +5,7 @@ waterfall = waterfall.replace('<link rel="stylesheet" href="./html/style.css" />
 waterfall = waterfall.replace('<script src="./shared/spectrum.js"></script>', '<script>' + fs.readFileSync('./shared/spectrum.js') + '</script>');
 waterfall = waterfall.replace('<script src="./shared/waterfall-data.js"></script>', '<script>' + fs.readFileSync('./shared/waterfall-data.js') + '</script>');
 waterfall = waterfall.replace('<script src="./shared/radiacode.js"></script>', '<script>' + fs.readFileSync('./shared/radiacode.js') + '</script>');
+waterfall = waterfall.replace('<script src="./shared/csv.js"></script>', '<script>' + fs.readFileSync('./shared/csv.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/common.js"></script>', '<script>' + fs.readFileSync('./html/common.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/waterfall-plot.js"></script>', '<script>' + fs.readFileSync('./html/waterfall-plot.js') + '</script>');
 waterfall = waterfall.replace('<script src="./html/cps-plot.js"></script>', '<script>' + fs.readFileSync('./html/cps-plot.js') + '</script>');
@@ -16,4 +17,5 @@ fs.writeFileSync('./offline/waterfall-offline.html', waterfall);
 let rcspg = fs.readFileSync('./rcspg.html', 'utf-8');
 rcspg = rcspg.replace('<script src="./shared/spectrum.js"></script>', '<script>' + fs.readFileSync('./shared/spectrum.js') + '</script>');
 rcspg = rcspg.replace('<script src="./shared/radiacode.js"></script>', '<script>' + fs.readFileSync('./shared/radiacode.js') + '</script>');
+rcspg = rcspg.replace('<script src="./shared/csv.js"></script>', '<script>' + fs.readFileSync('./shared/csv.js') + '</script>');
 fs.writeFileSync('./offline/rcspg-offline.html', rcspg);

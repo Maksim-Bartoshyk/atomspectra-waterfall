@@ -51,7 +51,7 @@ Index of spectrum is rendered next to timestamp on spectrogram.
 Tip: if you want to check what is recorded to spectrogram at the moment:
 1) go to `settings`, set `Diff time: XX s` to similar interval (or whatever you need), this setting is independent and does not affect `Save delta every XX s`
 2) while recording is in progress, go to `spectrum -> spectrum change` setting, enable it
-3) application starts collecting and displaying delta-spectrum (in green color) in memory for XX seconds (set in #1), once XX seconds elapsed, it will show spectrum for the latest XX seconds (sliding window)
+3) application starts collecting and displaying delta-spectrum in memory for XX seconds (set in #1), once XX seconds elapsed, it will show spectrum for the latest XX seconds (sliding window)
 4) disable `spectrum -> spectrum change` to view spectrum collected since recording start
 
 # Available controls
@@ -61,6 +61,8 @@ Tip: if you want to check what is recorded to spectrogram at the moment:
 3) observe spectrogram and CPS plot
 
 6.6.14 checkbox: use it for compatibility with older AtomSpectra app (6.6.12 - 6.6.14), which stores each delta file as a separate spectrum.
+
+No zeros checkbox: use it if spectrogram contains rows with zero counts and you want to omit them.
 
 ## Save spectrogram or CPS plot
 1) use right mouse click on either spectrogram or CPS plot -> `Save image as...`
@@ -90,15 +92,17 @@ Tip: if you want to check what is recorded to spectrogram at the moment:
 
 ## CPS plot range
 CPS plot displays count rate for a specific range of channels.
-1) CPS trend in channel range_1 - defines main range as [from channel index, to channel index]
+1) "CPS in channel range_1" - defines main range as [from channel index, to channel index]
 `hold 'c' key + two left mouse clicks` - set channels under cursor as range_1
-2) Compare to CPS in channel range_2 - enables comparison mode, renders 3 plots:
+2) "Ratio to CPS in channel range_2" - enables comparison mode, renders 3 plots:
   a. count rate in range_1
   b. count rate in range_2
   c. ratio of count rate in range_1 to count rate in range_2 (range_1/range_2)
 `hold 'a' key + two left mouse clicks` - set channels under cursor as range_2
-3) Range_1 cps to map - click to generate .rctrk map file, count rate in selected range will be used as value for CPS channel (use if AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application
-4) Range_1/range_2 comparison to map - click to generate .rctrk map file, range_1/range_2 rate in selected range will be used as value for CPS channel (use if AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application
+3) "CPS to map" - click to generate .rctrk map file, count rate in selected range will be used as value for CPS channel (ensure AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application. Button exports original spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
+4) "CPS ratio to map" - click to generate .rctrk map file, range_1/range_2 rate in selected range will be used as value for CPS channel (use if AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application. Button exports original spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
+
+*Use "csv" checkbox to enable export to csv instead of rctrk.
 
 ## Spectrum preview and export
 Preview shows spectrum combined from selected spectrogram range as [from delta index, to delta index], index is always original, despite binning applied

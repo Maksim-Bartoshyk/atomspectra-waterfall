@@ -1,172 +1,240 @@
 body {
-    background: #444;
-    box-sizing: border-box;
-    color: #CCC;
-    margin: 0;
-    min-width: 1024px;
-    padding: 0 12px;
-    scrollbar-color: #444 #888;
+  background: #444;
+  box-sizing: border-box;
+  color: #CCC;
+  margin: 0;
+  min-width: 1024px;
+  padding: 0 12px;
+  scrollbar-color: #444 #888;
 }
+
 body * {
-    box-sizing: border-box;
-    font-size: 16px;
-    font-family: sans-serif;
-    margin: 0;
-    padding: 0;
+  box-sizing: border-box;
+  font-size: 16px;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
 }
-select, input {
-    background: #444;
-    color: #CCC;
+
+select,
+input {
+  background: #444;
+  color: #CCC;
 }
+
 input[type="number"] {
-    border: 1px solid #CCC;
-    padding-left: 4px;
+  border: 1px solid #CCC;
+  padding-left: 4px;
 }
-input[type="checkbox"], input[type="radio"] {
-    margin: 3px 3px 3px 0;
+
+input[type="checkbox"],
+input[type="radio"] {
+  margin: 3px 3px 3px 0;
 }
+
 .blocking-overlay {
-    position: absolute;
-    background: rgba(100, 100, 100, 0.75);
-    top: 40px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: 1024px;
+  position: absolute;
+  background: rgba(100, 100, 100, 0.75);
+  top: 40px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  min-width: 1024px;
+  z-index: 1;
 }
+
 @keyframes fadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
+
 .status-text.fadein {
-    animation: fadeIn 0.25s;
+  animation: fadeIn 0.25s;
 }
+
 .status-text {
-    background: lightgray;
-    border: 1px solid white;
-    color: black;
-    display: none;
-    left: 500px;
-    padding: 8px;
-    position: absolute;
-    top: 50%;
-    width: fit-content;
-    z-index: 1;
+  background: lightgray;
+  border: 1px solid white;
+  color: black;
+  display: none;
+  left: 500px;
+  padding: 8px;
+  position: absolute;
+  top: 50%;
+  width: fit-content;
+  z-index: 1;
 }
+
 .upload-control {
-    border-bottom: 1px dotted;
-    padding-top: 12px;
-    padding-bottom: 4px;
-    text-wrap: nowrap;
+  border-bottom: 1px dotted;
+  padding-top: 12px;
+  padding-bottom: 4px;
+  text-wrap: nowrap;
 }
+
 .upload-control * {
-    display: inline-block;
+  display: inline-block;
 }
+
 .upload-control .file-input {
-    width: 580px;
+  width: 485px;
 }
-.waterfall-control, .cps-control {
-    width: 100%;
-    border-bottom: 1px dotted;
-}
-.waterfall-control {
-    padding-top: 12px;
-}
-.col .timezone {
-    width: 97px;
-    text-align: right;
-}
-.col .palette {
-    width: 68px;
-}
-.row {
-    display: flex;
-    justify-content: space-between;
-    max-width: 1000px;
-    padding-bottom: 8px;
-}
-.col {
-    align-items: baseline;
-    display: inline-flex;
-    width: 175px;
-}
-.col label {
-    flex-grow: 1;
-}
-.col input[type="number"], .col select {
-    width: 64px;
-}
-.scale-switch {
-    display: inline-block;
-    margin-right: 16px;
-}
-.preview-container {
-    display: none;
-    height: 125px;
-    max-width: calc(100% - 320px);
-    overflow-x: hidden;
-    overflow-y: scroll;
-    padding-left: 150px;
-    scrollbar-color: #444 #444;
-    width: fit-content;
-}
-.plot-container, .plot-container .cps-container {
-    height: calc(100% - 212px); /* - other controls height */
-}
-.plot-container.with-preview, .plot-container.with-preview .cps-container {
-    height: calc(100% - 212px - 125px); /* - other controls height + preview heigth */
-}
-.plot-container .waterfall-container {
-    display: inline-block;
-    height: 100%;
-    max-width: calc(100% - 320px); /* cpsPlotWidth in js + scroll */
-    overflow-x: scroll;
-    overflow-y: scroll;
-}
-.plot-container .cps-container {
-    display: inline-block;
-    position: absolute;
-    overflow-y: scroll;
-    overflow-x: scroll;
-    padding-left: 1px;
-    width: 320px; /* cpsPlotWidth in js + scroll */
-}
-.cps-container .cps-plot {
-    position: absolute;
-    transform: rotate(90deg); /* veeeeeery hacky, need to rewrite this */
-    transform-origin: bottom left;
-    top: -300px; /* cpsPlotWidth in js */
-}
-.horizontal-cursor, .vertical-cursor {
-    display: none;
-    position: absolute;
-    z-index: 1;
-}
-.horizontal-cursor {
-    border-bottom: 1px dotted #777;
-    height: 0;
-}
-.vertical-cursor {
-    border-right: 1px dotted #777;
-    width: 0;
-}
+
+.waterfall-control,
 .cps-control {
-    padding-top: 8px;
+  width: 100%;
+  border-bottom: 1px dotted;
 }
+
+.waterfall-control {
+  padding-top: 12px;
+}
+
+.col .timezone {
+  width: 97px;
+  text-align: right;
+}
+
+.col .palette {
+  width: 68px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1000px;
+  padding-bottom: 8px;
+}
+
+.col {
+  align-items: baseline;
+  display: inline-flex;
+  width: 175px;
+}
+
+.col label {
+  flex-grow: 1;
+}
+
+.col input[type="number"],
+.col select {
+  width: 64px;
+}
+
+.scale-switch {
+  display: inline-block;
+  margin-right: 16px;
+}
+
+.preview-container {
+  display: none;
+  height: 125px;
+  max-width: calc(100% - 320px);
+  overflow-x: hidden;
+  overflow-y: scroll;
+  padding-left: 150px;
+  scrollbar-color: #444 #444;
+  width: fit-content;
+}
+
+.plot-container,
+.plot-container .cps-container {
+  height: calc(100% - 212px);
+  /* - other controls height */
+}
+
+.plot-container.with-preview,
+.plot-container.with-preview .cps-container {
+  height: calc(100% - 212px - 125px);
+  /* - other controls height + preview heigth */
+}
+
+.plot-container .waterfall-container {
+  display: inline-block;
+  height: 100%;
+  max-width: calc(100% - 320px);
+  /* cpsPlotWidth in js + scroll */
+  overflow-x: scroll;
+  overflow-y: scroll;
+}
+
+.plot-container .cps-container {
+  display: inline-block;
+  position: absolute;
+  overflow-y: scroll;
+  overflow-x: scroll;
+  padding-left: 1px;
+  width: 320px;
+  /* cpsPlotWidth in js + scroll */
+}
+
+.cps-container .cps-plot {
+  position: absolute;
+  transform: rotate(90deg);
+  /* veeeeeery hacky, need to rewrite this */
+  transform-origin: bottom left;
+  top: -300px;
+  /* cpsPlotWidth in js */
+}
+
+.horizontal-cursor,
+.vertical-cursor {
+  display: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.horizontal-cursor {
+  border-bottom: 1px dotted #777;
+  height: 0;
+}
+
+.vertical-cursor {
+  border-right: 1px dotted #777;
+  width: 0;
+}
+
+.cps-control {
+  padding-top: 8px;
+}
+
 .cps-control .numeric-input {
-    margin: 0 4px;
-    width: 150px;
+  margin: 0 4px;
+  width: 150px;
 }
+
 .cps-left-column {
-    display: inline-block;
-    width: 330px;
+  display: inline-block;
+  width: 330px;
 }
+
 .export-button {
-    width: 340px;
+  width: 169px;
 }
+
+.export-bin-avg-button {
+  width: 120px;
+  margin-right: 4px;
+}
+
+.export-csv {
+  position: relative;
+  top: 15px;
+}
+
 .spg-range-button {
-    width: 169px;
+  width: 169px;
 }
+
 .error {
-    color: orangered;
+  color: orangered;
+}
+
+.invisible {
+  visibility: hidden;
 }
