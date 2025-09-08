@@ -9,13 +9,14 @@
    * @param {*} channelBin channel binning to be applied to deltas before cps calculation in provided ranges
    * @returns csv data as string
    */
-  exports.getCSV = function (deltas, range1, range2) {
-    let csvData = 'utc_time_unix,utc_time,latitude,longitude,cps\n';
+  exports.getCSV = function (deltas, range1, range2, localTimeOffsetHours) {
+    let csvData = 'utc_time_unix,utc_time,local_time,latitude,longitude,cps\n';
     deltas.forEach(delta => {
       const channels = delta.channels;
       let newLine = '';
       newLine += Math.round(delta.timestamp / 1000) + ','; // utc_time_unix
       newLine += formatDate(delta.timestamp) + ','; // utc_time
+      newLine += formatDate(delta.timestamp + localTimeOffsetHours * 3600 * 1000) + ','; // local_time
       newLine += delta.lat.toFixed(8) + ','; // latitude
       newLine += delta.lon.toFixed(8) + ','; // longitude
       let cps = sp.cpsInChannelRange(channels, delta.duration, range1);
@@ -28,7 +29,7 @@
         }
       }
       newLine += cps.toFixed(4); // cps
-      newLine += ' \n';
+      newLine += '\n';
 
       csvData += newLine;
     });

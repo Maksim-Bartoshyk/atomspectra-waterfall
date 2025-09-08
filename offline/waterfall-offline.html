@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title>AS Waterfall v2025.09.08.0</title>
+  <title>AS Waterfall v2025.09.08.1</title>
   <style>body {
   background: #444;
   box-sizing: border-box;
@@ -554,13 +554,14 @@ input[type="radio"] {
    * @param {*} channelBin channel binning to be applied to deltas before cps calculation in provided ranges
    * @returns csv data as string
    */
-  exports.getCSV = function (deltas, range1, range2) {
-    let csvData = 'utc_time_unix,utc_time,latitude,longitude,cps\n';
+  exports.getCSV = function (deltas, range1, range2, localTimeOffsetHours) {
+    let csvData = 'utc_time_unix,utc_time,local_time,latitude,longitude,cps\n';
     deltas.forEach(delta => {
       const channels = delta.channels;
       let newLine = '';
       newLine += Math.round(delta.timestamp / 1000) + ','; // utc_time_unix
       newLine += formatDate(delta.timestamp) + ','; // utc_time
+      newLine += formatDate(delta.timestamp + localTimeOffsetHours * 3600 * 1000) + ','; // local_time
       newLine += delta.lat.toFixed(8) + ','; // latitude
       newLine += delta.lon.toFixed(8) + ','; // longitude
       let cps = sp.cpsInChannelRange(channels, delta.duration, range1);
@@ -573,7 +574,7 @@ input[type="radio"] {
         }
       }
       newLine += cps.toFixed(4); // cps
-      newLine += ' \n';
+      newLine += '\n';
 
       csvData += newLine;
     });
@@ -907,7 +908,7 @@ input[type="radio"] {
   };
   window.common = {
     timeToString: timestamp => {
-      const utcISO = new Date(timestamp + waterfallState.timeOffsetHours * 60 * 60 * 1000).toISOString();
+      const isoFormat = new Date(timestamp + waterfallState.timeOffsetHours * 60 * 60 * 1000).toISOString();
       let offsetStr;
       if (waterfallState.timeOffsetHours > 0) {
         offsetStr = '+' + waterfallState.timeOffsetHours + 'h';
@@ -917,7 +918,7 @@ input[type="radio"] {
         offsetStr = 'UTC';
       }
 
-      return utcISO.split('T').join(' ').split('.')[0] + ' ' + offsetStr;
+      return isoFormat.split('T').join(' ').split('.')[0] + ' ' + offsetStr;
     },
     /**
      * Converts channel number to energy using current calibration for waterfall data
@@ -2406,13 +2407,15 @@ input[type="radio"] {
         data = exports.getCSV(
           waterfallData.deltas,
           range,
-          undefined
+          undefined,
+          waterfallState.timeOffsetHours
         );
       } else {
         data = exports.getCSV(
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          undefined
+          undefined,
+          waterfallState.timeOffsetHours
         );
       }
     } else {
@@ -2421,7 +2424,7 @@ input[type="radio"] {
           description,
           waterfallData.deltas,
           range,
-          undefined
+          undefined,
         );
       } else {
         data = exports.getRctrkData(
@@ -2433,13 +2436,11 @@ input[type="radio"] {
       }
     }
 
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange;
+    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + '-cps';
     if (csv) {
-      filename += '-cps.csv';
-      saveFile(filename, data, 'text/csv');
+      saveFile(filename, 'csv', data, 'text/csv');
     } else {
-      filename += '-cps.rctrk';
-      saveFile(filename, data, 'text/rctrk');
+      saveFile(filename, 'rctrk', data, 'text/rctrk');
       return;
     }
   }
@@ -2466,13 +2467,15 @@ input[type="radio"] {
         data = exports.getCSV(
           waterfallData.deltas,
           range,
-          compareRange
+          compareRange,
+          waterfallState.timeOffsetHours
         );
       } else {
         data = exports.getCSV(
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          common.rangeToOriginalRange(compareRange)
+          common.rangeToOriginalRange(compareRange),
+          waterfallState.timeOffsetHours
         );
       }
     } else {
@@ -2493,13 +2496,11 @@ input[type="radio"] {
       }
     }
 
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange;
+    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange + '-cps-ratio';
     if (csv) {
-      filename += '-cps-ratio.csv';
-      saveFile(filename, data, 'text/csv');
+      saveFile(filename, 'csv', data, 'text/csv');
     } else {
-      filename += '-cps-ratio.rctrk';
-      saveFile(filename, data, 'text/rctrk');
+      saveFile(filename, 'rctrk', data, 'text/rctrk');
     }
   }
 
@@ -2524,7 +2525,7 @@ input[type="radio"] {
     const spectrumText = exports.serializeSpectrum(combinedSpectrum);
     const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + ']';
 
-    saveFile(filename + '-combined.txt', spectrumText, 'text/plain');
+    saveFile(filename + '-combined', 'txt', spectrumText, 'text/plain');
   }
 
   async function spectrumRangeAsBase() {
@@ -2551,18 +2552,36 @@ input[type="radio"] {
     await cpsPlot.renderCpsAsync();
   }
 
-  function saveFile(filename, data, type) {
-    const blob = new Blob([data], { type: type });
+  function saveFile(filename, extension, data, mimeType) {
+    let userFilename = prompt("Please enter file name", filename);
+    if (userFilename == null) {
+        return;
+    } 
+
+    if (!userFilename) {
+        userFilename = filename;
+    }
+
+    const blob = new Blob([data], { type: mimeType });
     const elem = window.document.createElement('a');
     elem.href = window.URL.createObjectURL(blob);
-    elem.download = filename;
+    elem.download = userFilename + '.' + extension;
     document.body.appendChild(elem);
     elem.click();
     document.body.removeChild(elem);
   }
 
   function getEnergyRangeStr(range) {
-    return '[' + common.channelToEnergy(range[0]).toFixed(0) + '-' + common.channelToEnergy(range[1]).toFixed(0) + ' keV]';
+    let fromE = common.channelToEnergy(range[0]).toFixed(0);
+    if (fromE < 0) {
+        fromE = 0;
+    }
+    let toE = common.channelToEnergy(range[1]).toFixed(0);
+    if (toE < 0) {
+        toE = 0;
+    }
+
+    return '[' + fromE + '-' + toE + ' keV]';
   }
 })();
 </script>

@@ -629,13 +629,15 @@
         data = exports.getCSV(
           waterfallData.deltas,
           range,
-          undefined
+          undefined,
+          waterfallState.timeOffsetHours
         );
       } else {
         data = exports.getCSV(
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          undefined
+          undefined,
+          waterfallState.timeOffsetHours
         );
       }
     } else {
@@ -644,7 +646,7 @@
           description,
           waterfallData.deltas,
           range,
-          undefined
+          undefined,
         );
       } else {
         data = exports.getRctrkData(
@@ -656,13 +658,11 @@
       }
     }
 
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange;
+    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + '-cps';
     if (csv) {
-      filename += '-cps.csv';
-      saveFile(filename, data, 'text/csv');
+      saveFile(filename, 'csv', data, 'text/csv');
     } else {
-      filename += '-cps.rctrk';
-      saveFile(filename, data, 'text/rctrk');
+      saveFile(filename, 'rctrk', data, 'text/rctrk');
       return;
     }
   }
@@ -689,13 +689,15 @@
         data = exports.getCSV(
           waterfallData.deltas,
           range,
-          compareRange
+          compareRange,
+          waterfallState.timeOffsetHours
         );
       } else {
         data = exports.getCSV(
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          common.rangeToOriginalRange(compareRange)
+          common.rangeToOriginalRange(compareRange),
+          waterfallState.timeOffsetHours
         );
       }
     } else {
@@ -716,13 +718,11 @@
       }
     }
 
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange;
+    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange + '-cps-ratio';
     if (csv) {
-      filename += '-cps-ratio.csv';
-      saveFile(filename, data, 'text/csv');
+      saveFile(filename, 'csv', data, 'text/csv');
     } else {
-      filename += '-cps-ratio.rctrk';
-      saveFile(filename, data, 'text/rctrk');
+      saveFile(filename, 'rctrk', data, 'text/rctrk');
     }
   }
 
@@ -747,7 +747,7 @@
     const spectrumText = exports.serializeSpectrum(combinedSpectrum);
     const filename = originalWaterfallData.baseSpectrum.name + '-[' + range[0] + ', ' + range[1] + ']';
 
-    saveFile(filename + '-combined.txt', spectrumText, 'text/plain');
+    saveFile(filename + '-combined', 'txt', spectrumText, 'text/plain');
   }
 
   async function spectrumRangeAsBase() {
@@ -774,17 +774,35 @@
     await cpsPlot.renderCpsAsync();
   }
 
-  function saveFile(filename, data, type) {
-    const blob = new Blob([data], { type: type });
+  function saveFile(filename, extension, data, mimeType) {
+    let userFilename = prompt("Please enter file name", filename);
+    if (userFilename == null) {
+        return;
+    } 
+
+    if (!userFilename) {
+        userFilename = filename;
+    }
+
+    const blob = new Blob([data], { type: mimeType });
     const elem = window.document.createElement('a');
     elem.href = window.URL.createObjectURL(blob);
-    elem.download = filename;
+    elem.download = userFilename + '.' + extension;
     document.body.appendChild(elem);
     elem.click();
     document.body.removeChild(elem);
   }
 
   function getEnergyRangeStr(range) {
-    return '[' + common.channelToEnergy(range[0]).toFixed(0) + '-' + common.channelToEnergy(range[1]).toFixed(0) + ' keV]';
+    let fromE = common.channelToEnergy(range[0]).toFixed(0);
+    if (fromE < 0) {
+        fromE = 0;
+    }
+    let toE = common.channelToEnergy(range[1]).toFixed(0);
+    if (toE < 0) {
+        toE = 0;
+    }
+
+    return '[' + fromE + '-' + toE + ' keV]';
   }
 })();

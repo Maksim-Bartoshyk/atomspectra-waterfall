@@ -39,7 +39,7 @@
   };
   window.common = {
     timeToString: timestamp => {
-      const utcISO = new Date(timestamp + waterfallState.timeOffsetHours * 60 * 60 * 1000).toISOString();
+      const isoFormat = new Date(timestamp + waterfallState.timeOffsetHours * 60 * 60 * 1000).toISOString();
       let offsetStr;
       if (waterfallState.timeOffsetHours > 0) {
         offsetStr = '+' + waterfallState.timeOffsetHours + 'h';
@@ -49,7 +49,7 @@
         offsetStr = 'UTC';
       }
 
-      return utcISO.split('T').join(' ').split('.')[0] + ' ' + offsetStr;
+      return isoFormat.split('T').join(' ').split('.')[0] + ' ' + offsetStr;
     },
     /**
      * Converts channel number to energy using current calibration for waterfall data
