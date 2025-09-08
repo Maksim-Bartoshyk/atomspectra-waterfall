@@ -8,349 +8,368 @@
 		</script>
 		<script>// TODO: try use typed array to optimize memory consumption (float32, for instance)
 (function () {
-	exports.deserializeSpectrum = function(fileText) {
-		if (!fileText) {
-			throw new Error('spectrum file text is empty');
-		}
-	
-		const lines = fileText.split('\n');
-		const format = lines[0];
-		const note = lines[1];
-		const time = parseInt(lines[2]);
-		const time2 = parseInt(lines[3]);
-		const latStr = lines[4];
-		const lonStr = lines[5];
-		const name = lines[6];
-		const foundIsotopes = lines[7];
-		const duration = parseFloat(lines[8]);
-		const channelsCount = parseInt(lines[9]);
-		const calibrationOrder = parseInt(lines[10]);
-		const calibration = [];
-		for (let i = 0; i < calibrationOrder + 1; i++) {
-			calibration.push(parseFloat(lines[11 + i]));
-		}
-	
-		let index = 0;
-		const channels = new Float32Array(channelsCount);
-		while (index < channelsCount) {
-			channels[index] = parseFloat(lines[12 + calibrationOrder + index]);
-			index++;
-		}
-	
-		return {
-			format: format,
-			note: note,
-			timestamp: time,
-			timestamp2: time2,
-			latStr: latStr,
-			lonStr: lonStr,
-			name: name,
-			foundIsotopes: foundIsotopes,
-			duration: duration,
-			channelCount: channels.length,
-			calibration: calibration,
-			channels: channels
-		};
-	}
-	
-	exports.serializeSpectrum = function(spectrum) {
-		if (!spectrum) {
-			throw new Error('spectrum is not provided');
-		}
-	
-		let text = spectrum.format + '\n';
-		text += spectrum.note + '\n';
-		text += spectrum.timestamp + '\n';
-		text += spectrum.timestamp2 + '\n';
-		text += spectrum.latStr + '\n';
-		text += spectrum.lonStr + '\n';
-		text += spectrum.name + '\n';
-		text += spectrum.foundIsotopes + '\n';
-		text += spectrum.duration + '\n';
-		text += spectrum.channelCount + '\n';
-		text += (spectrum.calibration.length - 1) + '\n';
-		for (let i = 0; i < spectrum.calibration.length; i++) {
-			text += spectrum.calibration[i] + '\n';
-		}
-	
-		let index = 0;
-		while (index < spectrum.channelCount) {
-			text += spectrum.channels[index] + '\n';
-			index++;
-		}
-	
-		return text;
-	}
-	
-	exports.deserializeDeltas = function(fileText, baseSpectrum) {
-		if (!fileText) {
-			throw new Error('spectrum file text is empty');
-		}
-	
-		const lines = fileText.split('\n');
-		const deltaLinesCount = 5;
-		const deltas = [];
-		let deltaIndex = baseSpectrum.calibration.length + baseSpectrum.channelCount + 11; // skip base spectrum
-		while (deltaIndex <= lines.length - deltaLinesCount) {
-			const delta = readNextDelta(lines, deltaIndex, baseSpectrum.channelCount);
-			deltas.push(delta);
-			deltaIndex += deltaLinesCount;
-		}
-	
-		return {
-			deltas: deltas
-		};
-	}
-	
-	exports.reduceSpectrumCount = function(spectrums, spectrumsBinning) {
-		if (spectrumsBinning < 1) {
-			throw new Error('invalid factor: ' + spectrumsBinning);
-		}
-	
-		if (!spectrums || !spectrums.length) {
-			throw new Error('no spectrums provided');
-		}
-	
-		let reduced = [];
-		for (let i = 0; i < spectrums.length; i += spectrumsBinning) {
-			let summ = { 
-				...spectrums[i],
-				channels: new Float32Array(spectrums[i].channels) 
-			};
-			for (let j = 1; j < spectrumsBinning && (i + j) < spectrums.length; j++) {
-				for (let k = 0; k < summ.channels.length; k++) {
-					summ.channels[k] += spectrums[i + j].channels[k];
-				}
-	
-				summ.duration += spectrums[i + j].duration;
-			}
-	
-			reduced.push(summ);
-		}
-	
-		return reduced;
-	}
-	
-	exports.reduceChannelCount = function(channels, channelBinning) {
-		if (channelBinning < 1) {
-			throw new Error('invalid channel binning: ' + channelBinning);
-		}
-	
-		if (!channels || !channels.length) {
-			throw new Error('no channels provided');
-		}
-	
-		let reduced = [];
-		for (let i = 0; i < channels.length; i += channelBinning) {
-			let summ = 0;
-			for (let j = 0; j < channelBinning && (i + j) < channels.length; j++) {
-				summ += channels[i + j];
-			}
-	
-			reduced.push(summ);
-		}
-	
-		return new Float32Array(reduced);
-	}
-	
-	exports.getCalibration = function (calibration, channelBinning) {
-		const newCalibration = [];
-		for (let i = 0; i < calibration.length; i++) {
-			newCalibration.push(Math.pow(channelBinning, i) * calibration[i]);
-		}
-	
-		return newCalibration;
-	}
+  exports.deserializeSpectrum = function (fileText) {
+    if (!fileText) {
+      throw new Error('spectrum file text is empty');
+    }
 
-	exports.combineSpectrums = function(deltas, fromIndex, toIndex, baseSpectrum, filename) {
-		if (fromIndex < 0) {
-			fromIndex = 0;
-		}
+    const lines = fileText.split('\n');
+    const format = lines[0];
+    const note = lines[1];
+    const time = parseInt(lines[2]);
+    const time2 = parseInt(lines[3]);
+    const latStr = lines[4];
+    const lonStr = lines[5];
+    const name = lines[6];
+    const foundIsotopes = lines[7];
+    const duration = parseFloat(lines[8]);
+    const channelsCount = parseInt(lines[9]);
+    const calibrationOrder = parseInt(lines[10]);
+    const calibration = [];
+    for (let i = 0; i < calibrationOrder + 1; i++) {
+      calibration.push(parseFloat(lines[11 + i]));
+    }
 
-		if (toIndex > deltas.length - 1) {
-			toIndex = deltas.length - 1;
-		}
+    let index = 0;
+    const channels = new Float32Array(channelsCount);
+    while (index < channelsCount) {
+      channels[index] = parseFloat(lines[12 + calibrationOrder + index]);
+      index++;
+    }
 
-		if (fromIndex > toIndex) {
-			const tmp = fromIndex;
-			fromIndex = toIndex;
-			toIndex = tmp;
-		}
+    return {
+      format: format,
+      note: note,
+      timestamp: time,
+      timestamp2: time2,
+      latStr: latStr,
+      lonStr: lonStr,
+      name: name,
+      foundIsotopes: foundIsotopes,
+      duration: duration,
+      channelCount: channels.length,
+      calibration: calibration,
+      channels: channels
+    };
+  }
 
-		const deltasToCombine = deltas.slice(fromIndex, toIndex + 1);
-		const combinedDelta = this.reduceSpectrumCount(deltasToCombine, deltasToCombine.length)[0];
-		const combinedSpectrum = {
-			format: 'FORMAT: 3',
-			note: 'Counts: ' + combinedDelta.channels.reduce((a, v) => a += v, 0) + ', '
-				+ 'combined from spectrogram ' + filename + ', '
-				+ 'from index: ' + fromIndex + ', '
-				+ 'to index: ' + toIndex + ', '
-				+ 'from time: ' + formatTime(deltas[fromIndex].timestamp) + ', '
-				+ 'to time: ' + formatTime(deltas[toIndex].timestamp),
-			timestamp: combinedDelta.timestamp,
-			timestamp2: '0',
-			latStr: '0.0',
-			lonStr: '0.0',
-			name: baseSpectrum.name,
-			foundIsotopes: '',
-			duration: combinedDelta.duration,
-			channelCount: combinedDelta.channels.length,
-			calibration: baseSpectrum.calibration,
-			channels: combinedDelta.channels
-		};
-		
-		return combinedSpectrum;
-	}
-	
-	function readNextDelta(lines, fromIndex, channelCount) {
-		const timestamp = parseInt(lines[fromIndex]);
-		const lat = parseFloat(lines[fromIndex + 1]);
-		const lon = parseFloat(lines[fromIndex + 2]);
-		const duration = parseFloat(lines[fromIndex + 3]);
-		const channels = new Float32Array(channelCount);
-		lines[fromIndex + 4]
-			.split('\t')
-			.slice(0, channelCount)
-			.forEach((str, index) => channels[index] = parseFloat(str));
-	
-		return {
-			timestamp: timestamp,
-			duration: duration,
-			lat: lat,
-			lon: lon,
-			channels: channels
-		}
-	}
-	
-	function formatTime(timestamp) {
-		const utcISO = new Date(timestamp).toISOString();
+  exports.serializeSpectrum = function (spectrum) {
+    if (!spectrum) {
+      throw new Error('spectrum is not provided');
+    }
 
-		return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
-	}
+    let text = spectrum.format + '\n';
+    text += spectrum.note + '\n';
+    text += spectrum.timestamp + '\n';
+    text += spectrum.timestamp2 + '\n';
+    text += spectrum.latStr + '\n';
+    text += spectrum.lonStr + '\n';
+    text += spectrum.name + '\n';
+    text += spectrum.foundIsotopes + '\n';
+    text += spectrum.duration + '\n';
+    text += spectrum.channelCount + '\n';
+    text += (spectrum.calibration.length - 1) + '\n';
+    for (let i = 0; i < spectrum.calibration.length; i++) {
+      text += spectrum.calibration[i] + '\n';
+    }
+
+    let index = 0;
+    while (index < spectrum.channelCount) {
+      text += spectrum.channels[index] + '\n';
+      index++;
+    }
+
+    return text;
+  }
+
+  exports.deserializeDeltas = function (fileText, baseSpectrum, noZeros) {
+    if (!fileText) {
+      throw new Error('spectrum file text is empty');
+    }
+
+    const lines = fileText.split('\n');
+    const deltaLinesCount = 5;
+    const deltas = [];
+    let deltaIndex = baseSpectrum.calibration.length + baseSpectrum.channelCount + 11; // skip base spectrum
+    while (deltaIndex <= lines.length - deltaLinesCount) {
+      const delta = readNextDelta(lines, deltaIndex, baseSpectrum.channelCount);
+      if (noZeros) {
+        if (delta.channels.some(c => c !== 0) && delta.duration > 0) {
+          deltas.push(delta);
+        }
+      } else {
+        deltas.push(delta);
+      }
+
+      deltaIndex += deltaLinesCount;
+    }
+
+    return {
+      deltas: deltas
+    };
+  }
+
+  exports.reduceDeltasCount = function (deltas, binning) {
+    if (binning < 1) {
+      throw new Error('invalid factor: ' + binning);
+    }
+
+    if (!deltas || !deltas.length) {
+      throw new Error('no spectrums provided');
+    }
+
+    let reduced = [];
+    for (let i = 0; i < deltas.length; i += binning) {
+      let summ = {
+        ...deltas[i],
+        channels: new Float32Array(deltas[i].channels)
+      };
+      for (let j = 1; j < binning && (i + j) < deltas.length; j++) {
+        for (let k = 0; k < summ.channels.length; k++) {
+          summ.channels[k] += deltas[i + j].channels[k];
+        }
+
+        summ.duration += deltas[i + j].duration;
+        // binned delta takes timestamp, lat, lon of the last delta in the bin
+        summ.timestamp = deltas[i + j].timestamp;
+        summ.lat = deltas[i + j].lat;
+        summ.lon = deltas[i + j].lon;
+      }
+
+      reduced.push(summ);
+    }
+
+    return reduced;
+  }
+
+  exports.reduceChannelCount = function (channels, channelBinning) {
+    if (channelBinning < 1) {
+      throw new Error('invalid channel binning: ' + channelBinning);
+    }
+
+    if (!channels || !channels.length) {
+      throw new Error('no channels provided');
+    }
+
+    let reduced = [];
+    for (let i = 0; i < channels.length; i += channelBinning) {
+      let summ = 0;
+      for (let j = 0; j < channelBinning && (i + j) < channels.length; j++) {
+        summ += channels[i + j];
+      }
+
+      reduced.push(summ);
+    }
+
+    return new Float32Array(reduced);
+  }
+
+  exports.getCalibration = function (calibration, channelBinning) {
+    const newCalibration = [];
+    for (let i = 0; i < calibration.length; i++) {
+      newCalibration.push(Math.pow(channelBinning, i) * calibration[i]);
+    }
+
+    return newCalibration;
+  }
+
+  exports.combineDeltas = function (deltas, fromIndex, toIndex, baseSpectrum, filename) {
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
+
+    if (toIndex > deltas.length - 1) {
+      toIndex = deltas.length - 1;
+    }
+
+    if (fromIndex > toIndex) {
+      const tmp = fromIndex;
+      fromIndex = toIndex;
+      toIndex = tmp;
+    }
+
+    const deltasToCombine = deltas.slice(fromIndex, toIndex + 1);
+    const combinedDelta = this.reduceDeltasCount(deltasToCombine, deltasToCombine.length)[0];
+    const combinedSpectrum = {
+      format: 'FORMAT: 3',
+      note: 'Counts: ' + combinedDelta.channels.reduce((a, v) => a += v, 0) + ', '
+        + 'combined from spectrogram ' + filename + ', '
+        + 'from index: ' + fromIndex + ', '
+        + 'to index: ' + toIndex + ', '
+        + 'from time: ' + formatTime(deltas[fromIndex].timestamp) + ', '
+        + 'to time: ' + formatTime(deltas[toIndex].timestamp),
+      timestamp: combinedDelta.timestamp,
+      timestamp2: '0',
+      latStr: '0.0',
+      lonStr: '0.0',
+      name: baseSpectrum.name,
+      foundIsotopes: '',
+      duration: combinedDelta.duration,
+      channelCount: combinedDelta.channels.length,
+      calibration: baseSpectrum.calibration,
+      channels: combinedDelta.channels
+    };
+
+    return combinedSpectrum;
+  }
+
+  exports.cpsInChannelRange = function (channels, duration, range) {
+    return channels.slice(range[0], range[1] + 1).reduce((a, v) => a + v, 0) / duration;
+  };
+
+  function readNextDelta(lines, fromIndex, channelCount) {
+    const timestamp = parseInt(lines[fromIndex]);
+    const lat = parseFloat(lines[fromIndex + 1]);
+    const lon = parseFloat(lines[fromIndex + 2]);
+    const duration = parseFloat(lines[fromIndex + 3]);
+    const channels = new Float32Array(channelCount);
+    lines[fromIndex + 4]
+      .split('\t')
+      .slice(0, channelCount)
+      .forEach((str, index) => channels[index] = parseFloat(str));
+
+    return {
+      timestamp: timestamp,
+      duration: duration,
+      lat: lat,
+      lon: lon,
+      channels: channels
+    }
+  }
+
+  /**
+   * Converts binned range to original range before binning
+   * @param {*} range Range after binning applied
+   * @param {*} channelBinning Binning factor
+   * @returns original range before binning
+   */
+  exports.rangeToOriginalRange = function (range, channelBinning) {
+    return [range[0] * channelBinning, range[1] * channelBinning + (channelBinning - 1)];
+  };
+
+  function formatTime(timestamp) {
+    const utcISO = new Date(timestamp).toISOString();
+
+    return utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+  }
 })();
 </script>
 		<script>(function () {
-	const sp = require('./spectrum.js');
+  const sp = require('./spectrum.js');
 
-	exports.createRcspgData = function(baseSpectrum, deltas) {
-		if (!baseSpectrum || !deltas || deltas.length === 0) {
-			throw new Error('no deltas provided for rcspg convertion')
-		}
+  exports.createRcspgData = function (baseSpectrum, deltas) {
+    if (!baseSpectrum || !deltas || deltas.length === 0) {
+      throw new Error('no deltas provided for rcspg convertion')
+    }
 
-		const fromTimestamp = deltas[0].timestamp;
-		const toTimestamp = deltas[deltas.length - 1].timestamp;
+    const fromTimestamp = deltas[0].timestamp;
+    const toTimestamp = deltas[deltas.length - 1].timestamp;
 
-		// header
-		const utcISO = new Date(fromTimestamp).toISOString();
-		const formattedUTC = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
-		const spgName = baseSpectrum.name;
-		const spgTime = formattedUTC;
-		let rcspgData = 'Spectrogram: ' + spgName + 
-						'\tTime: ' + spgTime + 
-						'\tTimestamp: ' + filetimeFromJSTime(fromTimestamp) + // just in case to avoid any potential division by zero
-						'\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) + 
-						'\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
+    // header
+    const utcISO = new Date(fromTimestamp).toISOString();
+    const formattedUTC = utcISO.split('T').join(' ').split('.')[0] + ' UTC';
+    const spgName = baseSpectrum.name;
+    const spgTime = formattedUTC;
+    let rcspgData = 'Spectrogram: ' + spgName +
+      '\tTime: ' + spgTime +
+      '\tTimestamp: ' + filetimeFromJSTime(fromTimestamp) + // just in case to avoid any potential division by zero
+      '\tAccumulation time: ' + Math.floor((toTimestamp - fromTimestamp) / 1000) +
+      '\tChannels: 1024\tDevice serial: unknown\tFlags: 1\tComment: exported from atomspectra data';
 
-		const calibration = sp.getCalibration(baseSpectrum.calibration, 8);
-		// base spectrum, zero duration, y=x calibration, all zero channels
-		let a0 = 0;
-		let a1 = 1;
-		let a2 = 0;
-		switch (calibration.length) {
-			case 2:
-				a0 = calibration[0];
-				a1 = calibration[1];
-				break;
-			case 3:
-				a0 = calibration[0];
-				a1 = calibration[1];
-				a2 = calibration[2];
-				break;
-			default:
-				console.warn('calibration polynom order (' + calibration.length + ') is not supported, y=x applied');
-		}
+    const calibration = sp.getCalibration(baseSpectrum.calibration, 8);
+    // base spectrum, zero duration, y=x calibration, all zero channels
+    let a0 = 0;
+    let a1 = 1;
+    let a2 = 0;
+    switch (calibration.length) {
+      case 2:
+        a0 = calibration[0];
+        a1 = calibration[1];
+        break;
+      case 3:
+        a0 = calibration[0];
+        a1 = calibration[1];
+        a2 = calibration[2];
+        break;
+      default:
+        console.warn('calibration polynom order (' + calibration.length + ') is not supported, y=x applied');
+    }
 
-		// TODO: write base spectrum
-		rcspgData += '\nSpectrum: ' +
+    // TODO: write base spectrum
+    rcspgData += '\nSpectrum: ' +
 					/*int32 duration*/'00 00 00 00' + ' ' +
 					/*float A0*/getBigEndianFloat(a0) + ' ' +
 					/*float A1*/getBigEndianFloat(a1) + ' ' +
 					/*float A2*/getBigEndianFloat(a2) + ' ' +
-					Array(1024).fill('00 00 00 00').join(' ');
+      Array(1024).fill('00 00 00 00').join(' ');
 
-		// deltas
-		deltas.forEach(delta => {
-			const channels = sp.reduceChannelCount(delta.channels, 8);
-			rcspgData += '\n' + filetimeFromJSTime(delta.timestamp);
-			rcspgData += '\t' + Math.round(delta.duration);
-			channels.forEach(channel => {
-			rcspgData += '\t' + channel;
-			});
-		});
+    // deltas
+    deltas.forEach(delta => {
+      const channels = sp.reduceChannelCount(delta.channels, 8);
+      rcspgData += '\n' + filetimeFromJSTime(delta.timestamp);
+      rcspgData += '\t' + Math.round(delta.duration);
+      channels.forEach(channel => {
+        rcspgData += '\t' + channel;
+      });
+    });
 
-		return rcspgData;
-	}
+    return rcspgData;
+  }
 
-	exports.getRctrkData = function(name, deltas, range1, range2, channelBin) {
-		let rctrkData = 'Track: ' + name + '\tAtom Spectra spectrogram\t \tEC\n';
-		rctrkData += 'Timestamp\tTime\tLatitude\tLongitude\tAccuracy\tDoseRate\tCountRate\tComment\n';
-		deltas.forEach(delta8k => {
-			const channels = sp.reduceChannelCount(delta8k.channels, channelBin);
-			let newLine = '';
-			// ex: '133594869443100000	2024-05-06 16:35:44	60.0006352	30.3515997	6.79	13.3	9.98	 '
-			newLine += filetimeFromJSTime(delta8k.timestamp).toString() + '\t';
-			newLine += formatDate(delta8k.timestamp) + '\t';
-			newLine += delta8k.lat.toFixed(8) + '\t';
-			newLine += delta8k.lon.toFixed(8) + '\t';
-			newLine += '0.0\t'; // accuracy
-			newLine += '0.0\t'; // doserate
-			let cps = cpsInRange(channels, delta8k.duration, range1);
-			if (range2) {
-				let cps2 = cpsInRange(channels, delta8k.duration, range2);
-				if (cps2 > 0) {
-					cps /= cps2;
-				} else {
-					cps = 0;
-				}
-			} 
-			newLine += cps.toFixed(4) + '\t'; // cps
-			newLine += ' \n'; // comment
+  exports.getRctrkData = function (name, deltas, range1, range2) {
+    let rctrkData = 'Track: ' + name + '\tAtom Spectra spectrogram\t \tEC\n';
+    rctrkData += 'Timestamp\tTime\tLatitude\tLongitude\tAccuracy\tDoseRate\tCountRate\tComment\n';
+    deltas.forEach(delta => {
+      const channels = delta.channels;
+      let newLine = '';
+      // ex: '133594869443100000	2024-05-06 16:35:44	60.0006352	30.3515997	6.79	13.3	9.98	 '
+      newLine += filetimeFromJSTime(delta.timestamp).toString() + '\t';
+      newLine += formatDate(delta.timestamp) + '\t';
+      newLine += delta.lat.toFixed(8) + '\t';
+      newLine += delta.lon.toFixed(8) + '\t';
+      newLine += '0.0\t'; // accuracy
+      newLine += '0.0\t'; // doserate
+      let cps = sp.cpsInChannelRange(channels, delta.duration, range1);
+      if (range2) {
+        let cps2 = sp.cpsInChannelRange(channels, delta.duration, range2);
+        if (cps2 > 0) {
+          cps /= cps2;
+        } else {
+          cps = 0;
+        }
+      }
+      newLine += cps.toFixed(4) + '\t'; // cps
+      newLine += ' \n'; // comment
 
-			if (cps > 0 && (delta8k.lat !== 0 && delta8k.lon !== 0)) {
-				rctrkData += newLine;
-			}
-		});
+      rctrkData += newLine;
+    });
 
-		return rctrkData;
-	}
+    return rctrkData;
+  }
 
-	function getBigEndianFloat(value) {
-		const getHex = i => ('00' + i.toString(16)).slice(-2);
+  function getBigEndianFloat(value) {
+    const getHex = i => ('00' + i.toString(16)).slice(-2);
 
-		var view = new DataView(new ArrayBuffer(4));
-		view.setFloat32(0, value);
-		const result = Array
-			.apply(null, { length: 4 })
-			.map((_, i) => getHex(view.getUint8(i)))
-			.reverse()
-			.join(' ');
+    var view = new DataView(new ArrayBuffer(4));
+    view.setFloat32(0, value);
+    const result = Array
+      .apply(null, { length: 4 })
+      .map((_, i) => getHex(view.getUint8(i)))
+      .reverse()
+      .join(' ');
 
-		return result;
-	}
+    return result;
+  }
 
-	function filetimeFromJSTime(jsTime) {  
-		return jsTime * 1e4 + 116444736e9;
-	}
+  function filetimeFromJSTime(jsTime) {
+    return jsTime * 1e4 + 116444736e9;
+  }
 
-	function formatDate(ts) {
-		const splitDate = new Date(ts).toISOString().split('T');
+  function formatDate(ts) {
+    const splitDate = new Date(ts).toISOString().split('T');
 
-		return splitDate[0] + ' ' + splitDate[1].split('.')[0];
-	}
-
-	function cpsInRange(channels, duration, range) {
-		return channels.slice(range[0], range[1] + 1).reduce((a, v) => a + v, 0) / duration;
-	}
+    return splitDate[0] + ' ' + splitDate[1].split('.')[0];
+  }
 })();</script>
 	</head>
 	<body>
