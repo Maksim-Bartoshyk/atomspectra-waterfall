@@ -78,7 +78,7 @@
     combinedSpectrum.channels.forEach((channelValue, channelIndex) => {
       let cps = channelValue / combinedSpectrum.duration;
       // TODO: duplicated code
-      if (waterfallState.subtractBase) {
+      if (waterfallState.subtractBase && waterfallData.baseSpectrum.duration > 0) {
         const baseCps = waterfallData.baseSpectrum.channels[channelIndex] / waterfallData.baseSpectrum.duration;
         cps -= baseCps;
         if (cps < 0) {
@@ -143,7 +143,7 @@
 
         let cps = channelValue / delta.duration;
         // TODO: duplicated code
-        if (waterfallState.subtractBase) {
+        if (waterfallState.subtractBase && waterfallData.baseSpectrum.duration > 0) {
           const baseCps = waterfallData.baseSpectrum.channels[channelIndex] / waterfallData.baseSpectrum.duration;
           cps -= baseCps;
           if (cps < 0) {
@@ -167,7 +167,7 @@
 
         let cps = channelValue / delta.duration;
         // TODO: duplicated code
-        if (waterfallState.subtractBase) {
+        if (waterfallState.subtractBase && waterfallData.baseSpectrum.duration > 0) {
           const baseCps = waterfallData.baseSpectrum.channels[channelIndex] / waterfallData.baseSpectrum.duration;
           cps -= baseCps;
           if (cps < 0) {

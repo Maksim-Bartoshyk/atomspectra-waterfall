@@ -111,7 +111,7 @@
   }
 
   async function startupAsync() {
-    controlPanel.setSubstractBase(false);
+    controlPanel.setSubtractBase(false);
     controlPanel.resetBaseChanged();
     controlPanel.resetMovingAverage();
     controlPanel.resetWaterfallBinning(16);

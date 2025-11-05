@@ -23,7 +23,7 @@
   // misc
   const timezoneInput = document.getElementById('timezone');
   const subtractCheckbox = document.getElementById('subtract-base');
-  const substractLabel = document.getElementById('subtract-base-label');
+  const subtractLabel = document.getElementById('subtract-base-label');
   timezoneInput.addEventListener('change', (e) => onTimezoneChange(e.target.value));
   subtractCheckbox.addEventListener('change', (e) => onWaterfallSubtractChange(e.target.checked));
   // end
@@ -90,7 +90,7 @@
   // end
 
   window.controlPanel = {
-    setSubstractBase: (value) => setSubstractBase(value),
+    setSubtractBase: (value) => setSubtractBase(value),
     markBaseChanged: () => markBaseChanged(),
     resetBaseChanged: () => resetBaseChanged(),
     resetWaterfallBinning: (channelBinning) => resetWaterfallBinning(channelBinning),
@@ -225,22 +225,26 @@
     previewContainer.style.display = 'none';
   }
 
-  function setSubstractBase(value) {
+  function setSubtractBase(value) {
+    if (value && waterfallData.baseSpectrum.duration <= 0) {
+      alert('Error: cannot subtract base spectrum because its duration is zero.');
+      value = false;
+    }
     subtractCheckbox.checked = value;
     waterfallState.subtractBase = value;
   }
 
   function markBaseChanged() {
-    if (substractLabel.innerText.indexOf('*') === -1) {
-      substractLabel.innerText += '*';
-      substractLabel.title = 'base has been set from spectrogram';
+    if (subtractLabel.innerText.indexOf('*') === -1) {
+      subtractLabel.innerText += '*';
+      subtractLabel.title = 'base has been set from spectrogram';
     }
   }
 
   function resetBaseChanged() {
-    if (substractLabel.innerText.indexOf('*') !== -1) {
-      substractLabel.innerText = substractLabel.innerText.replace('*', '');
-      substractLabel.title = '';
+    if (subtractLabel.innerText.indexOf('*') !== -1) {
+      subtractLabel.innerText = subtractLabel.innerText.replace('*', '');
+      subtractLabel.title = '';
     }
   }
 
@@ -278,7 +282,7 @@
   }
 
   async function onWaterfallSubtractChange(value) {
-    waterfallState.subtractBase = value;
+    setSubtractBase(value);
     await waterfallPlot.renderWaterfallImageAsync();
     await waterfallPlot.renderSpectrumImageAsync();
     await cpsPlot.renderCpsAsync();
@@ -766,7 +770,7 @@
     );
     originalWaterfallData.baseSpectrum = combinedSpectrum;
 
-    controlPanel.setSubstractBase(true);
+    controlPanel.setSubtractBase(true);
     controlPanel.markBaseChanged();
     await controlPanel.applyBinningAndAverageAsync();
     await waterfallPlot.renderWaterfallImageAsync();
@@ -777,11 +781,11 @@
   function saveFile(filename, extension, data, mimeType) {
     let userFilename = prompt("Please enter file name", filename);
     if (userFilename == null) {
-        return;
-    } 
+      return;
+    }
 
     if (!userFilename) {
-        userFilename = filename;
+      userFilename = filename;
     }
 
     const blob = new Blob([data], { type: mimeType });
@@ -796,11 +800,11 @@
   function getEnergyRangeStr(range) {
     let fromE = common.channelToEnergy(range[0]).toFixed(0);
     if (fromE < 0) {
-        fromE = 0;
+      fromE = 0;
     }
     let toE = common.channelToEnergy(range[1]).toFixed(0);
     if (toE < 0) {
-        toE = 0;
+      toE = 0;
     }
 
     return '[' + fromE + '-' + toE + ' keV]';
