@@ -1,124 +1,124 @@
-(function () {
-  // startup - check if we have to run with nodejs prepared data or user loads it in browser
-  const uploadControl = document.getElementById('upload-control');
-  const infoContainer = document.getElementById('file-info-container');
-  const infoSpan = document.getElementById('file-info');
-  const overlay = document.getElementById('blocking-overlay');
-  const fileInput = document.getElementById('file-input');
-  const importChannelBinInput = document.getElementById('import-channel-binning');
-  const v6614Checkbox = document.getElementById('v-6.6.14');
-  const noZerosCheckbox = document.getElementById('no-zeros');
+(function(){
+//startup-checkifwehavetorunwithnodejsprepareddataoruserloadsitinbrowser
+constuploadControl=document.getElementById('upload-control');
+constinfoContainer=document.getElementById('file-info-container');
+constinfoSpan=document.getElementById('file-info');
+constoverlay=document.getElementById('blocking-overlay');
+constfileInput=document.getElementById('file-input');
+constimportChannelBinInput=document.getElementById('import-channel-binning');
+constv6614Checkbox=document.getElementById('v-6.6.14');
+constnoZerosCheckbox=document.getElementById('no-zeros');
 
-  v6614Checkbox.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      fileInput.setAttribute('multiple', '');
-    } else {
-      fileInput.removeAttribute('multiple', '');
-    }
-  });
+v6614Checkbox.addEventListener('change',(e)=>{
+if(e.target.checked){
+fileInput.setAttribute('multiple','');
+}else{
+fileInput.removeAttribute('multiple','');
+}
+});
 
-  noZerosCheckbox.addEventListener('change', (e) => {
-    fileInput.value = '';
-  });
+noZerosCheckbox.addEventListener('change',(e)=>{
+fileInput.value='';
+});
 
-  fileInput.addEventListener('change', (e) => onFileChange(e.target));
-  importChannelBinInput.addEventListener('change', (e) => {
-    fileInput.value = '';
-  });
+fileInput.addEventListener('change',(e)=>onFileChange(e.target));
+importChannelBinInput.addEventListener('change',(e)=>{
+fileInput.value='';
+});
 
-  if (window.originalWaterfallData === 'waterfall-data-placeholder') {
-    uploadControl.style.display = 'block';
-    infoContainer.style.display = 'none';
-  } else {
-    uploadControl.style.display = 'none';
-    overlay.style.display = 'none';
-    infoContainer.style.display = 'block';
-    infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
-      + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
+if(window.originalWaterfallData==='waterfall-data-placeholder'){
+uploadControl.style.display='block';
+infoContainer.style.display='none';
+}else{
+uploadControl.style.display='none';
+overlay.style.display='none';
+infoContainer.style.display='block';
+infoSpan.innerText='Atomspectrafile:'+originalWaterfallData.filename+';alreadyappliedbinning-'
++'spectrum:'+originalWaterfallData.spectrumBinning+',channel:'+originalWaterfallData.channelBinning;
 
-    startupAsync();
-  }
+startupAsync();
+}
 
-  function onFileChange(input) {
-    const file = input.files[0];
-    if (!file) {
-      return;
-    }
+functiononFileChange(input){
+constfile=input.files[0];
+if(!file){
+return;
+}
 
-    const noZeros = noZerosCheckbox.checked;
-    const reader = new FileReader();
-    if (v6614Checkbox.checked) {
-      let fileIndex = 0;
-      let baseSpectrum;
-      let deltas = [];
+constnoZeros=noZerosCheckbox.checked;
+constreader=newFileReader();
+if(v6614Checkbox.checked){
+letfileIndex=0;
+letbaseSpectrum;
+letdeltas=[];
 
-      reader.onload = async (e) => {
-        const fileText = e.target.result;
+reader.onload=async(e)=>{
+constfileText=e.target.result;
 
-        if (fileIndex === 0) {
-          baseSpectrum = exports.deserializeSpectrum(fileText);
-        }
+if(fileIndex===0){
+baseSpectrum=exports.deserializeSpectrum(fileText);
+}
 
-        if (fileIndex < input.files.length) {
-          const spectrum = exports.deserializeSpectrum(fileText);
-          if (noZeros) {
-            if (spectrum.channels.some(c => c !== 0) && spectrum.duration > 0) {
-              deltas.push(spectrum);
-            }
-          } else {
-            deltas.push(spectrum);
-          }
-        }
+if(fileIndex<input.files.length){
+constspectrum=exports.deserializeSpectrum(fileText);
+if(noZeros){
+if(spectrum.channels.some(c=>c!==0)&&spectrum.duration>0){
+deltas.push(spectrum);
+}
+}else{
+deltas.push(spectrum);
+}
+}
 
-        if ((fileIndex + 1) % 25 === 0) {
-          await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
-        }
+if((fileIndex+1)%25===0){
+awaitcommon.executeWithStatusAsync('Deserializing('+(fileIndex+1)+'/'+input.files.length+')...',()=>{});
+}
 
-        if (fileIndex === input.files.length - 1) {
-          overlay.style.display = 'none';
-          const importChannelBin = parseInt(importChannelBinInput.value);
-          const spectrumBin = 1;
-          deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+if(fileIndex===input.files.length-1){
+overlay.style.display='none';
+constimportChannelBin=parseInt(importChannelBinInput.value);
+constspectrumBin=1;
+deltas=deltas.sort((d1,d2)=>d1.timestamp>d2.timestamp?1:-1);
+window.originalWaterfallData=exports.createWaterfallData(baseSpectrum,deltas,importChannelBin,spectrumBin,file.name);
 
-          await startupAsync();
-        } else {
-          fileIndex++;
-          reader.readAsText(input.files[fileIndex]);
-        }
-      };
-    } else {
-      reader.onload = async (e) => {
-        await common.executeWithStatusAsync('Deserializing...', () => {
-          overlay.style.display = 'none';
-          const fileText = e.target.result;
-          const baseSpectrum = exports.deserializeSpectrum(fileText);
-          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, noZeros);
-          const deltas = deltaInfo.deltas;
+awaitstartupAsync();
+}else{
+fileIndex++;
+reader.readAsText(input.files[fileIndex]);
+}
+};
+}else{
+reader.onload=async(e)=>{
+awaitcommon.executeWithStatusAsync('Deserializing...',()=>{
+overlay.style.display='none';
+constfileText=e.target.result;
+constbaseSpectrum=exports.deserializeSpectrum(fileText);
+constdeltaInfo=exports.deserializeDeltas(fileText,baseSpectrum,noZeros);
+constdeltas=deltaInfo.deltas;
 
-          const importChannelBin = parseInt(importChannelBinInput.value);
-          const spectrumBin = 1;
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-        });
+constimportChannelBin=parseInt(importChannelBinInput.value);
+constspectrumBin=1;
+window.originalWaterfallData=exports.createWaterfallData(baseSpectrum,deltas,importChannelBin,spectrumBin,file.name);
+});
 
-        await startupAsync();
-      };
-    }
+awaitstartupAsync();
+};
+}
 
-    common.executeWithStatusAsync('Opening file...', () => {
-      reader.readAsText(file);
-    });
-  }
+common.executeWithStatusAsync('Openingfile...',()=>{
+reader.readAsText(file);
+});
+}
 
-  async function startupAsync() {
-    controlPanel.setSubtractBase(false);
-    controlPanel.resetBaseChanged();
-    controlPanel.resetMovingAverage();
-    controlPanel.resetWaterfallBinning(16);
-    await controlPanel.applyBinningAndAverageAsync(); // first setup of waterfall data
-    controlPanel.initCpsControls(); // depends on waterfall data
-    await waterfallPlot.renderWaterfallImageAsync();
-    await waterfallPlot.renderSpectrumImageAsync();
-    await cpsPlot.renderCpsAsync();
-  }
+asyncfunctionstartupAsync(){
+controlPanel.setSubtractBase(false);
+controlPanel.resetBaseChanged();
+controlPanel.resetMovingAverage();
+controlPanel.resetWaterfallBinning(16);
+awaitcontrolPanel.applyBinningAndAverageAsync();//firstsetupofwaterfalldata
+controlPanel.initCpsControls();//dependsonwaterfalldata
+awaitwaterfallPlot.renderWaterfallImageAsync();
+awaitwaterfallPlot.renderSpectrumImageAsync();
+awaitcpsPlot.renderCpsAsync();
+}
 })();

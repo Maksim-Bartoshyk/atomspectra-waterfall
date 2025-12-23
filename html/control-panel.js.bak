@@ -1,24 +1,24 @@
 (function () {
   // TODO: split into separate files
   // waterfall binning/average control
- constspectrumBinningInput=document.getElementById('spectrum-binning');
-constchannelBinningInput=document.getElementById('channel-binning');
-constmovingAverageVerticalInput=document.getElementById('moving-average-vertical');
-constmovingAverageHorizontalInput=document.getElementById('moving-average-horizontal');
-spectrumBinningInput.addEventListener('change',e=>onSpectrumBinningChange(e.target.value));
-channelBinningInput.addEventListener('change',e=>onChannelBinningChange(e.target.value));
-movingAverageVerticalInput.addEventListener('change',e=>onVerticalMovingAverageChange(e.target.value));
-movingAverageHorizontalInput.addEventListener('change',e=>onHorizontalMovingAverageChange(e.target.value));
-//end
+  const spectrumBinningInput = document.getElementById('spectrum-binning');
+  const channelBinningInput = document.getElementById('channel-binning');
+  const movingAverageVerticalInput = document.getElementById('moving-average-vertical');
+  const movingAverageHorizontalInput = document.getElementById('moving-average-horizontal');
+  spectrumBinningInput.addEventListener('change', e => onSpectrumBinningChange(e.target.value));
+  channelBinningInput.addEventListener('change', e => onChannelBinningChange(e.target.value));
+  movingAverageVerticalInput.addEventListener('change', e => onVerticalMovingAverageChange(e.target.value));
+  movingAverageHorizontalInput.addEventListener('change', e => onHorizontalMovingAverageChange(e.target.value));
+  // end
 
-//scalecontrol
-constlinBtn=document.getElementById('lin');
-constsqrtBtn=document.getElementById('sqrt');
-constlogBtn=document.getElementById('log');
-linBtn.addEventListener('change',(e)=>onWaterfallScaleChange(e.target.value));
-sqrtBtn.addEventListener('change',(e)=>onWaterfallScaleChange(e.target.value));
-logBtn.addEventListener('change',(e)=>onWaterfallScaleChange(e.target.value));
-//end
+  // scale control
+  const linBtn = document.getElementById('lin');
+  const sqrtBtn = document.getElementById('sqrt');
+  const logBtn = document.getElementById('log');
+  linBtn.addEventListener('change', (e) => onWaterfallScaleChange(e.target.value));
+  sqrtBtn.addEventListener('change', (e) => onWaterfallScaleChange(e.target.value));
+  logBtn.addEventListener('change', (e) => onWaterfallScaleChange(e.target.value));
+  // end
 
 //misc
 consttimezoneInput=document.getElementById('timezone');
