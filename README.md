@@ -1,8 +1,8 @@
 # atomspectra-waterfall
 
-Simplest waterfall image creator for atom spectra delta file (starting from atomspectra 6.6.15).
+Simplest waterfall image creator for atom spectra delta file (starting from atom spectra 6.6.15).
 
-Provided as is, use at your own risk. This software is not sertified as a measurement tool, any results obtained with this software could not be used for official statements, conclusions or decisions.
+Provided as is, use at your own risk. This software is not certified as a measurement tool, any results obtained with this software could not be used for official statements, conclusions or decisions.
 
 # Usage (basic, might work on mobile/tablet as well):
 1) download repository
@@ -11,7 +11,7 @@ Provided as is, use at your own risk. This software is not sertified as a measur
 4) upload spectrogram file
 5) apply spectrum/channel binning
 6) right mouse click on spectrogram - save image as
-7) to convert your atomstectra spectrogram to radiacode format use ```offline/rcspg-ofline.html```
+7) to convert your atom spectra spectrogram to radiacode format use ```offline/rcspg-ofline.html```
 
 # Advanced Usage (mostly for large spectrograms):
 1) install nodejs - https://nodejs.org/
@@ -23,7 +23,7 @@ Provided as is, use at your own risk. This software is not sertified as a measur
 7) right mouse click on spectrogram - save image as
 
 Parameters:
-1) ```-channel-binning X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```-channel-binning 8``` makes 1024 channes from 8192, default is 4
+1) ```-channel-binning X``` reduce channel count (spectrogram width) by provided factor (X), i.e. ```-channel-binning 8``` makes 1024 channels from 8192, default is 4
 2) ```-spectrum-binning X``` reduce spectrum count (spectrogram height) by provided factor (X), i.e. ```-spectrum-binning 2``` makes 100 spectrums from 200, default is 1
 3) ```--rcspg``` outputs data in radiacode spectrogram format
 
@@ -77,7 +77,7 @@ No zeros checkbox: use it if spectrogram contains rows with zero counts and you 
 
 ## Time axis
 1) time axis displays two values: time and spectrum index. Spectrum index is always original index in source file (even with spectrum binning)
-2) timezone dropdown - selects which timezone should be used on timespamps (AtomSpectra writes timestamps in UTC), default is Local (browser local, not local time where spectrogram was recorded)
+2) timezone dropdown - selects which timezone should be used on timestamps (AtomSpectra writes timestamps in UTC), default is Local (browser local, not local time where spectrogram was recorded)
 
 ## Binning
 1) Spectrum bin - reduce spectrogram height by combining delta-spectrums, default is 1
@@ -106,7 +106,7 @@ CPS plot displays count rate for a specific range of channels.
 
 ## Spectrum preview and export
 Preview shows spectrum combined from selected spectrogram range as [from delta index, to delta index], index is always original, despite binning applied
-1) Preview spectrum in spectrorgam range - enables spectrum preview
+1) Preview spectrum in spectrogram range - enables spectrum preview
 `hold 's' key + two left mouse clicks` - set delta spectrum indexes under cursor as spectrum range
 2) Spg range as base - overrides base spectrum, sets it from selected spectrogram range
 3) Spg range to file - exports spectrum combined from selected spectrogram range (with channel binning applied during spectrogram import)
