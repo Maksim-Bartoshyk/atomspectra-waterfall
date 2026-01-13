@@ -93,7 +93,7 @@
     setSubtractBase: (value) => setSubtractBase(value),
     markBaseChanged: () => markBaseChanged(),
     resetBaseChanged: () => resetBaseChanged(),
-    resetWaterfallBinning: (channelBinning) => resetWaterfallBinning(channelBinning),
+    ensureValidWaterfallBinning: (channelBinning) => ensureValidWaterfallBinning(channelBinning),
     resetMovingAverage: () => resetMovingAverage(),
     applyBinningAndAverage: () => applyBinningAndAverage(),
     applyBinningAndAverageAsync: () => {
@@ -248,12 +248,12 @@
     }
   }
 
-  function resetWaterfallBinning(channelBinning) {
-    waterfallState.spectrumBinning = 1;
+  function ensureValidWaterfallBinning() {
     spectrumBinningInput.value = waterfallState.spectrumBinning;
 
-    waterfallState.channelBinning = channelBinning >= originalWaterfallData.channelBinning
-      ? channelBinning
+    const currentChannelBinning = waterfallState.channelBinning;
+    waterfallState.channelBinning = currentChannelBinning >= originalWaterfallData.channelBinning
+      ? currentChannelBinning
       : originalWaterfallData.channelBinning;
     channelBinningInput.value = waterfallState.channelBinning;
     const opts = channelBinningInput.getElementsByTagName('option');

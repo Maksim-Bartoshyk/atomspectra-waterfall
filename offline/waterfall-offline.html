@@ -807,7 +807,7 @@ input[type="radio"] {
           <option value="2">2</option>
           <option value="4">4</option>
           <option value="8">8</option>
-          <option value="16">16</option>
+          <option value="16" selected>16</option>
           <option value="32">32</option>
         </select>
       </div>
@@ -893,7 +893,7 @@ input[type="radio"] {
     scale: 'sqrt',
     palette: 'iron',
     spectrumBinning: 1,
-    channelBinning: 1,
+    channelBinning: 16,
     blur: false,
     subtractBase: false,
     movingAverageVertical: 0,
@@ -1872,7 +1872,7 @@ input[type="radio"] {
     setSubtractBase: (value) => setSubtractBase(value),
     markBaseChanged: () => markBaseChanged(),
     resetBaseChanged: () => resetBaseChanged(),
-    resetWaterfallBinning: (channelBinning) => resetWaterfallBinning(channelBinning),
+    ensureValidWaterfallBinning: (channelBinning) => ensureValidWaterfallBinning(channelBinning),
     resetMovingAverage: () => resetMovingAverage(),
     applyBinningAndAverage: () => applyBinningAndAverage(),
     applyBinningAndAverageAsync: () => {
@@ -2027,12 +2027,12 @@ input[type="radio"] {
     }
   }
 
-  function resetWaterfallBinning(channelBinning) {
-    waterfallState.spectrumBinning = 1;
+  function ensureValidWaterfallBinning() {
     spectrumBinningInput.value = waterfallState.spectrumBinning;
 
-    waterfallState.channelBinning = channelBinning >= originalWaterfallData.channelBinning
-      ? channelBinning
+    const currentChannelBinning = waterfallState.channelBinning;
+    waterfallState.channelBinning = currentChannelBinning >= originalWaterfallData.channelBinning
+      ? currentChannelBinning
       : originalWaterfallData.channelBinning;
     channelBinningInput.value = waterfallState.channelBinning;
     const opts = channelBinningInput.getElementsByTagName('option');
@@ -2696,8 +2696,7 @@ input[type="radio"] {
   async function startupAsync() {
     controlPanel.setSubtractBase(false);
     controlPanel.resetBaseChanged();
-    controlPanel.resetMovingAverage();
-    controlPanel.resetWaterfallBinning(16);
+    controlPanel.ensureValidWaterfallBinning();
     await controlPanel.applyBinningAndAverageAsync(); // first setup of waterfall data
     controlPanel.initCpsControls(); // depends on waterfall data
     await waterfallPlot.renderWaterfallImageAsync();

@@ -23,7 +23,7 @@
     scale: 'sqrt',
     palette: 'iron',
     spectrumBinning: 1,
-    channelBinning: 1,
+    channelBinning: 16,
     blur: false,
     subtractBase: false,
     movingAverageVertical: 0,

@@ -104,8 +104,7 @@
   async function startupAsync() {
     controlPanel.setSubtractBase(false);
     controlPanel.resetBaseChanged();
-    controlPanel.resetMovingAverage();
-    controlPanel.resetWaterfallBinning(16);
+    controlPanel.ensureValidWaterfallBinning();
     await controlPanel.applyBinningAndAverageAsync(); // first setup of waterfall data
     controlPanel.initCpsControls(); // depends on waterfall data
     await waterfallPlot.renderWaterfallImageAsync();
