@@ -6,10 +6,10 @@
   const overlay = document.getElementById('blocking-overlay');
   const fileInput = document.getElementById('file-input');
   const importChannelBinInput = document.getElementById('import-channel-binning');
-  const v6614Checkbox = document.getElementById('v-6.6.14');
+  const spgConcatCheckbox = document.getElementById('spg-concat');
   const noZerosCheckbox = document.getElementById('no-zeros');
 
-  v6614Checkbox.addEventListener('change', (e) => {
+  spgConcatCheckbox.addEventListener('change', (e) => {
     if (e.target.checked) {
       fileInput.setAttribute('multiple', '');
     } else {
@@ -47,39 +47,30 @@
 
     const noZeros = noZerosCheckbox.checked;
     const reader = new FileReader();
-    if (v6614Checkbox.checked) {
+    if (spgConcatCheckbox.checked) {
+      // concat multiple spectrograms
       let fileIndex = 0;
-      let baseSpectrum;
+      let baseSpectrums = [];
       let deltas = [];
 
       reader.onload = async (e) => {
         const fileText = e.target.result;
-
-        if (fileIndex === 0) {
-          baseSpectrum = exports.deserializeSpectrum(fileText);
-        }
-
         if (fileIndex < input.files.length) {
-          const spectrum = exports.deserializeSpectrum(fileText);
-          if (noZeros) {
-            if (spectrum.channels.some(c => c !== 0) && spectrum.duration > 0) {
-              deltas.push(spectrum);
-            }
-          } else {
-            deltas.push(spectrum);
-          }
+          const baseSpectrum = exports.deserializeSpectrum(fileText);
+          baseSpectrums.push(baseSpectrum);
+          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, noZeros);
+          deltas = deltas.concat(deltaInfo.deltas);
         }
 
-        if ((fileIndex + 1) % 25 === 0) {
-          await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
-        }
+        await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
 
         if (fileIndex === input.files.length - 1) {
           overlay.style.display = 'none';
           const importChannelBin = parseInt(importChannelBinInput.value);
           const spectrumBin = 1;
           deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+          baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
+          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
 
           await startupAsync();
         } else {
@@ -113,8 +104,7 @@
   async function startupAsync() {
     controlPanel.setSubtractBase(false);
     controlPanel.resetBaseChanged();
-    controlPanel.resetMovingAverage();
-    controlPanel.resetWaterfallBinning(16);
+    controlPanel.ensureValidWaterfallBinning();
     await controlPanel.applyBinningAndAverageAsync(); // first setup of waterfall data
     controlPanel.initCpsControls(); // depends on waterfall data
     await waterfallPlot.renderWaterfallImageAsync();

@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title>AS Waterfall v2025.11.05.0</title>
+  <title>AS Waterfall v2026.01.16.0</title>
   <style>body {
   background: #444;
   box-sizing: border-box;
@@ -86,7 +86,7 @@ input[type="radio"] {
 }
 
 .upload-control .file-input {
-  width: 485px;
+  width: 480px;
 }
 
 .waterfall-control,
@@ -713,7 +713,8 @@ input[type="radio"] {
   <div id="upload-control" class="upload-control">
     <span>Atomspectra file:</span>
     <input id="file-input" class="file-input" type="file" accept=".txt" name="files">
-    <label for="import-channel-binning">Import channel binning:</label>
+    <label for="import-channel-binning" title="Bin channels during import (reduces memory usage and render time)">Import
+      channel binning:</label>
     <select name="import-channel-binning" id="import-channel-binning">
       <option value="1">1</option>
       <option value="2">2</option>
@@ -722,10 +723,11 @@ input[type="radio"] {
       <option value="16">16</option>
       <option value="32">32</option>
     </select>
-    | <input type="checkbox" id="v-6.6.14" name="v-6.6.14" />
-    <label for="v-6.6.14">6.6.14</label>
+    | <input type="checkbox" id="spg-concat" name="spg-concat" />
+    <label for="spg-concat"
+      title="Concat multiple spectrograms (sorted by time ascending), calibration will be taken from the first spectrogram file">Concat</label>
     | <input type="checkbox" id="no-zeros" name="no-zeros" />
-    <label for="no-zeros">No zeros</label>
+    <label for="no-zeros" title="Omit zero rows during import">No zeros</label>
   </div>
   <div id="file-info-container" class="upload-control">
     <span id="file-info"></span>
@@ -745,15 +747,17 @@ input[type="radio"] {
         <label for="blur-waterfall">Blur waterfall image</label>
       </div>
       <div class="col">
-        <label for="spectrum-binning">Spectrum bin:</label>
+        <label for="spectrum-binning" title="Combine spectrogram rows">Spectrum bin:</label>
         <input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning" />
       </div>
       <div class="col">
-        <label for="max-cps">Scale max(%):</label>
+        <label for="max-cps"
+          title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any CPS higher than 50% of max CPS over whole spectrogram">Scale
+          max(%):</label>
         <input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100" />
       </div>
       <div class="col">
-        <label for="moving-average-vertical">Moving avg(v):</label>
+        <label for="moving-average-vertical" title="Smooth spectrogram vertically">Moving avg(v):</label>
         <input type="number" name="moving-average-vertical" id="moving-average-vertical" min="0" step="1" value="0" />
       </div>
     </div>
@@ -797,25 +801,28 @@ input[type="radio"] {
       </div>
       <div class="col">
         <input type="checkbox" id="subtract-base" name="subtract-base" />
-        <label for="subtract-base" id="subtract-base-label">Subtract base</label>
+        <label for="subtract-base" id="subtract-base-label"
+          title="Subtract base spectrum from all spectrogram rows">Subtract base</label>
       </div>
       <div class="col">
-        <label for="channel-binning">Channel bin:</label>
+        <label for="channel-binning" title="Combine spectrogram channels">Channel bin:</label>
         <select name="channel-binning" id="channel-binning">
           <option value="1">1</option>
           <option value="2">2</option>
           <option value="4">4</option>
           <option value="8">8</option>
-          <option value="16">16</option>
+          <option value="16" selected>16</option>
           <option value="32">32</option>
         </select>
       </div>
       <div class="col">
-        <label for="min-cps">Scale min(%):</label>
+        <label for="min-cps"
+          title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any CPS lower than 10% of max CPS over whole spectrogram">Scale
+          min(%):</label>
         <input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0" />
       </div>
       <div class="col">
-        <label for="moving-average-horizontal">Moving avg(h):</label>
+        <label for="moving-average-horizontal" title="Smooth spectrogram horizontally">Moving avg(h):</label>
         <input type="number" name="moving-average-horizontal" id="moving-average-horizontal" min="0" step="1"
           value="0" />
       </div>
@@ -836,35 +843,45 @@ input[type="radio"] {
   </div>
   <div id="cps-control" class="cps-control">
     <div class="row">
-      <label id="render-cps" class="cps-left-column">CPS in channel range_1:</label>
-      <input type="number" id="from-channel-1" class="numeric-input" />-<input type="number" id="to-channel-1"
-        class="numeric-input" />
-      <button id="export-cps-map" class="export-button">CPS to map</button>
-      <button id="export-bin-avg-cps-map" class="export-bin-avg-button">Binned/Avg</button>
+      <label id="render-cps" class="cps-left-column" title="CPS plot displays count rate in a given channel range">CPS
+        in channel range_1:</label>
+      <input type="number" id="from-channel-1" class="numeric-input" title="Channel range start" />-<input type="number"
+        id="to-channel-1" class="numeric-input" title="Channel range end" />
+      <button id="export-cps-map" class="export-button" title="Export raw CPS data to file">CPS to map</button>
+      <button id="export-bin-avg-cps-map" class="export-bin-avg-button"
+        title="Export binned/averaged CPS data to file">Binned/Avg</button>
       <input type="checkbox" id="cps-csv-export" name="cps-csv-export" class="export-csv" />
-      <label for="cps-csv-export" class="export-csv">csv</label>
+      <label for="cps-csv-export" class="export-csv" title="Export CPS data as CSV file">csv</label>
     </div>
     <div class="row">
       <div class="cps-left-column">
+
         <input type="checkbox" id="cps-ratio" name="cps-ratio" />
-        <label for="cps-ratio">Ratio to CPS in channel range_2:</label>
+        <label for="cps-ratio" title="CPS plot displays count rate ratio for given channel ranges">Ratio to CPS in
+          channel range_2:</label>
       </div>
-      <input type="number" id="from-channel-2" class="numeric-input" />-<input type="number" id="to-channel-2"
-        class="numeric-input" />
-      <button id="export-ratio-map" class="export-button" disabled>Ratio to map</button>
-      <button id="export-bin-avg-ratio-map" class="export-bin-avg-button" disabled>Binned/Avg</button>
+      <input type="number" id="from-channel-2" class="numeric-input" title="Channel range start" />-<input type="number"
+        id="to-channel-2" class="numeric-input" title="Channel range end" />
+      <button id="export-ratio-map" class="export-button" title="Export raw CPS ratio data to file" disabled>Ratio to
+        map</button>
+      <button id="export-bin-avg-ratio-map" class="export-bin-avg-button"
+        title="Export binned/averaged CPS ratio data to file" disabled>Binned/Avg</button>
       <input type="checkbox" name="cps-csv-export-dummy" class="invisible" />
       <label for="cps-csv-export-dummy" class="invisible">csv</label>
     </div>
     <div class="row">
       <div class="cps-left-column">
         <input type="checkbox" id="preview-enabled" name="preview-enabled" />
-        <label for="preview-enabled">Preview spectrum in spectrorgam range:</label>
+        <label for="preview-enabled" title="Combine range of spectrogram rows into single preview spectrum">Preview
+          spectrum in spectrogram range:</label>
       </div>
-      <input type="number" id="from-spectrum" class="numeric-input" placeholder="from index" />-<input type="number"
-        id="to-spectrum" class="numeric-input" placeholder="to index" />
-      <button id="spg-range-as-base" class="spg-range-button">Spg range as base</button>
-      <button id="spg-range-to-file" class="spg-range-button">Spg range to file</button>
+      <input type="number" id="from-spectrum" class="numeric-input" placeholder="from index"
+        title="Range start row index" />-<input type="number" id="to-spectrum" class="numeric-input"
+        placeholder="to index" title="Range end row index" />
+      <button id="spg-range-as-base" class="spg-range-button"
+        title="Set spectrum, combined from a given range, as a base spectrum">Spg range as base</button>
+      <button id="spg-range-to-file" class="spg-range-button"
+        title="Export spectrum, combined from a given range, to a file">Spg range to file</button>
     </div>
   </div>
   <script>(function () {
@@ -881,6 +898,7 @@ input[type="radio"] {
     previewHeight: 125,
     textColor: 'lightgray',
     lineColor: 'lightgray',
+    timeGapColor: 'red',
     separatorLineColor: '#777777',
     dotColor: 'white',
     cpsPlotHeight: 300,
@@ -892,7 +910,7 @@ input[type="radio"] {
     scale: 'sqrt',
     palette: 'iron',
     spectrumBinning: 1,
-    channelBinning: 1,
+    channelBinning: 16,
     blur: false,
     subtractBase: false,
     movingAverageVertical: 0,
@@ -1260,24 +1278,43 @@ input[type="radio"] {
     ctx.fillRect(0, 0, constants.timeAxisWidth, waterfallData.deltas.length);
 
     const timestamps = waterfallData.deltas.map(d => d.timestamp);
-    for (let tsIndex = 0; tsIndex < timestamps.length; tsIndex += constants.timestampHeight) {
+    for (let tsIndex = 0; tsIndex < timestamps.length; tsIndex++) {
       const timestamp = timestamps[tsIndex];
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = constants.textColor;
-      let label = common.timeToString(timestamp);
-      label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
-      ctx.fillText(label, 0, tsIndex);
+      const previousTimestamp = tsIndex > 0 ? timestamps[tsIndex - 1] : timestamp;
+      const currentDeltaDuration = waterfallData.deltas[tsIndex].duration;
+      const previousDeltaDuration = tsIndex > 0 ? waterfallData.deltas[tsIndex - 1].duration : 0;
+      const secondsElapsedSinceLastDelta = (timestamp - previousTimestamp) / 1000;
+      // time gap usually happens when multiple spectrograms are concatenated
+      const isTimeGap = secondsElapsedSinceLastDelta > previousDeltaDuration + 1;
 
-      // label tick
-      const tickWidth = tsIndex % 100 === 0
-        ? constants.timestampTickWidth
-        : constants.timestampTickWidth / 2;
-      for (let x = constants.timeAxisWidth - tickWidth; x < constants.timeAxisWidth; x++) {
-        ctx.fillRect(x, tsIndex, 1, 1);
+      // label tick or gap tick
+      if (tsIndex % constants.timestampHeight === 0 || isTimeGap) {
+        ctx.fillStyle = isTimeGap
+          ? constants.timeGapColor
+          : constants.lineColor;
+        const tickWidth = isTimeGap
+          ? constants.timeAxisWidth
+          : tsIndex % 100 === 0
+            ? constants.timestampTickWidth
+            : constants.timestampTickWidth / 2;
+
+        for (let x = constants.timeAxisWidth - tickWidth; x < constants.timeAxisWidth; x++) {
+          ctx.fillRect(x, tsIndex, 1, 1);
+        }
+      }
+
+      // label timestamp
+      if (tsIndex % constants.timestampHeight === 0) {
+        ctx.fillStyle = constants.textColor;
+        ctx.textBaseline = 'top';
+        let label = common.timeToString(timestamp);
+        label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
+        ctx.fillText(label, 0, tsIndex);
       }
     }
 
     // display selection
+    ctx.fillStyle = constants.lineColor;
     if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
       const fromY = Math.floor(waterfallState.spectrumRange[0] / waterfallState.spectrumBinning);
       const toY = Math.floor(waterfallState.spectrumRange[1] / waterfallState.spectrumBinning);
@@ -1871,7 +1908,7 @@ input[type="radio"] {
     setSubtractBase: (value) => setSubtractBase(value),
     markBaseChanged: () => markBaseChanged(),
     resetBaseChanged: () => resetBaseChanged(),
-    resetWaterfallBinning: (channelBinning) => resetWaterfallBinning(channelBinning),
+    ensureValidWaterfallBinning: (channelBinning) => ensureValidWaterfallBinning(channelBinning),
     resetMovingAverage: () => resetMovingAverage(),
     applyBinningAndAverage: () => applyBinningAndAverage(),
     applyBinningAndAverageAsync: () => {
@@ -2026,12 +2063,12 @@ input[type="radio"] {
     }
   }
 
-  function resetWaterfallBinning(channelBinning) {
-    waterfallState.spectrumBinning = 1;
+  function ensureValidWaterfallBinning() {
     spectrumBinningInput.value = waterfallState.spectrumBinning;
 
-    waterfallState.channelBinning = channelBinning >= originalWaterfallData.channelBinning
-      ? channelBinning
+    const currentChannelBinning = waterfallState.channelBinning;
+    waterfallState.channelBinning = currentChannelBinning >= originalWaterfallData.channelBinning
+      ? currentChannelBinning
       : originalWaterfallData.channelBinning;
     channelBinningInput.value = waterfallState.channelBinning;
     const opts = channelBinningInput.getElementsByTagName('option');
@@ -2597,10 +2634,10 @@ input[type="radio"] {
   const overlay = document.getElementById('blocking-overlay');
   const fileInput = document.getElementById('file-input');
   const importChannelBinInput = document.getElementById('import-channel-binning');
-  const v6614Checkbox = document.getElementById('v-6.6.14');
+  const spgConcatCheckbox = document.getElementById('spg-concat');
   const noZerosCheckbox = document.getElementById('no-zeros');
 
-  v6614Checkbox.addEventListener('change', (e) => {
+  spgConcatCheckbox.addEventListener('change', (e) => {
     if (e.target.checked) {
       fileInput.setAttribute('multiple', '');
     } else {
@@ -2638,39 +2675,30 @@ input[type="radio"] {
 
     const noZeros = noZerosCheckbox.checked;
     const reader = new FileReader();
-    if (v6614Checkbox.checked) {
+    if (spgConcatCheckbox.checked) {
+      // concat multiple spectrograms
       let fileIndex = 0;
-      let baseSpectrum;
+      let baseSpectrums = [];
       let deltas = [];
 
       reader.onload = async (e) => {
         const fileText = e.target.result;
-
-        if (fileIndex === 0) {
-          baseSpectrum = exports.deserializeSpectrum(fileText);
-        }
-
         if (fileIndex < input.files.length) {
-          const spectrum = exports.deserializeSpectrum(fileText);
-          if (noZeros) {
-            if (spectrum.channels.some(c => c !== 0) && spectrum.duration > 0) {
-              deltas.push(spectrum);
-            }
-          } else {
-            deltas.push(spectrum);
-          }
+          const baseSpectrum = exports.deserializeSpectrum(fileText);
+          baseSpectrums.push(baseSpectrum);
+          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, noZeros);
+          deltas = deltas.concat(deltaInfo.deltas);
         }
 
-        if ((fileIndex + 1) % 25 === 0) {
-          await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
-        }
+        await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
 
         if (fileIndex === input.files.length - 1) {
           overlay.style.display = 'none';
           const importChannelBin = parseInt(importChannelBinInput.value);
           const spectrumBin = 1;
           deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
+          baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
+          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
 
           await startupAsync();
         } else {
@@ -2704,8 +2732,7 @@ input[type="radio"] {
   async function startupAsync() {
     controlPanel.setSubtractBase(false);
     controlPanel.resetBaseChanged();
-    controlPanel.resetMovingAverage();
-    controlPanel.resetWaterfallBinning(16);
+    controlPanel.ensureValidWaterfallBinning();
     await controlPanel.applyBinningAndAverageAsync(); // first setup of waterfall data
     controlPanel.initCpsControls(); // depends on waterfall data
     await waterfallPlot.renderWaterfallImageAsync();
