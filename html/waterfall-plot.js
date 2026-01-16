@@ -293,36 +293,40 @@
     for (let tsIndex = 0; tsIndex < timestamps.length; tsIndex++) {
       const timestamp = timestamps[tsIndex];
       const previousTimestamp = tsIndex > 0 ? timestamps[tsIndex - 1] : timestamp;
+      const currentDeltaDuration = waterfallData.deltas[tsIndex].duration;
       const previousDeltaDuration = tsIndex > 0 ? waterfallData.deltas[tsIndex - 1].duration : 0;
       const secondsElapsedSinceLastDelta = (timestamp - previousTimestamp) / 1000;
-      const isTimeGap = secondsElapsedSinceLastDelta > previousDeltaDuration + 1; // usually happens when multiple spectrograms are concatenated
+      // time gap usually happens when multiple spectrograms are concatenated
+      const isTimeGap = secondsElapsedSinceLastDelta > previousDeltaDuration + 1;
 
-      if (tsIndex % constants.timestampHeight === 0) {
-        // label timestamp
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = constants.textColor;
-        let label = common.timeToString(timestamp);
-        label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
-        ctx.fillText(label, 0, tsIndex);
-      } else {
-        if (!isTimeGap) {
-          continue; // nothing to render
+      // label tick or gap tick
+      if (tsIndex % constants.timestampHeight === 0 || isTimeGap) {
+        ctx.fillStyle = isTimeGap
+          ? constants.timeGapColor
+          : constants.lineColor;
+        const tickWidth = isTimeGap
+          ? constants.timeAxisWidth
+          : tsIndex % 100 === 0
+            ? constants.timestampTickWidth
+            : constants.timestampTickWidth / 2;
+
+        for (let x = constants.timeAxisWidth - tickWidth; x < constants.timeAxisWidth; x++) {
+          ctx.fillRect(x, tsIndex, 1, 1);
         }
       }
 
-      // label tick or gap tick
-      const tickWidth = isTimeGap
-        ? constants.timeAxisWidth
-        : tsIndex % 100 === 0
-          ? constants.timestampTickWidth
-          : constants.timestampTickWidth / 2;
-
-      for (let x = constants.timeAxisWidth - tickWidth; x < constants.timeAxisWidth; x++) {
-        ctx.fillRect(x, tsIndex, 1, 1);
+      // label timestamp
+      if (tsIndex % constants.timestampHeight === 0) {
+        ctx.fillStyle = constants.textColor;
+        ctx.textBaseline = 'top';
+        let label = common.timeToString(timestamp);
+        label += ': ' + tsIndex * waterfallState.spectrumBinning * originalWaterfallData.spectrumBinning;
+        ctx.fillText(label, 0, tsIndex);
       }
     }
 
     // display selection
+    ctx.fillStyle = constants.lineColor;
     if (waterfallState.spectrumRange && waterfallState.spectrumRange.length === 2) {
       const fromY = Math.floor(waterfallState.spectrumRange[0] / waterfallState.spectrumBinning);
       const toY = Math.floor(waterfallState.spectrumRange[1] / waterfallState.spectrumBinning);

@@ -12,6 +12,7 @@
     previewHeight: 125,
     textColor: 'lightgray',
     lineColor: 'lightgray',
+    timeGapColor: 'red',
     separatorLineColor: '#777777',
     dotColor: 'white',
     cpsPlotHeight: 300,
