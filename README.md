@@ -67,9 +67,7 @@ Alternative way (spectrum change mode):
 2. click upload button to open spectrogram file you want to render
 3. observe spectrogram and CPS plot
 
-`Concat` checkbox: use it when you need to combine several spectrograms into one (ordered by time ascending). Calibration will be taken from the first spectrogram. Spectrogram bounds are marked on time axis as red horizontal line.
-
-`No zeros` checkbox: use it if spectrogram contains rows with zero counts and you want to omit them.
+You could also select multiple files at once to combine several spectrograms into one (ordered by time ascending). Calibration will be taken from the first spectrogram. Spectrogram bounds are marked on time axis as red horizontal line.
 
 ## Save spectrogram or CPS plot
 1. use right mouse click on either spectrogram or CPS plot image -> `Save image as...`

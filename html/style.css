@@ -82,7 +82,7 @@ input[type="radio"] {
 }
 
 .upload-control .file-input {
-  width: 480px;
+  width: 640px;
 }
 
 .waterfall-control,
@@ -223,8 +223,9 @@ input[type="radio"] {
 }
 
 .export-csv {
-  position: relative;
-  top: 15px;
+}
+
+.export-rctrk {
 }
 
 .spg-range-button {
