@@ -9,7 +9,7 @@ Provided AS IS, use at your own risk. This software is not certified as a measur
 # Usage (basic, browser only):
 1. copy spectrogram file from smartphone to computer
 2. download this repository
-3. open ```offline/waterfall-offline.html``` file in browser, (Chrome is recommended)
+3. open ```offline/waterfall-offline.html``` file in browser (Chrome is recommended)
 4. use file upload control to load spectrogram file 
 5. apply spectrum/channel binning, averaging etc.
 6. use right mouse click on spectrogram image - save image as to save current image
@@ -62,6 +62,9 @@ Alternative way (spectrum change mode):
 4. disable `Spectrum -> Spectrum change` menu option to view spectrum collected since recording start
 
 # Available controls
+
+Controls are grouped in collapsible sections on all screen sizes; expand a section to change its options. On narrow viewports (<=1000px width) a CPS toggle button appears to show/hide the CPS plot.
+
 ## Upload
 1. set initial channel binning: AtomSpectra writes to spectrogram all 8k channels which requires time and memory to process, if you do not have clear reasons to view spectrum as 8k channels, use binning during import to reduce cpu/memory usage and improve rendering performance
 2. click upload button to open spectrogram file you want to render
@@ -100,23 +103,22 @@ You could also select multiple files at once to combine several spectrograms int
 Cps plot displays count rate for a specific range of channels.
 1. "Cps in channel range_1" - defines main range as [from channel index, to channel index]
 `hold 'c' key + two left mouse clicks` - set channels under cursor as range_1
-2. "Ratio to cps in channel range_2" - enables comparison mode, renders 3 plots:
+2. "Ratio to cps in range_2" - enables comparison mode, renders 3 plots:
   a. count rate in range_1
   b. count rate in range_2
   c. ratio of count rate in range_1 to count rate in range_2 (range_1/range_2)
 `hold 'a' key + two left mouse clicks` - set channels under cursor as range_2
-3. "Export cps" - click to generate file with cps data. This button exports original(unchanged) spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
-4. "Export cps ratio" - click to generate file with cps ratio data. This button exports original spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
+3. "Export cps" - single export button (label changes to "Export cps ratio" when ratio mode is enabled). Exports original (unchanged) spectrogram data; check "Export bin/avg cps" checkbox to export with binning/averaging applied.
 
 *Use "csv" and "rctrk" radio buttons to select export type.
-If spectrogram contains GPS data, .rctrk map could be imported to AtomSwift (Atom Dosimeter) application.
+If spectrogram contains GPS data, *.rctrk map could be imported to AtomSwift (Atom Dosimeter) application.
 
 ## Spectrum preview and export
 Preview shows spectrum combined from selected spectrogram range as [from row index, to row index], index is always original, zero-based, despite binning applied
-1. Preview spectrum in spectrogram range - enables spectrum preview
+1. Spectrum in spg range - enables spectrum preview
 `hold 's' key + two left mouse clicks` - set row indexes under cursor as spectrum range
-2. Spg range as base - overrides base spectrum, sets it from selected spectrogram range
-3. Spg range to file - exports spectrum combined from selected spectrogram range (with channel binning applied during spectrogram import, not the current binning)
+2. Spectrum as base - overrides base spectrum, sets it from selected spectrogram range
+3. Export spectrum - exports spectrum combined from selected spectrogram range (with channel binning applied during spectrogram import, not the current binning)
 
 # Spectrogram file format
 

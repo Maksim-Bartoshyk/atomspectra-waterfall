@@ -1,7 +1,8 @@
 <html>
 
 <head>
-  <title>AS Waterfall v2026.02.23.0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AS Waterfall v2026.02.24.0</title>
   <link rel="stylesheet" href="./html/style.css" />
   <script>
     (function () {
@@ -36,173 +37,231 @@
 <body>
   <div id="blocking-overlay" class="blocking-overlay"></div>
   <div id="status-text" class="status-text">...</div>
-  <div id="upload-control" class="upload-control">
-    <span>Spectrogram file(s):</span>
-    <input id="file-input" class="file-input" type="file" accept=".txt" name="files" multiple="multiple">
-    <label for="import-channel-binning" title="Bin channels during import (reduces memory usage and render time)">Import
-      channel binning:</label>
-    <select name="import-channel-binning" id="import-channel-binning">
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="4" selected>4</option>
-      <option value="8">8</option>
-      <option value="16">16</option>
-      <option value="32">32</option>
-    </select>
+  <div id="upload-controls" class="upload-controls-row">
+    <div class="col-upload">
+      <span>File(s):</span>
+      <input id="file-input" class="file-input" type="file" accept=".txt" name="files" multiple="multiple">
+    </div>
+    <div class="col-import-bin">
+      <label for="import-channel-binning" title="Bin channels during import (reduces memory usage and render time)">
+        Import channel binning:
+      </label>
+      <select name="import-channel-binning" id="import-channel-binning">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="4" selected>4</option>
+        <option value="8">8</option>
+        <option value="16">16</option>
+        <option value="32">32</option>
+      </select>
+    </div>
   </div>
-  <div id="file-info-container" class="upload-control">
+  <div id="file-info-container" class="file-info-row">
     <span id="file-info"></span>
   </div>
-  <div id="waterfall-control" class="waterfall-control">
-    <div class="row">
-      <div class="col">
-        <input type="radio" id="lin" name="scale" value="lin">
-        <label for="lin">LIN</label>
-        <input type="radio" id="sqrt" name="scale" value="sqrt" checked>
-        <label for="sqrt">SQRT</label>
-        <input type="radio" id="log" name="scale" value="log">
-        <label for="log">LOG</label>
+  <details class="settings-panel-top">
+    <summary>Waterfall settings</summary>
+    <div class="settings-panel-top-container">
+      <!-- scale and time -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <div>
+            <input type="radio" id="lin" name="scale" value="lin">
+            <label for="lin">LIN</label>
+          </div>
+          <div>
+            <input type="radio" id="sqrt" name="scale" value="sqrt" checked>
+            <label for="sqrt">SQRT</label>
+          </div>
+          <div>
+            <input type="radio" id="log" name="scale" value="log">
+            <label for="log">LOG</label>
+          </div>
+        </div>
+        <div class="settings-panel-top-row">
+          <select name="palette" id="palette" class="palette">
+            <option value="iron" selected>Iron</option>
+            <option value="lime">Lime</option>
+            <option value="yellow">Yellow</option>
+            <option value="glow">Glow</option>
+            <option value="gray">Gray</option>
+          </select>
+          &nbsp;
+          <select name="timezone" id="timezone" class="timezone">
+            <option value="-11">-11 h</option>
+            <option value="-10">-10 h</option>
+            <option value="-9">-9 h</option>
+            <option value="-8">-8 h</option>
+            <option value="-7">-7 h</option>
+            <option value="-6">-6 h</option>
+            <option value="-5">-5 h</option>
+            <option value="-4">-4 h</option>
+            <option value="-3">-3 h</option>
+            <option value="-2">-2 h</option>
+            <option value="-1">-1 h</option>
+            <option value="0">UTC</option>
+            <option value="local" selected>Local time</option>
+            <option value="1">+1 h</option>
+            <option value="2">+2 h</option>
+            <option value="3">+3 h</option>
+            <option value="4">+4 h</option>
+            <option value="5">+5 h</option>
+            <option value="6">+6 h</option>
+            <option value="7">+7 h</option>
+            <option value="8">+8 h</option>
+            <option value="9">+9 h</option>
+            <option value="10">+10 h</option>
+            <option value="11">+11 h</option>
+            <option value="12">+12 h</option>
+          </select>
+        </div>
       </div>
-      <div class="col">
-        <input type="checkbox" id="blur-waterfall" name="blur-waterfall" />
-        <label for="blur-waterfall">Blur waterfall image</label>
+      <!-- blur and subtract -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <input type="checkbox" id="blur-waterfall" name="blur-waterfall" />
+          <label for="blur-waterfall">Blur waterfall image</label>
+        </div>
+        <div class="settings-panel-top-row">
+          <input type="checkbox" id="subtract-base" name="subtract-base" />
+          <label for="subtract-base" id="subtract-base-label"
+            title="Subtract base spectrum from all spectrogram rows">Subtract base</label>
+        </div>
       </div>
-      <div class="col">
-        <label for="spectrum-binning" title="Combine spectrogram rows">Spectrum bin:</label>
-        <input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning" />
+      <!-- spectrum and channel bin -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <label for="spectrum-binning" title="Combine spectrogram rows">Spectrum bin:</label>
+          <input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning" />
+        </div>
+        <div class="settings-panel-top-row">
+          <label for="channel-binning" title="Combine spectrogram channels">Channel bin:</label>
+          <select name="channel-binning" id="channel-binning">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="32">32</option>
+          </select>
+        </div>
       </div>
-      <div class="col">
-        <label for="max-cps"
-          title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any cps higher than 50% of max cps over whole spectrogram">Scale
-          max(%):</label>
-        <input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100" />
+      <!-- dynamic range -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <label for="max-cps"
+            title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any cps higher than 50% of max cps over whole spectrogram">Scale
+            max(%):</label>
+          <input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100" />
+        </div>
+        <div class="settings-panel-top-row">
+          <label for="min-cps"
+            title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any cps lower than 10% of max cps over whole spectrogram">Scale
+            min(%):</label>
+          <input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0" />
+        </div>
       </div>
-      <div class="col">
-        <label for="moving-average-vertical" title="Smooth spectrogram vertically">Moving avg(v):</label>
-        <input type="number" name="moving-average-vertical" id="moving-average-vertical" min="0" step="1" value="0" />
+      <!-- averaging -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <label for="moving-average-vertical" title="Smooth spectrogram vertically">Moving avg(v):</label>
+          <input type="number" name="moving-average-vertical" id="moving-average-vertical" min="0" step="1" value="0" />
+        </div>
+        <div class="settings-panel-top-row">
+          <label for="moving-average-horizontal" title="Smooth spectrogram horizontally">Moving avg(h):</label>
+          <input type="number" name="moving-average-horizontal" id="moving-average-horizontal" min="0" step="1"
+            value="0" />
+        </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col">
-        <select name="palette" id="palette" class="palette">
-          <option value="iron" selected>Iron</option>
-          <option value="lime">Lime</option>
-          <option value="yellow">Yellow</option>
-          <option value="glow">Glow</option>
-          <option value="gray">Gray</option>
-        </select>
-        &nbsp;
-        <select name="timezone" id="timezone" class="timezone">
-          <option value="-11">-11 h</option>
-          <option value="-10">-10 h</option>
-          <option value="-9">-9 h</option>
-          <option value="-8">-8 h</option>
-          <option value="-7">-7 h</option>
-          <option value="-6">-6 h</option>
-          <option value="-5">-5 h</option>
-          <option value="-4">-4 h</option>
-          <option value="-3">-3 h</option>
-          <option value="-2">-2 h</option>
-          <option value="-1">-1 h</option>
-          <option value="0">UTC</option>
-          <option value="local" selected>Local time</option>
-          <option value="1">+1 h</option>
-          <option value="2">+2 h</option>
-          <option value="3">+3 h</option>
-          <option value="4">+4 h</option>
-          <option value="5">+5 h</option>
-          <option value="6">+6 h</option>
-          <option value="7">+7 h</option>
-          <option value="8">+8 h</option>
-          <option value="9">+9 h</option>
-          <option value="10">+10 h</option>
-          <option value="11">+11 h</option>
-          <option value="12">+12 h</option>
-        </select>
-      </div>
-      <div class="col">
-        <input type="checkbox" id="subtract-base" name="subtract-base" />
-        <label for="subtract-base" id="subtract-base-label"
-          title="Subtract base spectrum from all spectrogram rows">Subtract base</label>
-      </div>
-      <div class="col">
-        <label for="channel-binning" title="Combine spectrogram channels">Channel bin:</label>
-        <select name="channel-binning" id="channel-binning">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="4">4</option>
-          <option value="8">8</option>
-          <option value="16" selected>16</option>
-          <option value="32">32</option>
-        </select>
-      </div>
-      <div class="col">
-        <label for="min-cps"
-          title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any cps lower than 10% of max cps over whole spectrogram">Scale
-          min(%):</label>
-        <input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0" />
-      </div>
-      <div class="col">
-        <label for="moving-average-horizontal" title="Smooth spectrogram horizontally">Moving avg(h):</label>
-        <input type="number" name="moving-average-horizontal" id="moving-average-horizontal" min="0" step="1"
-          value="0" />
-      </div>
-    </div>
-  </div>
+  </details>
+  <!-- spectrum preview -->
   <div id="preview-container" class="preview-container">
     <canvas id="preview-plot" class="plot" width="662" height="0"></canvas>
   </div>
+  <!-- waterfall and cps -->
   <div id="plot-container" class="plot-container">
     <div id="horizontal-cursor" class="horizontal-cursor"></div>
     <div id="vertical-cursor" class="vertical-cursor"></div>
     <div id="waterfall-container" class="waterfall-container">
       <canvas id="waterfall-plot" class="plot" width="662" height="0"></canvas>
     </div>
+    <button id="toggle-cps" class="toggle-cps-btn">CPS &#x25C0;</button>
     <div id="cps-container" class="cps-container">
       <canvas id="cps-plot" class="cps-plot" width="0" height="0"></canvas>
     </div>
   </div>
-  <div id="cps-control" class="cps-control">
-    <div class="row">
-      <label id="render-cps" class="cps-left-column" title="Cps plot displays count rate in a given channel range">Cps
-        in channel range_1:</label>
-      <input type="number" id="from-channel-1" class="numeric-input" title="Channel range start" />-<input type="number"
-        id="to-channel-1" class="numeric-input" title="Channel range end" />
-      <button id="export-cps" class="export-button" title="Export raw cps data to file">Export cps</button>
-      <button id="export-bin-avg-cps" class="export-bin-avg-button"
-        title="Export binned/averaged cps data to file">Binned/Avg</button>
-      <input type="radio" id="cps-csv-export" name="cps-export-type" checked="checked"/>
-      <label for="cps-csv-export" class="export-csv" title="Export cps data as .csv file">csv</label>
-    </div>
-    <div class="row">
-      <div class="cps-left-column">
-        <input type="checkbox" id="cps-ratio" name="cps-ratio" />
-        <label for="cps-ratio" title="Cps plot displays count rate ratio for given channel ranges">Ratio to cps in
-          channel range_2:</label>
+  <!-- cps/export settings -->
+  <details class="settings-panel-bottom">
+    <summary>Range / Export settings</summary>
+    <div class="settings-panel-bottom-container">
+      <!-- cps and spg ranges -->
+      <div class="settings-panel-bottom-col">
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label">
+            <input type="checkbox" checked disabled />
+            <label title="Cps plot displays count rate in a given channel range">Cps
+              in channel range_1:</label>
+          </div>
+          <div class="settings-panel-bottom-row-range-group">
+            <input type="number" id="from-channel-1" class="numeric-input" title="Channel range start" /> - <input
+              type="number" id="to-channel-1" class="numeric-input" title="Channel range end" />
+          </div>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label">
+            <input type="checkbox" id="cps-ratio" name="cps-ratio" />
+            <label for="cps-ratio" title="Cps plot displays count rate ratio for given channel ranges">Ratio to cps in
+              range_2:</label>
+          </div>
+          <div class="settings-panel-bottom-row-range-group">
+            <input type="number" id="from-channel-2" class="numeric-input" title="Channel range start" /> - <input
+              type="number" id="to-channel-2" class="numeric-input" title="Channel range end" />
+          </div>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label">
+            <input type="checkbox" id="preview-enabled" name="preview-enabled" />
+            <label for="preview-enabled" title="Combine range of spectrogram rows into single preview spectrum">Spectrum
+              in spg range:</label>
+          </div>
+          <div class="settings-panel-bottom-row-range-group">
+            <input type="number" id="from-spectrum" class="numeric-input" title="Range start row index" /> - <input
+              type="number" id="to-spectrum" class="numeric-input" title="Range end row index" />
+          </div>
+        </div>
       </div>
-      <input type="number" id="from-channel-2" class="numeric-input" title="Channel range start" />-<input type="number"
-        id="to-channel-2" class="numeric-input" title="Channel range end" />
-      <button id="export-cps-ratio" class="export-button" title="Export raw cps ratio data to file" disabled>Export cps ratio</button>
-      <button id="export-bin-avg-cps-ratio" class="export-bin-avg-button"
-        title="Export binned/averaged cps ratio data to file" disabled>Binned/Avg</button>
-      <input type="radio" id="cps-rctrk-export" name="cps-export-type"/>
-      <label for="cps-rctrk-export" class="export-rctrk" title="Export cps data as .rctrk file">rctrk</label>
-    </div>
-    <div class="row">
-      <div class="cps-left-column">
-        <input type="checkbox" id="preview-enabled" name="preview-enabled" />
-        <label for="preview-enabled" title="Combine range of spectrogram rows into single preview spectrum">Preview
-          spectrum in spectrogram range:</label>
+      <!-- export settings -->
+      <div class="settings-panel-bottom-col">
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label"><input type="checkbox" id="bin-avg-export"
+              name="bin-avg-export" />
+            <label for="bin-avg-export" class="export-bin-avg" title="Export binned/averaged cps data">Export bin/avg
+              cps</label>
+          </div>
+          <div>
+            <input type="radio" id="cps-csv-export" name="cps-export-type" checked="checked" />
+            <label for="cps-csv-export" class="export-csv" title="Export cps data as .csv file">csv</label>
+          </div>
+          <div>
+            <input type="radio" id="cps-rctrk-export" name="cps-export-type" />
+            <label for="cps-rctrk-export" class="export-rctrk" title="Export cps data as .rctrk file">rctrk</label>
+          </div>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label"></div>
+          <button id="export-cps" class="export-button" title="Export cps data to file">Export cps</button>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label"></div>
+          <button id="spg-range-as-base" class="spg-range-button"
+            title="Set spectrum, combined from a given range, as a base spectrum">Spectrum as base</button>
+          <button id="spg-range-to-file" class="spg-range-button"
+            title="Export spectrum, combined from a given range, to a file">Export spectrum</button>
+        </div>
       </div>
-      <input type="number" id="from-spectrum" class="numeric-input" placeholder="from index"
-        title="Range start row index" />-<input type="number" id="to-spectrum" class="numeric-input"
-        placeholder="to index" title="Range end row index" />
-      <button id="spg-range-as-base" class="spg-range-button"
-        title="Set spectrum, combined from a given range, as a base spectrum">Spg range as base</button>
-      <button id="spg-range-to-file" class="spg-range-button"
-        title="Export spectrum, combined from a given range, to a file">Spg range to file</button>
     </div>
-  </div>
+  </details>
   <script src="./html/common.js"></script>
   <script src="./html/waterfall-plot.js"></script>
   <script src="./html/cps-plot.js"></script>

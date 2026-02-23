@@ -1,6 +1,6 @@
 (function () {
   // startup - check if we have to run with nodejs prepared data or user loads it in browser
-  const uploadControl = document.getElementById('upload-control');
+  const uploadControl = document.getElementById('upload-controls');
   const infoContainer = document.getElementById('file-info-container');
   const infoSpan = document.getElementById('file-info');
   const overlay = document.getElementById('blocking-overlay');
@@ -13,13 +13,13 @@
   });
 
   if (window.originalWaterfallData === 'waterfall-data-placeholder') {
-    uploadControl.style.display = 'block';
+    uploadControl.style.display = 'flex';
     infoContainer.style.display = 'none';
   } else {
     uploadControl.style.display = 'none';
     overlay.style.display = 'none';
-    infoContainer.style.display = 'block';
-    infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
+    infoContainer.style.display = 'flex';
+    infoSpan.innerText = 'File: ' + originalWaterfallData.filename + '; import binning - '
       + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
 
     startupAsync();
