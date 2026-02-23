@@ -65,21 +65,19 @@ Alternative way (spectrum change mode):
 ## Upload
 1. set initial channel binning: AtomSpectra writes to spectrogram all 8k channels which requires time and memory to process, if you do not have clear reasons to view spectrum as 8k channels, use binning during import to reduce cpu/memory usage and improve rendering performance
 2. click upload button to open spectrogram file you want to render
-3. observe spectrogram and CPS plot
+3. observe spectrogram and cps plot
 
-`Concat` checkbox: use it when you need to combine several spectrograms into one (ordered by time ascending). Calibration will be taken from the first spectrogram. Spectrogram bounds are marked on time axis as red horizontal line.
+You could also select multiple files at once to combine several spectrograms into one (ordered by time ascending). Calibration will be taken from the first spectrogram. Spectrogram bounds are marked on time axis as red horizontal line.
 
-`No zeros` checkbox: use it if spectrogram contains rows with zero counts and you want to omit them.
-
-## Save spectrogram or CPS plot
-1. use right mouse click on either spectrogram or CPS plot image -> `Save image as...`
-2. CPS plot is saved in horizontal orientation, despite rendered vertically to be in sync with spectrogram
+## Save spectrogram or cps plot
+1. use right mouse click on either spectrogram or cps plot image -> `Save image as...`
+2. cps plot is saved in horizontal orientation, despite rendered vertically to be in sync with spectrogram
 
 ## Scale/Palette control
-1. Lin/Sqrt/Log - applies linear/non-linear scale on top of color palette and CPS plot view, `Sqrt` is default
+1. Lin/Sqrt/Log - applies linear/non-linear scale on top of color palette and cps plot view, `Sqrt` is default
 2. Palette selector - changes color palette, you could also use double click on spectrogram image, `Iron` is default
-3. Scale max(%) - defines maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any CPS higher than 50% of max CPS over whole spectrogram (values above 100 are allowed via manual typing)
-4. Scale min(%) - same as max, but for minimum value (calculated relative to max CPS over whole spectrogram)
+3. Scale max(%) - defines maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any cps higher than 50% of max cps over whole spectrogram (values above 100 are allowed via manual typing)
+4. Scale min(%) - same as max, but for minimum value (calculated relative to max cps over whole spectrogram)
 5. Blur waterfall image - applies blur effects, sometimes makes spectrogram more smooth
 
 ## Time axis
@@ -96,21 +94,22 @@ Alternative way (spectrum change mode):
 2. Moving avg(h) - moving average applied to channels (horizontally on spectrogram), defines number of neighbors used, ex. 4 means that each point will be an average of 2 neighbors back, 2 ahead and current channel itself
 
 ## Base spectrum
-1. Subtract base - subtracts base spectrum stored in spectrogram from each spectrogram row, affects both spectrogram and CPS plot
+1. Subtract base - subtracts base spectrum stored in spectrogram from each spectrogram row, affects both spectrogram and cps plot
 
-## CPS plot range
-CPS plot displays count rate for a specific range of channels.
-1. "CPS in channel range_1" - defines main range as [from channel index, to channel index]
+## Cps plot channel range
+Cps plot displays count rate for a specific range of channels.
+1. "Cps in channel range_1" - defines main range as [from channel index, to channel index]
 `hold 'c' key + two left mouse clicks` - set channels under cursor as range_1
-2. "Ratio to CPS in channel range_2" - enables comparison mode, renders 3 plots:
+2. "Ratio to cps in channel range_2" - enables comparison mode, renders 3 plots:
   a. count rate in range_1
   b. count rate in range_2
   c. ratio of count rate in range_1 to count rate in range_2 (range_1/range_2)
 `hold 'a' key + two left mouse clicks` - set channels under cursor as range_2
-3. "CPS to map" - click to generate .rctrk map file, count rate in selected range will be used as value for CPS channel (ensure AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application. Button exports original spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
-4. "CPS ratio to map" - click to generate .rctrk map file, range_1/range_2 rate in selected range will be used as value for CPS channel (use if AtomSpectra configured to write GPS to each delta), .rctrk map could be imported to AtomSwift (Atom Dosimeter) application. Button exports original spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
+3. "Export cps" - click to generate file with cps data. This button exports original(unchanged) spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
+4. "Export cps ratio" - click to generate file with cps ratio data. This button exports original spectrogram data, use "Binned/Avg" to export data with additional binning/averaging.
 
-*Use "csv" checkbox to enable export to csv instead of rctrk.
+*Use "csv" and "rctrk" radio buttons to select export type.
+If spectrogram contains GPS data, .rctrk map could be imported to AtomSwift (Atom Dosimeter) application.
 
 ## Spectrum preview and export
 Preview shows spectrum combined from selected spectrogram range as [from row index, to row index], index is always original, zero-based, despite binning applied

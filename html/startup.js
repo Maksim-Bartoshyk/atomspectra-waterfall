@@ -6,20 +6,6 @@
   const overlay = document.getElementById('blocking-overlay');
   const fileInput = document.getElementById('file-input');
   const importChannelBinInput = document.getElementById('import-channel-binning');
-  const spgConcatCheckbox = document.getElementById('spg-concat');
-  const noZerosCheckbox = document.getElementById('no-zeros');
-
-  spgConcatCheckbox.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      fileInput.setAttribute('multiple', '');
-    } else {
-      fileInput.removeAttribute('multiple', '');
-    }
-  });
-
-  noZerosCheckbox.addEventListener('change', (e) => {
-    fileInput.value = '';
-  });
 
   fileInput.addEventListener('change', (e) => onFileChange(e.target));
   importChannelBinInput.addEventListener('change', (e) => {
@@ -45,58 +31,38 @@
       return;
     }
 
-    const noZeros = noZerosCheckbox.checked;
     const reader = new FileReader();
-    if (spgConcatCheckbox.checked) {
-      // concat multiple spectrograms
-      let fileIndex = 0;
-      let baseSpectrums = [];
-      let deltas = [];
+    let fileIndex = 0;
+    let baseSpectrums = [];
+    let deltas = [];
 
-      reader.onload = async (e) => {
-        const fileText = e.target.result;
-        if (fileIndex < input.files.length) {
-          const baseSpectrum = exports.deserializeSpectrum(fileText);
-          baseSpectrums.push(baseSpectrum);
-          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, noZeros);
-          deltas = deltas.concat(deltaInfo.deltas);
-        }
+    reader.onload = async (e) => {
+      const fileText = e.target.result;
+      if (fileIndex < input.files.length) {
+        const baseSpectrum = exports.deserializeSpectrum(fileText);
+        baseSpectrums.push(baseSpectrum);
+        const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, false);
+        deltas = deltas.concat(deltaInfo.deltas);
+      }
 
-        await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
+      await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
 
-        if (fileIndex === input.files.length - 1) {
-          overlay.style.display = 'none';
-          const importChannelBin = parseInt(importChannelBinInput.value);
-          const spectrumBin = 1;
-          deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-          baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
-
-          await startupAsync();
-        } else {
-          fileIndex++;
-          reader.readAsText(input.files[fileIndex]);
-        }
-      };
-    } else {
-      reader.onload = async (e) => {
-        await common.executeWithStatusAsync('Deserializing...', () => {
-          overlay.style.display = 'none';
-          const fileText = e.target.result;
-          const baseSpectrum = exports.deserializeSpectrum(fileText);
-          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, noZeros);
-          const deltas = deltaInfo.deltas;
-
-          const importChannelBin = parseInt(importChannelBinInput.value);
-          const spectrumBin = 1;
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-        });
+      if (fileIndex === input.files.length - 1) {
+        overlay.style.display = 'none';
+        const importChannelBin = parseInt(importChannelBinInput.value);
+        const spectrumBin = 1;
+        deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+        baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
+        window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
 
         await startupAsync();
-      };
-    }
+      } else {
+        fileIndex++;
+        reader.readAsText(input.files[fileIndex]);
+      }
+    };
 
-    common.executeWithStatusAsync('Opening file...', () => {
+    common.executeWithStatusAsync('Opening files...', () => {
       reader.readAsText(file);
     });
   }

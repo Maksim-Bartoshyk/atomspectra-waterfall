@@ -48,18 +48,18 @@
   const fromSpectrumInput = document.getElementById('from-spectrum');
   const toSpectrumInput = document.getElementById('to-spectrum');
   const cpsRatioCheckbox = document.getElementById('cps-ratio');
-  const cpsCsvExportCheckbox = document.getElementById('cps-csv-export');
-  const cpsToMapButton = document.getElementById('export-cps-map');
-  const cpsBinAvgToMapButton = document.getElementById('export-bin-avg-cps-map');
-  const cpsRatioToMapButton = document.getElementById('export-ratio-map');
-  const cpsRatioBinAvgToMapButton = document.getElementById('export-bin-avg-ratio-map');
+  const cpsCsvExportRadio = document.getElementById('cps-csv-export');
+  const cpsExportButton = document.getElementById('export-cps');
+  const cpsBinAvgExportButton = document.getElementById('export-bin-avg-cps');
+  const cpsRatioExportButton = document.getElementById('export-cps-ratio');
+  const cpsRatioBinAvgExportButton = document.getElementById('export-bin-avg-cps-ratio');
   const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
   const spgAsBaseButton = document.getElementById('spg-range-as-base');
   cpsRatioCheckbox.addEventListener('change', async () => onCompareCheckboxChange());
-  cpsToMapButton.addEventListener('click', () => exportCpsMap(false, cpsCsvExportCheckbox.checked));
-  cpsRatioToMapButton.addEventListener('click', () => exportRatioMap(false, cpsCsvExportCheckbox.checked));
-  cpsBinAvgToMapButton.addEventListener('click', () => exportCpsMap(true, cpsCsvExportCheckbox.checked));
-  cpsRatioBinAvgToMapButton.addEventListener('click', () => exportRatioMap(true, cpsCsvExportCheckbox.checked));
+  cpsExportButton.addEventListener('click', () => exportCps(false, cpsCsvExportRadio.checked));
+  cpsRatioExportButton.addEventListener('click', () => exportCpsRatio(false, cpsCsvExportRadio.checked));
+  cpsBinAvgExportButton.addEventListener('click', () => exportCps(true, cpsCsvExportRadio.checked));
+  cpsRatioBinAvgExportButton.addEventListener('click', () => exportCpsRatio(true, cpsCsvExportRadio.checked));
   spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
   spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
   previewCheckbox.addEventListener('change', async () => await previewEnabledChange());
@@ -528,8 +528,8 @@
 
   async function onCompareCheckboxChange() {
     waterfallState.compareCps = cpsRatioCheckbox.checked;
-    cpsRatioToMapButton.disabled = !waterfallState.compareCps;
-    cpsRatioBinAvgToMapButton.disabled = !waterfallState.compareCps;
+    cpsRatioExportButton.disabled = !waterfallState.compareCps;
+    cpsRatioBinAvgExportButton.disabled = !waterfallState.compareCps;
 
     await waterfallPlot.renderChannelSelectionAsync();
     await cpsPlot.renderCpsAsync();
@@ -617,8 +617,7 @@
     }
   }
 
-  function exportCpsMap(binAvg, csv) {
-    debugger;
+  function exportCps(binAvg, csv) {
     const range = waterfallState.channelRange1;
     if (!range || range.length !== 2) {
       alert('Error: invalid channel range 1.');
@@ -671,8 +670,7 @@
     }
   }
 
-  function exportRatioMap(binAvg, csv) {
-    debugger;
+  function exportCpsRatio(binAvg, csv) {
     const range = waterfallState.channelRange1;
     if (!range || range.length !== 2) {
       alert('Error: invalid channel range 1.');
