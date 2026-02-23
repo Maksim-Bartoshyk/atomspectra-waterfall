@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title>AS Waterfall v2026.01.16.0</title>
+  <title>AS Waterfall v2026.02.23.0</title>
   <style>body {
   background: #444;
   box-sizing: border-box;
@@ -86,7 +86,7 @@ input[type="radio"] {
 }
 
 .upload-control .file-input {
-  width: 480px;
+  width: 640px;
 }
 
 .waterfall-control,
@@ -222,13 +222,12 @@ input[type="radio"] {
 }
 
 .export-bin-avg-button {
-  width: 120px;
-  margin-right: 4px;
+  width: 100px;
+  margin-right: 8px;
 }
 
-.export-csv {
-  position: relative;
-  top: 15px;
+.export-csv, .export-rctrk {
+  width: 40px;
 }
 
 .spg-range-button {
@@ -711,8 +710,8 @@ input[type="radio"] {
   <div id="blocking-overlay" class="blocking-overlay"></div>
   <div id="status-text" class="status-text">...</div>
   <div id="upload-control" class="upload-control">
-    <span>Atomspectra file:</span>
-    <input id="file-input" class="file-input" type="file" accept=".txt" name="files">
+    <span>Spectrogram file(s):</span>
+    <input id="file-input" class="file-input" type="file" accept=".txt" name="files" multiple="multiple">
     <label for="import-channel-binning" title="Bin channels during import (reduces memory usage and render time)">Import
       channel binning:</label>
     <select name="import-channel-binning" id="import-channel-binning">
@@ -723,11 +722,6 @@ input[type="radio"] {
       <option value="16">16</option>
       <option value="32">32</option>
     </select>
-    | <input type="checkbox" id="spg-concat" name="spg-concat" />
-    <label for="spg-concat"
-      title="Concat multiple spectrograms (sorted by time ascending), calibration will be taken from the first spectrogram file">Concat</label>
-    | <input type="checkbox" id="no-zeros" name="no-zeros" />
-    <label for="no-zeros" title="Omit zero rows during import">No zeros</label>
   </div>
   <div id="file-info-container" class="upload-control">
     <span id="file-info"></span>
@@ -752,7 +746,7 @@ input[type="radio"] {
       </div>
       <div class="col">
         <label for="max-cps"
-          title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any CPS higher than 50% of max CPS over whole spectrogram">Scale
+          title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any cps higher than 50% of max cps over whole spectrogram">Scale
           max(%):</label>
         <input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100" />
       </div>
@@ -817,7 +811,7 @@ input[type="radio"] {
       </div>
       <div class="col">
         <label for="min-cps"
-          title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any CPS lower than 10% of max CPS over whole spectrogram">Scale
+          title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any cps lower than 10% of max cps over whole spectrogram">Scale
           min(%):</label>
         <input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0" />
       </div>
@@ -843,31 +837,29 @@ input[type="radio"] {
   </div>
   <div id="cps-control" class="cps-control">
     <div class="row">
-      <label id="render-cps" class="cps-left-column" title="CPS plot displays count rate in a given channel range">CPS
+      <label id="render-cps" class="cps-left-column" title="Cps plot displays count rate in a given channel range">Cps
         in channel range_1:</label>
       <input type="number" id="from-channel-1" class="numeric-input" title="Channel range start" />-<input type="number"
         id="to-channel-1" class="numeric-input" title="Channel range end" />
-      <button id="export-cps-map" class="export-button" title="Export raw CPS data to file">CPS to map</button>
-      <button id="export-bin-avg-cps-map" class="export-bin-avg-button"
-        title="Export binned/averaged CPS data to file">Binned/Avg</button>
-      <input type="checkbox" id="cps-csv-export" name="cps-csv-export" class="export-csv" />
-      <label for="cps-csv-export" class="export-csv" title="Export CPS data as CSV file">csv</label>
+      <button id="export-cps" class="export-button" title="Export raw cps data to file">Export cps</button>
+      <button id="export-bin-avg-cps" class="export-bin-avg-button"
+        title="Export binned/averaged cps data to file">Binned/Avg</button>
+      <input type="radio" id="cps-csv-export" name="cps-export-type" checked="checked"/>
+      <label for="cps-csv-export" class="export-csv" title="Export cps data as .csv file">csv</label>
     </div>
     <div class="row">
       <div class="cps-left-column">
-
         <input type="checkbox" id="cps-ratio" name="cps-ratio" />
-        <label for="cps-ratio" title="CPS plot displays count rate ratio for given channel ranges">Ratio to CPS in
+        <label for="cps-ratio" title="Cps plot displays count rate ratio for given channel ranges">Ratio to cps in
           channel range_2:</label>
       </div>
       <input type="number" id="from-channel-2" class="numeric-input" title="Channel range start" />-<input type="number"
         id="to-channel-2" class="numeric-input" title="Channel range end" />
-      <button id="export-ratio-map" class="export-button" title="Export raw CPS ratio data to file" disabled>Ratio to
-        map</button>
-      <button id="export-bin-avg-ratio-map" class="export-bin-avg-button"
-        title="Export binned/averaged CPS ratio data to file" disabled>Binned/Avg</button>
-      <input type="checkbox" name="cps-csv-export-dummy" class="invisible" />
-      <label for="cps-csv-export-dummy" class="invisible">csv</label>
+      <button id="export-cps-ratio" class="export-button" title="Export raw cps ratio data to file" disabled>Export cps ratio</button>
+      <button id="export-bin-avg-cps-ratio" class="export-bin-avg-button"
+        title="Export binned/averaged cps ratio data to file" disabled>Binned/Avg</button>
+      <input type="radio" id="cps-rctrk-export" name="cps-export-type"/>
+      <label for="cps-rctrk-export" class="export-rctrk" title="Export cps data as .rctrk file">rctrk</label>
     </div>
     <div class="row">
       <div class="cps-left-column">
@@ -1863,18 +1855,18 @@ input[type="radio"] {
   const fromSpectrumInput = document.getElementById('from-spectrum');
   const toSpectrumInput = document.getElementById('to-spectrum');
   const cpsRatioCheckbox = document.getElementById('cps-ratio');
-  const cpsCsvExportCheckbox = document.getElementById('cps-csv-export');
-  const cpsToMapButton = document.getElementById('export-cps-map');
-  const cpsBinAvgToMapButton = document.getElementById('export-bin-avg-cps-map');
-  const cpsRatioToMapButton = document.getElementById('export-ratio-map');
-  const cpsRatioBinAvgToMapButton = document.getElementById('export-bin-avg-ratio-map');
+  const cpsCsvExportRadio = document.getElementById('cps-csv-export');
+  const cpsExportButton = document.getElementById('export-cps');
+  const cpsBinAvgExportButton = document.getElementById('export-bin-avg-cps');
+  const cpsRatioExportButton = document.getElementById('export-cps-ratio');
+  const cpsRatioBinAvgExportButton = document.getElementById('export-bin-avg-cps-ratio');
   const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
   const spgAsBaseButton = document.getElementById('spg-range-as-base');
   cpsRatioCheckbox.addEventListener('change', async () => onCompareCheckboxChange());
-  cpsToMapButton.addEventListener('click', () => exportCpsMap(false, cpsCsvExportCheckbox.checked));
-  cpsRatioToMapButton.addEventListener('click', () => exportRatioMap(false, cpsCsvExportCheckbox.checked));
-  cpsBinAvgToMapButton.addEventListener('click', () => exportCpsMap(true, cpsCsvExportCheckbox.checked));
-  cpsRatioBinAvgToMapButton.addEventListener('click', () => exportRatioMap(true, cpsCsvExportCheckbox.checked));
+  cpsExportButton.addEventListener('click', () => exportCps(false, cpsCsvExportRadio.checked));
+  cpsRatioExportButton.addEventListener('click', () => exportCpsRatio(false, cpsCsvExportRadio.checked));
+  cpsBinAvgExportButton.addEventListener('click', () => exportCps(true, cpsCsvExportRadio.checked));
+  cpsRatioBinAvgExportButton.addEventListener('click', () => exportCpsRatio(true, cpsCsvExportRadio.checked));
   spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
   spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
   previewCheckbox.addEventListener('change', async () => await previewEnabledChange());
@@ -2343,8 +2335,8 @@ input[type="radio"] {
 
   async function onCompareCheckboxChange() {
     waterfallState.compareCps = cpsRatioCheckbox.checked;
-    cpsRatioToMapButton.disabled = !waterfallState.compareCps;
-    cpsRatioBinAvgToMapButton.disabled = !waterfallState.compareCps;
+    cpsRatioExportButton.disabled = !waterfallState.compareCps;
+    cpsRatioBinAvgExportButton.disabled = !waterfallState.compareCps;
 
     await waterfallPlot.renderChannelSelectionAsync();
     await cpsPlot.renderCpsAsync();
@@ -2432,8 +2424,7 @@ input[type="radio"] {
     }
   }
 
-  function exportCpsMap(binAvg, csv) {
-    debugger;
+  function exportCps(binAvg, csv) {
     const range = waterfallState.channelRange1;
     if (!range || range.length !== 2) {
       alert('Error: invalid channel range 1.');
@@ -2486,8 +2477,7 @@ input[type="radio"] {
     }
   }
 
-  function exportRatioMap(binAvg, csv) {
-    debugger;
+  function exportCpsRatio(binAvg, csv) {
     const range = waterfallState.channelRange1;
     if (!range || range.length !== 2) {
       alert('Error: invalid channel range 1.');
@@ -2634,20 +2624,6 @@ input[type="radio"] {
   const overlay = document.getElementById('blocking-overlay');
   const fileInput = document.getElementById('file-input');
   const importChannelBinInput = document.getElementById('import-channel-binning');
-  const spgConcatCheckbox = document.getElementById('spg-concat');
-  const noZerosCheckbox = document.getElementById('no-zeros');
-
-  spgConcatCheckbox.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      fileInput.setAttribute('multiple', '');
-    } else {
-      fileInput.removeAttribute('multiple', '');
-    }
-  });
-
-  noZerosCheckbox.addEventListener('change', (e) => {
-    fileInput.value = '';
-  });
 
   fileInput.addEventListener('change', (e) => onFileChange(e.target));
   importChannelBinInput.addEventListener('change', (e) => {
@@ -2673,58 +2649,38 @@ input[type="radio"] {
       return;
     }
 
-    const noZeros = noZerosCheckbox.checked;
     const reader = new FileReader();
-    if (spgConcatCheckbox.checked) {
-      // concat multiple spectrograms
-      let fileIndex = 0;
-      let baseSpectrums = [];
-      let deltas = [];
+    let fileIndex = 0;
+    let baseSpectrums = [];
+    let deltas = [];
 
-      reader.onload = async (e) => {
-        const fileText = e.target.result;
-        if (fileIndex < input.files.length) {
-          const baseSpectrum = exports.deserializeSpectrum(fileText);
-          baseSpectrums.push(baseSpectrum);
-          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, noZeros);
-          deltas = deltas.concat(deltaInfo.deltas);
-        }
+    reader.onload = async (e) => {
+      const fileText = e.target.result;
+      if (fileIndex < input.files.length) {
+        const baseSpectrum = exports.deserializeSpectrum(fileText);
+        baseSpectrums.push(baseSpectrum);
+        const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, false);
+        deltas = deltas.concat(deltaInfo.deltas);
+      }
 
-        await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
+      await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
 
-        if (fileIndex === input.files.length - 1) {
-          overlay.style.display = 'none';
-          const importChannelBin = parseInt(importChannelBinInput.value);
-          const spectrumBin = 1;
-          deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-          baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
-
-          await startupAsync();
-        } else {
-          fileIndex++;
-          reader.readAsText(input.files[fileIndex]);
-        }
-      };
-    } else {
-      reader.onload = async (e) => {
-        await common.executeWithStatusAsync('Deserializing...', () => {
-          overlay.style.display = 'none';
-          const fileText = e.target.result;
-          const baseSpectrum = exports.deserializeSpectrum(fileText);
-          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, noZeros);
-          const deltas = deltaInfo.deltas;
-
-          const importChannelBin = parseInt(importChannelBinInput.value);
-          const spectrumBin = 1;
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrum, deltas, importChannelBin, spectrumBin, file.name);
-        });
+      if (fileIndex === input.files.length - 1) {
+        overlay.style.display = 'none';
+        const importChannelBin = parseInt(importChannelBinInput.value);
+        const spectrumBin = 1;
+        deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+        baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
+        window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
 
         await startupAsync();
-      };
-    }
+      } else {
+        fileIndex++;
+        reader.readAsText(input.files[fileIndex]);
+      }
+    };
 
-    common.executeWithStatusAsync('Opening file...', () => {
+    common.executeWithStatusAsync('Opening files...', () => {
       reader.readAsText(file);
     });
   }

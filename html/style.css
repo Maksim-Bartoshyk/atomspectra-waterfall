@@ -218,14 +218,12 @@ input[type="radio"] {
 }
 
 .export-bin-avg-button {
-  width: 120px;
-  margin-right: 4px;
+  width: 100px;
+  margin-right: 8px;
 }
 
-.export-csv {
-}
-
-.export-rctrk {
+.export-csv, .export-rctrk {
+  width: 40px;
 }
 
 .spg-range-button {

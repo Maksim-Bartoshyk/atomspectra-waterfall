@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title>AS Waterfall v2026.01.16.0</title>
+  <title>AS Waterfall v2026.02.23.0</title>
   <link rel="stylesheet" href="./html/style.css" />
   <script>
     (function () {
@@ -73,7 +73,7 @@
       </div>
       <div class="col">
         <label for="max-cps"
-          title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any CPS higher than 50% of max CPS over whole spectrogram">Scale
+          title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any cps higher than 50% of max cps over whole spectrogram">Scale
           max(%):</label>
         <input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100" />
       </div>
@@ -138,7 +138,7 @@
       </div>
       <div class="col">
         <label for="min-cps"
-          title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any CPS lower than 10% of max CPS over whole spectrogram">Scale
+          title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any cps lower than 10% of max cps over whole spectrogram">Scale
           min(%):</label>
         <input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0" />
       </div>
@@ -164,31 +164,29 @@
   </div>
   <div id="cps-control" class="cps-control">
     <div class="row">
-      <label id="render-cps" class="cps-left-column" title="CPS plot displays count rate in a given channel range">CPS
+      <label id="render-cps" class="cps-left-column" title="Cps plot displays count rate in a given channel range">Cps
         in channel range_1:</label>
       <input type="number" id="from-channel-1" class="numeric-input" title="Channel range start" />-<input type="number"
         id="to-channel-1" class="numeric-input" title="Channel range end" />
-      <button id="export-cps-map" class="export-button" title="Export raw CPS data to file">CPS to map</button>
-      <button id="export-bin-avg-cps-map" class="export-bin-avg-button"
-        title="Export binned/averaged CPS data to file">Binned/Avg</button>
-      <input type="checkbox" id="cps-csv-export" name="cps-csv-export" class="export-csv" />
-      <label for="cps-csv-export" class="export-csv" title="Export CPS data as CSV file">csv</label>
+      <button id="export-cps" class="export-button" title="Export raw cps data to file">Export cps</button>
+      <button id="export-bin-avg-cps" class="export-bin-avg-button"
+        title="Export binned/averaged cps data to file">Binned/Avg</button>
+      <input type="radio" id="cps-csv-export" name="cps-export-type" checked="checked"/>
+      <label for="cps-csv-export" class="export-csv" title="Export cps data as .csv file">csv</label>
     </div>
     <div class="row">
       <div class="cps-left-column">
-
         <input type="checkbox" id="cps-ratio" name="cps-ratio" />
-        <label for="cps-ratio" title="CPS plot displays count rate ratio for given channel ranges">Ratio to CPS in
+        <label for="cps-ratio" title="Cps plot displays count rate ratio for given channel ranges">Ratio to cps in
           channel range_2:</label>
       </div>
       <input type="number" id="from-channel-2" class="numeric-input" title="Channel range start" />-<input type="number"
         id="to-channel-2" class="numeric-input" title="Channel range end" />
-      <button id="export-ratio-map" class="export-button" title="Export raw CPS ratio data to file" disabled>Ratio to
-        map</button>
-      <button id="export-bin-avg-ratio-map" class="export-bin-avg-button"
-        title="Export binned/averaged CPS ratio data to file" disabled>Binned/Avg</button>
-      <input type="checkbox" name="cps-csv-export-dummy" class="invisible" />
-      <label for="cps-csv-export-dummy" class="invisible">csv</label>
+      <button id="export-cps-ratio" class="export-button" title="Export raw cps ratio data to file" disabled>Export cps ratio</button>
+      <button id="export-bin-avg-cps-ratio" class="export-bin-avg-button"
+        title="Export binned/averaged cps ratio data to file" disabled>Binned/Avg</button>
+      <input type="radio" id="cps-rctrk-export" name="cps-export-type"/>
+      <label for="cps-rctrk-export" class="export-rctrk" title="Export cps data as .rctrk file">rctrk</label>
     </div>
     <div class="row">
       <div class="cps-left-column">
