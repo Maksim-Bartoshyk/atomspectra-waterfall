@@ -37,29 +37,34 @@
     let deltas = [];
 
     reader.onload = async (e) => {
-      const fileText = e.target.result;
-      if (fileIndex < input.files.length) {
-        const baseSpectrum = exports.deserializeSpectrum(fileText);
-        baseSpectrums.push(baseSpectrum);
-        const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, false);
-        deltas = deltas.concat(deltaInfo.deltas);
-      }
+      await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', async () => {
+        const fileText = e.target.result;
+        if (fileIndex < input.files.length) {
+          const baseSpectrum = exports.deserializeSpectrum(fileText);
+          baseSpectrums.push(baseSpectrum);
+          const deltaInfo = exports.deserializeDeltas(fileText, baseSpectrum, false);
+          deltas = deltas.concat(deltaInfo.deltas);
+        }
 
-      await common.executeWithStatusAsync('Deserializing(' + (fileIndex + 1) + '/' + input.files.length + ')...', () => { });
-
-      if (fileIndex === input.files.length - 1) {
-        overlay.style.display = 'none';
-        const importChannelBin = parseInt(importChannelBinInput.value);
-        const spectrumBin = 1;
-        deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
-        baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
-        window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
-
-        await startupAsync();
-      } else {
-        fileIndex++;
-        reader.readAsText(input.files[fileIndex]);
-      }
+        if (fileIndex === input.files.length - 1) {
+          overlay.style.display = 'none';
+          const importChannelBin = parseInt(importChannelBinInput.value);
+          const spectrumBin = 1;
+          deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
+          baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
+          const filename = baseSpectrums.length > 1 
+            ? 'concatenated(' + baseSpectrums.map(b => b.name).join(', ') + ')'   
+            : baseSpectrums[0].name;
+          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, filename);
+  
+          await startupAsync();
+        } else {
+          fileIndex++;
+          common.executeWithStatusAsync('Opening next file...', () => {
+            reader.readAsText(input.files[fileIndex]);
+          });
+        }
+      });
     };
 
     common.executeWithStatusAsync('Opening files...', () => {
