@@ -1,13 +1,22 @@
 <html>
 
 <head>
-  <title>AS Waterfall v2026.02.23.1</title>
-  <style>body {
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AS Waterfall v2026.02.24.0</title>
+  <style>/* common defaults */
+html {
+  height: 100%;
+}
+
+body {
   background: #444;
   box-sizing: border-box;
   color: #CCC;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   margin: 0;
-  min-width: 1024px;
+  overflow: hidden;
   padding: 0 12px;
   scrollbar-color: #444 #888;
 }
@@ -36,6 +45,7 @@ input[type="radio"] {
   margin: 3px 3px 3px 0;
 }
 
+/* overlay */
 .blocking-overlay {
   position: absolute;
   background: rgba(100, 100, 100, 0.75);
@@ -43,10 +53,10 @@ input[type="radio"] {
   bottom: 0;
   left: 0;
   right: 0;
-  min-width: 1024px;
   z-index: 1;
 }
 
+/* status text */
 @keyframes fadeIn {
   0% {
     opacity: 0;
@@ -74,69 +84,134 @@ input[type="radio"] {
   z-index: 1;
 }
 
-.upload-control {
+/* upload controls */
+.upload-controls-row {
   border-bottom: 1px dotted;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  max-width: 1000px;
   padding-top: 12px;
   padding-bottom: 4px;
-  text-wrap: nowrap;
 }
 
-.upload-control * {
-  display: inline-block;
-}
-
-.upload-control .file-input {
-  width: 640px;
-}
-
-.waterfall-control,
-.cps-control {
-  width: 100%;
-  border-bottom: 1px dotted;
-}
-
-.waterfall-control {
-  padding-top: 12px;
-}
-
-.col .timezone {
-  width: 97px;
-  text-align: right;
-}
-
-.col .palette {
-  width: 68px;
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  max-width: 1000px;
-  padding-bottom: 8px;
-}
-
-.col {
+.col-upload {
   align-items: baseline;
-  display: inline-flex;
-  width: 175px;
-}
-
-.col label {
+  display: flex;
   flex-grow: 1;
 }
 
-.col input[type="number"],
-.col select {
+.col-upload span {
+  white-space: nowrap;
+}
+
+.col-upload input {
+  flex-grow: 1;
+  width: 0;
+}
+
+.col-import-bin {
+  align-items: baseline;
+  justify-content: end;
+  display: flex;
+  width: 240px;
+}
+
+.col-import-bin label {
+  margin-right: 4px;
+}
+
+.col-import-bin select {
   width: 64px;
 }
 
-.scale-switch {
-  display: inline-block;
-  margin-right: 16px;
+/* file info */
+.file-info-row {
+  border-bottom: 1px dotted;
+  flex-shrink: 0;
+  padding-top: 12px;
+  padding-bottom: 4px;
 }
 
+/* top settings panel */
+.settings-panel-top {
+  border-bottom: 1px dotted;
+  flex-shrink: 0;
+  max-width: 1000px;
+}
+
+.settings-panel-top>summary {
+  cursor: pointer;
+  font-weight: bold;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.settings-panel-top[open]>summary {
+  padding-bottom: 0;
+}
+
+.settings-panel-top-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  width: 100%;
+}
+
+.settings-panel-top-col {
+  align-items: baseline;
+  display: flex;
+  flex-direction: column;
+  width: 19%;
+}
+
+.settings-panel-top-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 4px;
+  width: 100%;
+}
+
+.settings-panel-top-row label {
+  flex-grow: 1;
+}
+
+.settings-panel-top-row .timezone {
+  width: 60%;
+}
+
+.settings-panel-top-row .palette {
+  width: 40%;
+}
+
+.settings-panel-top-row input[type="number"],
+.settings-panel-top-row select {
+  width: 64px;
+}
+
+/* toggle cps */
+.toggle-cps-btn {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  background: #555;
+  color: #CCC;
+  border: 1px solid #888;
+  padding: 8px 4px;
+  cursor: pointer;
+  font-size: 12px;
+  writing-mode: vertical-lr;
+}
+
+/* spectrum, waterfall and cps view */
 .preview-container {
   display: none;
+  flex-shrink: 0;
   height: 125px;
   max-width: calc(100% - 320px);
   overflow-x: hidden;
@@ -146,16 +221,10 @@ input[type="radio"] {
   width: fit-content;
 }
 
-.plot-container,
-.plot-container .cps-container {
-  height: calc(100% - 212px);
-  /* - other controls height */
-}
-
-.plot-container.with-preview,
-.plot-container.with-preview .cps-container {
-  height: calc(100% - 212px - 125px);
-  /* - other controls height + preview heigth */
+.plot-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }
 
 .plot-container .waterfall-container {
@@ -169,6 +238,7 @@ input[type="radio"] {
 
 .plot-container .cps-container {
   display: inline-block;
+  height: 100%;
   position: absolute;
   overflow-y: scroll;
   overflow-x: scroll;
@@ -203,43 +273,179 @@ input[type="radio"] {
   width: 0;
 }
 
-.cps-control {
+/* bottom control panel */
+.settings-panel-bottom {
+  flex-shrink: 0;
+  max-width: 1000px;
+}
+
+.settings-panel-bottom>summary {
+  cursor: pointer;
+  font-weight: bold;
   padding-top: 8px;
+  padding-bottom: 8px;
 }
 
-.cps-control .numeric-input {
-  margin: 0 4px;
-  width: 150px;
+.settings-panel-bottom-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  width: 100%;
 }
 
-.cps-left-column {
-  display: inline-block;
-  width: 330px;
+.settings-panel-bottom-col {
+  align-items: baseline;
+  display: flex;
+  flex-direction: column;
 }
 
-.export-button {
-  width: 169px;
+.settings-panel-bottom-col:nth-child(1) {
+  width: 380px;
 }
 
-.export-bin-avg-button {
-  width: 100px;
+.settings-panel-bottom-col:nth-child(2) {
+  width: 280px;
+}
+
+.settings-panel-bottom-col button {
+  width: 140px;
+}
+
+.settings-panel-bottom-row {
+  align-items: baseline;
+  display: flex;
+  padding-top: 4px;
+  width: 100%;
+}
+
+.settings-panel-bottom-row-label {
+  flex-grow: 1;
+}
+
+.settings-panel-bottom-row-range-group input[type="number"] {
+  width: 70px;
+}
+
+.export-csv,
+.export-bin-avg {
   margin-right: 8px;
 }
 
-.export-csv, .export-rctrk {
-  width: 40px;
-}
-
-.spg-range-button {
-  width: 169px;
-}
-
+/* misc */
 .error {
   color: orangered;
 }
 
 .invisible {
   visibility: hidden;
+}
+
+@media (max-width: 1000px) {
+  body {
+    padding: 0 8px;
+  }
+
+  .status-text {
+    left: 400px
+  }
+
+  .toggle-cps-btn {
+    display: block;
+  }
+
+  .plot-container.cps-hidden .cps-container {
+    display: none;
+  }
+
+  .plot-container.cps-hidden .waterfall-container {
+    max-width: 100%;
+  }
+
+  .preview-container.cps-hidden {
+    max-width: 100%;
+  }
+
+  .settings-panel-top-col {
+    width: 30%;
+  }
+
+  .settings-panel-top-col:nth-child(4) {
+    margin-left: 35%;
+  }
+}
+
+@media (max-width: 700px) {
+  body {
+    padding: 0 4px;
+  }
+
+  .blocking-overlay {
+    top: 62px;
+  }
+
+  .status-text {
+    left: 250px
+  }
+
+  .col-import-bin {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .settings-panel-top-row,
+  .settings-panel-bottom-row {
+    padding-top: 8px;
+  }
+
+  .settings-panel-top-col {
+    width: 48%;
+  }
+
+  .settings-panel-top-col:nth-child(4) {
+    margin-left: 0;
+  }
+
+  .settings-panel-top-col:nth-child(5) {
+    margin-left: 52%;
+  }
+
+  .settings-panel-bottom-col:nth-child(1) {
+    width: 100%;
+  }
+
+  .settings-panel-bottom-col:nth-child(2) {
+    width: 100%;
+  }
+
+  .settings-panel-bottom-col button {
+    width: 155px;
+  }
+}
+
+@media (max-width: 450px) {
+  body {
+    padding: 0 2px;
+  }
+
+  .status-text {
+    left: 150px
+  }
+
+  .settings-panel-top-row,
+  .settings-panel-bottom-row {
+    padding-top: 12px;
+  }
+
+  .settings-panel-top-col,
+  .settings-panel-bottom-col {
+    width: 100%;
+  }
+
+  .settings-panel-top-col:nth-child(5) {
+    margin-left: 0;
+  }
 }</style>
   <script>
     (function () {
@@ -280,7 +486,7 @@ input[type="radio"] {
     const latStr = lines[4];
     const lonStr = lines[5];
     const name = lines[6];
-    const foundIsotopes = lines[7];
+    const deviceInfo = lines[7];
     const duration = parseFloat(lines[8]);
     const channelsCount = parseInt(lines[9]);
     const calibrationOrder = parseInt(lines[10]);
@@ -304,7 +510,7 @@ input[type="radio"] {
       latStr: latStr,
       lonStr: lonStr,
       name: name,
-      foundIsotopes: foundIsotopes,
+      deviceInfo: deviceInfo,
       duration: duration,
       channelCount: channels.length,
       calibration: calibration,
@@ -324,7 +530,7 @@ input[type="radio"] {
     text += spectrum.latStr + '\n';
     text += spectrum.lonStr + '\n';
     text += spectrum.name + '\n';
-    text += spectrum.foundIsotopes + '\n';
+    text += spectrum.deviceInfo + '\n';
     text += spectrum.duration + '\n';
     text += spectrum.channelCount + '\n';
     text += (spectrum.calibration.length - 1) + '\n';
@@ -462,7 +668,7 @@ input[type="radio"] {
       latStr: '0.0',
       lonStr: '0.0',
       name: baseSpectrum.name,
-      foundIsotopes: '',
+      deviceInfo: baseSpectrum.deviceInfo,
       duration: combinedDelta.duration,
       channelCount: combinedDelta.channels.length,
       calibration: baseSpectrum.calibration,
@@ -709,173 +915,231 @@ input[type="radio"] {
 <body>
   <div id="blocking-overlay" class="blocking-overlay"></div>
   <div id="status-text" class="status-text">...</div>
-  <div id="upload-control" class="upload-control">
-    <span>Spectrogram file(s):</span>
-    <input id="file-input" class="file-input" type="file" accept=".txt" name="files" multiple="multiple">
-    <label for="import-channel-binning" title="Bin channels during import (reduces memory usage and render time)">Import
-      channel binning:</label>
-    <select name="import-channel-binning" id="import-channel-binning">
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="4" selected>4</option>
-      <option value="8">8</option>
-      <option value="16">16</option>
-      <option value="32">32</option>
-    </select>
+  <div id="upload-controls" class="upload-controls-row">
+    <div class="col-upload">
+      <span>File(s):</span>
+      <input id="file-input" class="file-input" type="file" accept=".txt" name="files" multiple="multiple">
+    </div>
+    <div class="col-import-bin">
+      <label for="import-channel-binning" title="Bin channels during import (reduces memory usage and render time)">
+        Import channel binning:
+      </label>
+      <select name="import-channel-binning" id="import-channel-binning">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="4" selected>4</option>
+        <option value="8">8</option>
+        <option value="16">16</option>
+        <option value="32">32</option>
+      </select>
+    </div>
   </div>
-  <div id="file-info-container" class="upload-control">
+  <div id="file-info-container" class="file-info-row">
     <span id="file-info"></span>
   </div>
-  <div id="waterfall-control" class="waterfall-control">
-    <div class="row">
-      <div class="col">
-        <input type="radio" id="lin" name="scale" value="lin">
-        <label for="lin">LIN</label>
-        <input type="radio" id="sqrt" name="scale" value="sqrt" checked>
-        <label for="sqrt">SQRT</label>
-        <input type="radio" id="log" name="scale" value="log">
-        <label for="log">LOG</label>
+  <details class="settings-panel-top">
+    <summary>Waterfall settings</summary>
+    <div class="settings-panel-top-container">
+      <!-- scale and time -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <div>
+            <input type="radio" id="lin" name="scale" value="lin">
+            <label for="lin">LIN</label>
+          </div>
+          <div>
+            <input type="radio" id="sqrt" name="scale" value="sqrt" checked>
+            <label for="sqrt">SQRT</label>
+          </div>
+          <div>
+            <input type="radio" id="log" name="scale" value="log">
+            <label for="log">LOG</label>
+          </div>
+        </div>
+        <div class="settings-panel-top-row">
+          <select name="palette" id="palette" class="palette">
+            <option value="iron" selected>Iron</option>
+            <option value="lime">Lime</option>
+            <option value="yellow">Yellow</option>
+            <option value="glow">Glow</option>
+            <option value="gray">Gray</option>
+          </select>
+          &nbsp;
+          <select name="timezone" id="timezone" class="timezone">
+            <option value="-11">-11 h</option>
+            <option value="-10">-10 h</option>
+            <option value="-9">-9 h</option>
+            <option value="-8">-8 h</option>
+            <option value="-7">-7 h</option>
+            <option value="-6">-6 h</option>
+            <option value="-5">-5 h</option>
+            <option value="-4">-4 h</option>
+            <option value="-3">-3 h</option>
+            <option value="-2">-2 h</option>
+            <option value="-1">-1 h</option>
+            <option value="0">UTC</option>
+            <option value="local" selected>Local time</option>
+            <option value="1">+1 h</option>
+            <option value="2">+2 h</option>
+            <option value="3">+3 h</option>
+            <option value="4">+4 h</option>
+            <option value="5">+5 h</option>
+            <option value="6">+6 h</option>
+            <option value="7">+7 h</option>
+            <option value="8">+8 h</option>
+            <option value="9">+9 h</option>
+            <option value="10">+10 h</option>
+            <option value="11">+11 h</option>
+            <option value="12">+12 h</option>
+          </select>
+        </div>
       </div>
-      <div class="col">
-        <input type="checkbox" id="blur-waterfall" name="blur-waterfall" />
-        <label for="blur-waterfall">Blur waterfall image</label>
+      <!-- blur and subtract -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <input type="checkbox" id="blur-waterfall" name="blur-waterfall" />
+          <label for="blur-waterfall">Blur waterfall image</label>
+        </div>
+        <div class="settings-panel-top-row">
+          <input type="checkbox" id="subtract-base" name="subtract-base" />
+          <label for="subtract-base" id="subtract-base-label"
+            title="Subtract base spectrum from all spectrogram rows">Subtract base</label>
+        </div>
       </div>
-      <div class="col">
-        <label for="spectrum-binning" title="Combine spectrogram rows">Spectrum bin:</label>
-        <input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning" />
+      <!-- spectrum and channel bin -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <label for="spectrum-binning" title="Combine spectrogram rows">Spectrum bin:</label>
+          <input type="number" min="1" value="1" name="spectrum-binning" id="spectrum-binning" />
+        </div>
+        <div class="settings-panel-top-row">
+          <label for="channel-binning" title="Combine spectrogram channels">Channel bin:</label>
+          <select name="channel-binning" id="channel-binning">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="32">32</option>
+          </select>
+        </div>
       </div>
-      <div class="col">
-        <label for="max-cps"
-          title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any cps higher than 50% of max cps over whole spectrogram">Scale
-          max(%):</label>
-        <input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100" />
+      <!-- dynamic range -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <label for="max-cps"
+            title="Maximum value for a chosen color palette, i.e setting to 50% will use max palette color for any cps higher than 50% of max cps over whole spectrogram">Scale
+            max(%):</label>
+          <input type="number" name="max-cps" id="max-cps" min="0" max="100" step="10" value="100" />
+        </div>
+        <div class="settings-panel-top-row">
+          <label for="min-cps"
+            title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any cps lower than 10% of max cps over whole spectrogram">Scale
+            min(%):</label>
+          <input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0" />
+        </div>
       </div>
-      <div class="col">
-        <label for="moving-average-vertical" title="Smooth spectrogram vertically">Moving avg(v):</label>
-        <input type="number" name="moving-average-vertical" id="moving-average-vertical" min="0" step="1" value="0" />
+      <!-- averaging -->
+      <div class="settings-panel-top-col">
+        <div class="settings-panel-top-row">
+          <label for="moving-average-vertical" title="Smooth spectrogram vertically">Moving avg(v):</label>
+          <input type="number" name="moving-average-vertical" id="moving-average-vertical" min="0" step="1" value="0" />
+        </div>
+        <div class="settings-panel-top-row">
+          <label for="moving-average-horizontal" title="Smooth spectrogram horizontally">Moving avg(h):</label>
+          <input type="number" name="moving-average-horizontal" id="moving-average-horizontal" min="0" step="1"
+            value="0" />
+        </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col">
-        <select name="palette" id="palette" class="palette">
-          <option value="iron" selected>Iron</option>
-          <option value="lime">Lime</option>
-          <option value="yellow">Yellow</option>
-          <option value="glow">Glow</option>
-          <option value="gray">Gray</option>
-        </select>
-        &nbsp;
-        <select name="timezone" id="timezone" class="timezone">
-          <option value="-11">-11 h</option>
-          <option value="-10">-10 h</option>
-          <option value="-9">-9 h</option>
-          <option value="-8">-8 h</option>
-          <option value="-7">-7 h</option>
-          <option value="-6">-6 h</option>
-          <option value="-5">-5 h</option>
-          <option value="-4">-4 h</option>
-          <option value="-3">-3 h</option>
-          <option value="-2">-2 h</option>
-          <option value="-1">-1 h</option>
-          <option value="0">UTC</option>
-          <option value="local" selected>Local time</option>
-          <option value="1">+1 h</option>
-          <option value="2">+2 h</option>
-          <option value="3">+3 h</option>
-          <option value="4">+4 h</option>
-          <option value="5">+5 h</option>
-          <option value="6">+6 h</option>
-          <option value="7">+7 h</option>
-          <option value="8">+8 h</option>
-          <option value="9">+9 h</option>
-          <option value="10">+10 h</option>
-          <option value="11">+11 h</option>
-          <option value="12">+12 h</option>
-        </select>
-      </div>
-      <div class="col">
-        <input type="checkbox" id="subtract-base" name="subtract-base" />
-        <label for="subtract-base" id="subtract-base-label"
-          title="Subtract base spectrum from all spectrogram rows">Subtract base</label>
-      </div>
-      <div class="col">
-        <label for="channel-binning" title="Combine spectrogram channels">Channel bin:</label>
-        <select name="channel-binning" id="channel-binning">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="4">4</option>
-          <option value="8">8</option>
-          <option value="16" selected>16</option>
-          <option value="32">32</option>
-        </select>
-      </div>
-      <div class="col">
-        <label for="min-cps"
-          title="Minimum value for a chosen color palette, i.e setting to 10% will use min palette color for any cps lower than 10% of max cps over whole spectrogram">Scale
-          min(%):</label>
-        <input type="number" name="min-cps" id="min-cps" min="0" max="99" step="1" value="0" />
-      </div>
-      <div class="col">
-        <label for="moving-average-horizontal" title="Smooth spectrogram horizontally">Moving avg(h):</label>
-        <input type="number" name="moving-average-horizontal" id="moving-average-horizontal" min="0" step="1"
-          value="0" />
-      </div>
-    </div>
-  </div>
+  </details>
+  <!-- spectrum preview -->
   <div id="preview-container" class="preview-container">
     <canvas id="preview-plot" class="plot" width="662" height="0"></canvas>
   </div>
+  <!-- waterfall and cps -->
   <div id="plot-container" class="plot-container">
     <div id="horizontal-cursor" class="horizontal-cursor"></div>
     <div id="vertical-cursor" class="vertical-cursor"></div>
     <div id="waterfall-container" class="waterfall-container">
       <canvas id="waterfall-plot" class="plot" width="662" height="0"></canvas>
     </div>
+    <button id="toggle-cps" class="toggle-cps-btn">CPS &#x25C0;</button>
     <div id="cps-container" class="cps-container">
       <canvas id="cps-plot" class="cps-plot" width="0" height="0"></canvas>
     </div>
   </div>
-  <div id="cps-control" class="cps-control">
-    <div class="row">
-      <label id="render-cps" class="cps-left-column" title="Cps plot displays count rate in a given channel range">Cps
-        in channel range_1:</label>
-      <input type="number" id="from-channel-1" class="numeric-input" title="Channel range start" />-<input type="number"
-        id="to-channel-1" class="numeric-input" title="Channel range end" />
-      <button id="export-cps" class="export-button" title="Export raw cps data to file">Export cps</button>
-      <button id="export-bin-avg-cps" class="export-bin-avg-button"
-        title="Export binned/averaged cps data to file">Binned/Avg</button>
-      <input type="radio" id="cps-csv-export" name="cps-export-type" checked="checked"/>
-      <label for="cps-csv-export" class="export-csv" title="Export cps data as .csv file">csv</label>
-    </div>
-    <div class="row">
-      <div class="cps-left-column">
-        <input type="checkbox" id="cps-ratio" name="cps-ratio" />
-        <label for="cps-ratio" title="Cps plot displays count rate ratio for given channel ranges">Ratio to cps in
-          channel range_2:</label>
+  <!-- cps/export settings -->
+  <details class="settings-panel-bottom">
+    <summary>Range / Export settings</summary>
+    <div class="settings-panel-bottom-container">
+      <!-- cps and spg ranges -->
+      <div class="settings-panel-bottom-col">
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label">
+            <input type="checkbox" checked disabled />
+            <label title="Cps plot displays count rate in a given channel range">Cps
+              in channel range_1:</label>
+          </div>
+          <div class="settings-panel-bottom-row-range-group">
+            <input type="number" id="from-channel-1" class="numeric-input" title="Channel range start" /> - <input
+              type="number" id="to-channel-1" class="numeric-input" title="Channel range end" />
+          </div>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label">
+            <input type="checkbox" id="cps-ratio" name="cps-ratio" />
+            <label for="cps-ratio" title="Cps plot displays count rate ratio for given channel ranges">Ratio to cps in
+              range_2:</label>
+          </div>
+          <div class="settings-panel-bottom-row-range-group">
+            <input type="number" id="from-channel-2" class="numeric-input" title="Channel range start" /> - <input
+              type="number" id="to-channel-2" class="numeric-input" title="Channel range end" />
+          </div>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label">
+            <input type="checkbox" id="preview-enabled" name="preview-enabled" />
+            <label for="preview-enabled" title="Combine range of spectrogram rows into single preview spectrum">Spectrum
+              in spg range:</label>
+          </div>
+          <div class="settings-panel-bottom-row-range-group">
+            <input type="number" id="from-spectrum" class="numeric-input" title="Range start row index" /> - <input
+              type="number" id="to-spectrum" class="numeric-input" title="Range end row index" />
+          </div>
+        </div>
       </div>
-      <input type="number" id="from-channel-2" class="numeric-input" title="Channel range start" />-<input type="number"
-        id="to-channel-2" class="numeric-input" title="Channel range end" />
-      <button id="export-cps-ratio" class="export-button" title="Export raw cps ratio data to file" disabled>Export cps ratio</button>
-      <button id="export-bin-avg-cps-ratio" class="export-bin-avg-button"
-        title="Export binned/averaged cps ratio data to file" disabled>Binned/Avg</button>
-      <input type="radio" id="cps-rctrk-export" name="cps-export-type"/>
-      <label for="cps-rctrk-export" class="export-rctrk" title="Export cps data as .rctrk file">rctrk</label>
-    </div>
-    <div class="row">
-      <div class="cps-left-column">
-        <input type="checkbox" id="preview-enabled" name="preview-enabled" />
-        <label for="preview-enabled" title="Combine range of spectrogram rows into single preview spectrum">Preview
-          spectrum in spectrogram range:</label>
+      <!-- export settings -->
+      <div class="settings-panel-bottom-col">
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label"><input type="checkbox" id="bin-avg-export"
+              name="bin-avg-export" />
+            <label for="bin-avg-export" class="export-bin-avg" title="Export binned/averaged cps data">Export bin/avg
+              cps</label>
+          </div>
+          <div>
+            <input type="radio" id="cps-csv-export" name="cps-export-type" checked="checked" />
+            <label for="cps-csv-export" class="export-csv" title="Export cps data as .csv file">csv</label>
+          </div>
+          <div>
+            <input type="radio" id="cps-rctrk-export" name="cps-export-type" />
+            <label for="cps-rctrk-export" class="export-rctrk" title="Export cps data as .rctrk file">rctrk</label>
+          </div>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label"></div>
+          <button id="export-cps" class="export-button" title="Export cps data to file">Export cps</button>
+        </div>
+        <div class="settings-panel-bottom-row">
+          <div class="settings-panel-bottom-row-label"></div>
+          <button id="spg-range-as-base" class="spg-range-button"
+            title="Set spectrum, combined from a given range, as a base spectrum">Spectrum as base</button>
+          <button id="spg-range-to-file" class="spg-range-button"
+            title="Export spectrum, combined from a given range, to a file">Export spectrum</button>
+        </div>
       </div>
-      <input type="number" id="from-spectrum" class="numeric-input" placeholder="from index"
-        title="Range start row index" />-<input type="number" id="to-spectrum" class="numeric-input"
-        placeholder="to index" title="Range end row index" />
-      <button id="spg-range-as-base" class="spg-range-button"
-        title="Set spectrum, combined from a given range, as a base spectrum">Spg range as base</button>
-      <button id="spg-range-to-file" class="spg-range-button"
-        title="Export spectrum, combined from a given range, to a file">Spg range to file</button>
     </div>
-  </div>
+  </details>
   <script>(function () {
   const statusText = document.getElementById('status-text');
 
@@ -1273,11 +1537,11 @@ input[type="radio"] {
     for (let tsIndex = 0; tsIndex < timestamps.length; tsIndex++) {
       const timestamp = timestamps[tsIndex];
       const previousTimestamp = tsIndex > 0 ? timestamps[tsIndex - 1] : timestamp;
-      const currentDeltaDuration = waterfallData.deltas[tsIndex].duration;
       const previousDeltaDuration = tsIndex > 0 ? waterfallData.deltas[tsIndex - 1].duration : 0;
       const secondsElapsedSinceLastDelta = (timestamp - previousTimestamp) / 1000;
       // time gap usually happens when multiple spectrograms are concatenated
-      const isTimeGap = secondsElapsedSinceLastDelta > previousDeltaDuration + 1;
+      // spectrum binning intensifies time gaps leading to all red time axis
+      const isTimeGap = secondsElapsedSinceLastDelta > previousDeltaDuration + 1 * (1 + waterfallState.spectrumBinning / 10);
 
       // label tick or gap tick
       if (tsIndex % constants.timestampHeight === 0 || isTimeGap) {
@@ -1607,6 +1871,7 @@ input[type="radio"] {
   const cpsContainer = document.getElementById('cps-container');
   const waterfallPlot = document.getElementById('waterfall-plot');
   const cpsPlot = document.getElementById('cps-plot');
+  const plotContainer = document.getElementById('plot-container');
   const wfHorizontalCursor = document.getElementById('horizontal-cursor');
   const wfVerticalCursor = document.getElementById('vertical-cursor');
 
@@ -1715,7 +1980,8 @@ input[type="radio"] {
 
     // vertical line
     const wfContainerRect = wfContainer.getBoundingClientRect();
-    wfVerticalCursor.style.left = offsetX + wfContainerRect.left - wfContainer.scrollLeft + window.scrollX;
+    const plotRect = plotContainer.getBoundingClientRect();
+    wfVerticalCursor.style.left = offsetX + wfContainerRect.left - plotRect.left - wfContainer.scrollLeft + 'px';
     if (wfContainerRect.height < waterfallData.deltas.length + constants.channelAxisHeight) {
       wfVerticalCursor.style.height = wfContainerRect.height + 'px';
     } else {
@@ -1724,8 +1990,8 @@ input[type="radio"] {
 
     // horizontal line
     const cpsContainerRect = cpsContainer.getBoundingClientRect();
-    wfHorizontalCursor.style.top = offsetY + wfContainerRect.top - wfContainer.scrollTop + window.scrollY;
-    wfHorizontalCursor.style.left = wfContainerRect.left;
+    wfHorizontalCursor.style.top = offsetY + wfContainerRect.top - plotRect.top - wfContainer.scrollTop + 'px';
+    wfHorizontalCursor.style.left = wfContainerRect.left - plotRect.left + 'px';
     wfHorizontalCursor.style.width = wfContainerRect.width + cpsContainerRect.width + 'px';
   }
 
@@ -1746,8 +2012,9 @@ input[type="radio"] {
     // horizontal line
     const wfContainerRect = wfContainer.getBoundingClientRect();
     const cpsContainerRect = cpsContainer.getBoundingClientRect();
-    wfHorizontalCursor.style.top = offsetX + cpsContainerRect.top - cpsContainer.scrollTop + window.scrollY;
-    wfHorizontalCursor.style.left = wfContainerRect.left;
+    const plotRect = plotContainer.getBoundingClientRect();
+    wfHorizontalCursor.style.top = offsetX + cpsContainerRect.top - plotRect.top - cpsContainer.scrollTop + 'px';
+    wfHorizontalCursor.style.left = wfContainerRect.left - plotRect.left + 'px';
     wfHorizontalCursor.style.width = wfContainerRect.width + cpsContainerRect.width + 'px';
   }
 
@@ -1846,7 +2113,17 @@ input[type="radio"] {
   blurCheckbox.addEventListener('change', (e) => onWaterfallBlurChange(e.target.checked));
   // end
 
+  // cps toggle
+  const toggleCpsBtn = document.getElementById('toggle-cps');
+  toggleCpsBtn.addEventListener('click', () => {
+    plotContainer.classList.toggle('cps-hidden');
+    previewContainer.classList.toggle('cps-hidden');
+    toggleCpsBtn.textContent = plotContainer.classList.contains('cps-hidden')
+      ? 'CPS \u25C0' : 'CPS \u25B6';
+  });
+
   // bottom section (cps related)
+  // ranges
   const fromChannelInput1 = document.getElementById('from-channel-1');
   const toChannelInput1 = document.getElementById('to-channel-1');
   const previewCheckbox = document.getElementById('preview-enabled');
@@ -1855,18 +2132,16 @@ input[type="radio"] {
   const fromSpectrumInput = document.getElementById('from-spectrum');
   const toSpectrumInput = document.getElementById('to-spectrum');
   const cpsRatioCheckbox = document.getElementById('cps-ratio');
+  // export
   const cpsCsvExportRadio = document.getElementById('cps-csv-export');
+  const binAvgExportCheckbox = document.getElementById('bin-avg-export');
   const cpsExportButton = document.getElementById('export-cps');
-  const cpsBinAvgExportButton = document.getElementById('export-bin-avg-cps');
-  const cpsRatioExportButton = document.getElementById('export-cps-ratio');
-  const cpsRatioBinAvgExportButton = document.getElementById('export-bin-avg-cps-ratio');
   const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
   const spgAsBaseButton = document.getElementById('spg-range-as-base');
+
+  // handlers
   cpsRatioCheckbox.addEventListener('change', async () => onCompareCheckboxChange());
-  cpsExportButton.addEventListener('click', () => exportCps(false, cpsCsvExportRadio.checked));
-  cpsRatioExportButton.addEventListener('click', () => exportCpsRatio(false, cpsCsvExportRadio.checked));
-  cpsBinAvgExportButton.addEventListener('click', () => exportCps(true, cpsCsvExportRadio.checked));
-  cpsRatioBinAvgExportButton.addEventListener('click', () => exportCpsRatio(true, cpsCsvExportRadio.checked));
+  cpsExportButton.addEventListener('click', () => exportCps(cpsRatioCheckbox.checked, binAvgExportCheckbox.checked, cpsCsvExportRadio.checked));
   spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
   spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
   previewCheckbox.addEventListener('change', async () => await previewEnabledChange());
@@ -1883,6 +2158,14 @@ input[type="radio"] {
   const cpsCanvas = document.getElementById('cps-plot');
   const previewContainer = document.getElementById('preview-container');
   const previewCanvas = document.getElementById('preview-plot');
+
+  if (window.matchMedia('(max-width: 1000px)').matches) {
+    plotContainer.classList.add('cps-hidden');
+    previewContainer.classList.add('cps-hidden');
+    toggleCpsBtn.textContent = 'CPS \u25C0';
+  } else {
+    toggleCpsBtn.textContent = 'CPS \u25B6';
+  }
 
   // hotkeys
   const keyboardState = {
@@ -2021,14 +2304,12 @@ input[type="radio"] {
 
   function showPreview() {
     waterfallState.previewEnabled = true;
-    plotContainer.classList.add('with-preview');
     previewContainer.style.display = 'block';
     previewCanvas.height = 0;
   }
 
   function hidePreview() {
     waterfallState.previewEnabled = false;
-    plotContainer.classList.remove('with-preview');
     previewContainer.style.display = 'none';
   }
 
@@ -2335,8 +2616,7 @@ input[type="radio"] {
 
   async function onCompareCheckboxChange() {
     waterfallState.compareCps = cpsRatioCheckbox.checked;
-    cpsRatioExportButton.disabled = !waterfallState.compareCps;
-    cpsRatioBinAvgExportButton.disabled = !waterfallState.compareCps;
+    cpsExportButton.innerText = waterfallState.compareCps ? 'Export cps ratio' : 'Export cps';
 
     await waterfallPlot.renderChannelSelectionAsync();
     await cpsPlot.renderCpsAsync();
@@ -2424,73 +2704,22 @@ input[type="radio"] {
     }
   }
 
-  function exportCps(binAvg, csv) {
-    const range = waterfallState.channelRange1;
-    if (!range || range.length !== 2) {
-      alert('Error: invalid channel range 1.');
-      return;
-    }
-
-    const energyRange = getEnergyRangeStr(range);
-    const description = originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range ' + energyRange;
-    let data = '';
-    if (csv) {
-      if (binAvg) {
-        data = exports.getCSV(
-          waterfallData.deltas,
-          range,
-          undefined,
-          waterfallState.timeOffsetHours
-        );
-      } else {
-        data = exports.getCSV(
-          originalWaterfallData.deltas,
-          common.rangeToOriginalRange(range),
-          undefined,
-          waterfallState.timeOffsetHours
-        );
-      }
-    } else {
-      if (binAvg) {
-        data = exports.getRctrkData(
-          description,
-          waterfallData.deltas,
-          range,
-          undefined,
-        );
-      } else {
-        data = exports.getRctrkData(
-          description,
-          originalWaterfallData.deltas,
-          common.rangeToOriginalRange(range),
-          undefined
-        );
-      }
-    }
-
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + '-cps';
-    if (csv) {
-      saveFile(filename, 'csv', data, 'text/csv');
-    } else {
-      saveFile(filename, 'rctrk', data, 'text/rctrk');
-      return;
-    }
-  }
-
-  function exportCpsRatio(binAvg, csv) {
+  function exportCps(ratio, binAvg, csv) {
     const range = waterfallState.channelRange1;
     if (!range || range.length !== 2) {
       alert('Error: invalid channel range 1.');
       return;
     }
     const compareRange = waterfallState.channelRange2;
-    if (!compareRange || compareRange.length !== 2) {
+    if (ratio && (!compareRange || compareRange.length !== 2)) {
       alert('Error: invalid channel range 2.');
       return;
     }
     const energyRange = getEnergyRangeStr(range);
-    const compareEnergyRange = getEnergyRangeStr(compareRange);
-    const description = originalWaterfallData.baseSpectrum.name + ' CP2S: cps ratio for ranges ' + energyRange + '/' + compareEnergyRange;
+    const compareEnergyRange = ratio ? getEnergyRangeStr(compareRange) : undefined;
+    const description = ratio
+      ? originalWaterfallData.baseSpectrum.name + ' CP2S: cps ratio for ranges ' + energyRange + '/' + compareEnergyRange
+      : originalWaterfallData.baseSpectrum.name + ' CP2S: cps for range ' + energyRange;
 
     let data = '';
     if (csv) {
@@ -2498,14 +2727,14 @@ input[type="radio"] {
         data = exports.getCSV(
           waterfallData.deltas,
           range,
-          compareRange,
+          ratio ? compareRange : undefined,
           waterfallState.timeOffsetHours
         );
       } else {
         data = exports.getCSV(
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          common.rangeToOriginalRange(compareRange),
+          ratio ? common.rangeToOriginalRange(compareRange) : undefined,
           waterfallState.timeOffsetHours
         );
       }
@@ -2515,19 +2744,21 @@ input[type="radio"] {
           description,
           waterfallData.deltas,
           range,
-          compareRange
+          ratio ? compareRange : undefined
         );
       } else {
         data = exports.getRctrkData(
           description,
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          common.rangeToOriginalRange(compareRange)
+          ratio ? common.rangeToOriginalRange(compareRange) : undefined
         );
       }
     }
 
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange + '-cps-ratio';
+    let filename = ratio
+      ? originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange + '-cps-ratio'
+      : originalWaterfallData.baseSpectrum.name + '-' + energyRange + '-cps';
     if (csv) {
       saveFile(filename, 'csv', data, 'text/csv');
     } else {
@@ -2618,7 +2849,7 @@ input[type="radio"] {
 </script>
   <script>(function () {
   // startup - check if we have to run with nodejs prepared data or user loads it in browser
-  const uploadControl = document.getElementById('upload-control');
+  const uploadControl = document.getElementById('upload-controls');
   const infoContainer = document.getElementById('file-info-container');
   const infoSpan = document.getElementById('file-info');
   const overlay = document.getElementById('blocking-overlay');
@@ -2631,13 +2862,13 @@ input[type="radio"] {
   });
 
   if (window.originalWaterfallData === 'waterfall-data-placeholder') {
-    uploadControl.style.display = 'block';
+    uploadControl.style.display = 'flex';
     infoContainer.style.display = 'none';
   } else {
     uploadControl.style.display = 'none';
     overlay.style.display = 'none';
-    infoContainer.style.display = 'block';
-    infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
+    infoContainer.style.display = 'flex';
+    infoSpan.innerText = 'File: ' + originalWaterfallData.filename + '; import binning - '
       + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
 
     startupAsync();
@@ -2670,7 +2901,10 @@ input[type="radio"] {
           const spectrumBin = 1;
           deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
           baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
+          const filename = baseSpectrums.length > 1 
+            ? 'concatenated(' + baseSpectrums.map(b => b.name).join(', ') + ')'   
+            : baseSpectrums[0].name;
+          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, filename);
   
           await startupAsync();
         } else {

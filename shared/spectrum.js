@@ -13,7 +13,7 @@
     const latStr = lines[4];
     const lonStr = lines[5];
     const name = lines[6];
-    const foundIsotopes = lines[7];
+    const deviceInfo = lines[7];
     const duration = parseFloat(lines[8]);
     const channelsCount = parseInt(lines[9]);
     const calibrationOrder = parseInt(lines[10]);
@@ -37,7 +37,7 @@
       latStr: latStr,
       lonStr: lonStr,
       name: name,
-      foundIsotopes: foundIsotopes,
+      deviceInfo: deviceInfo,
       duration: duration,
       channelCount: channels.length,
       calibration: calibration,
@@ -57,7 +57,7 @@
     text += spectrum.latStr + '\n';
     text += spectrum.lonStr + '\n';
     text += spectrum.name + '\n';
-    text += spectrum.foundIsotopes + '\n';
+    text += spectrum.deviceInfo + '\n';
     text += spectrum.duration + '\n';
     text += spectrum.channelCount + '\n';
     text += (spectrum.calibration.length - 1) + '\n';
@@ -195,7 +195,7 @@
       latStr: '0.0',
       lonStr: '0.0',
       name: baseSpectrum.name,
-      foundIsotopes: '',
+      deviceInfo: baseSpectrum.deviceInfo,
       duration: combinedDelta.duration,
       channelCount: combinedDelta.channels.length,
       calibration: baseSpectrum.calibration,

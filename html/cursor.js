@@ -5,6 +5,7 @@
   const cpsContainer = document.getElementById('cps-container');
   const waterfallPlot = document.getElementById('waterfall-plot');
   const cpsPlot = document.getElementById('cps-plot');
+  const plotContainer = document.getElementById('plot-container');
   const wfHorizontalCursor = document.getElementById('horizontal-cursor');
   const wfVerticalCursor = document.getElementById('vertical-cursor');
 
@@ -113,7 +114,8 @@
 
     // vertical line
     const wfContainerRect = wfContainer.getBoundingClientRect();
-    wfVerticalCursor.style.left = offsetX + wfContainerRect.left - wfContainer.scrollLeft + window.scrollX;
+    const plotRect = plotContainer.getBoundingClientRect();
+    wfVerticalCursor.style.left = offsetX + wfContainerRect.left - plotRect.left - wfContainer.scrollLeft + 'px';
     if (wfContainerRect.height < waterfallData.deltas.length + constants.channelAxisHeight) {
       wfVerticalCursor.style.height = wfContainerRect.height + 'px';
     } else {
@@ -122,8 +124,8 @@
 
     // horizontal line
     const cpsContainerRect = cpsContainer.getBoundingClientRect();
-    wfHorizontalCursor.style.top = offsetY + wfContainerRect.top - wfContainer.scrollTop + window.scrollY;
-    wfHorizontalCursor.style.left = wfContainerRect.left;
+    wfHorizontalCursor.style.top = offsetY + wfContainerRect.top - plotRect.top - wfContainer.scrollTop + 'px';
+    wfHorizontalCursor.style.left = wfContainerRect.left - plotRect.left + 'px';
     wfHorizontalCursor.style.width = wfContainerRect.width + cpsContainerRect.width + 'px';
   }
 
@@ -144,8 +146,9 @@
     // horizontal line
     const wfContainerRect = wfContainer.getBoundingClientRect();
     const cpsContainerRect = cpsContainer.getBoundingClientRect();
-    wfHorizontalCursor.style.top = offsetX + cpsContainerRect.top - cpsContainer.scrollTop + window.scrollY;
-    wfHorizontalCursor.style.left = wfContainerRect.left;
+    const plotRect = plotContainer.getBoundingClientRect();
+    wfHorizontalCursor.style.top = offsetX + cpsContainerRect.top - plotRect.top - cpsContainer.scrollTop + 'px';
+    wfHorizontalCursor.style.left = wfContainerRect.left - plotRect.left + 'px';
     wfHorizontalCursor.style.width = wfContainerRect.width + cpsContainerRect.width + 'px';
   }
 

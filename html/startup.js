@@ -1,6 +1,6 @@
 (function () {
   // startup - check if we have to run with nodejs prepared data or user loads it in browser
-  const uploadControl = document.getElementById('upload-control');
+  const uploadControl = document.getElementById('upload-controls');
   const infoContainer = document.getElementById('file-info-container');
   const infoSpan = document.getElementById('file-info');
   const overlay = document.getElementById('blocking-overlay');
@@ -13,13 +13,13 @@
   });
 
   if (window.originalWaterfallData === 'waterfall-data-placeholder') {
-    uploadControl.style.display = 'block';
+    uploadControl.style.display = 'flex';
     infoContainer.style.display = 'none';
   } else {
     uploadControl.style.display = 'none';
     overlay.style.display = 'none';
-    infoContainer.style.display = 'block';
-    infoSpan.innerText = 'Atomspectra file: ' + originalWaterfallData.filename + '; already applied binning - '
+    infoContainer.style.display = 'flex';
+    infoSpan.innerText = 'File: ' + originalWaterfallData.filename + '; import binning - '
       + 'spectrum: ' + originalWaterfallData.spectrumBinning + ', channel: ' + originalWaterfallData.channelBinning;
 
     startupAsync();
@@ -52,7 +52,10 @@
           const spectrumBin = 1;
           deltas = deltas.sort((d1, d2) => d1.timestamp > d2.timestamp ? 1 : -1);
           baseSpectrums = baseSpectrums.sort((b1, b2) => b1.timestamp > b2.timestamp ? 1 : -1);
-          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, 'Concatenated_spectrograms');
+          const filename = baseSpectrums.length > 1 
+            ? 'concatenated(' + baseSpectrums.map(b => b.name).join(', ') + ')'   
+            : baseSpectrums[0].name;
+          window.originalWaterfallData = exports.createWaterfallData(baseSpectrums[0], deltas, importChannelBin, spectrumBin, filename);
   
           await startupAsync();
         } else {

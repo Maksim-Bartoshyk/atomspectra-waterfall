@@ -39,7 +39,17 @@
   blurCheckbox.addEventListener('change', (e) => onWaterfallBlurChange(e.target.checked));
   // end
 
+  // cps toggle
+  const toggleCpsBtn = document.getElementById('toggle-cps');
+  toggleCpsBtn.addEventListener('click', () => {
+    plotContainer.classList.toggle('cps-hidden');
+    previewContainer.classList.toggle('cps-hidden');
+    toggleCpsBtn.textContent = plotContainer.classList.contains('cps-hidden')
+      ? 'CPS \u25C0' : 'CPS \u25B6';
+  });
+
   // bottom section (cps related)
+  // ranges
   const fromChannelInput1 = document.getElementById('from-channel-1');
   const toChannelInput1 = document.getElementById('to-channel-1');
   const previewCheckbox = document.getElementById('preview-enabled');
@@ -48,18 +58,16 @@
   const fromSpectrumInput = document.getElementById('from-spectrum');
   const toSpectrumInput = document.getElementById('to-spectrum');
   const cpsRatioCheckbox = document.getElementById('cps-ratio');
+  // export
   const cpsCsvExportRadio = document.getElementById('cps-csv-export');
+  const binAvgExportCheckbox = document.getElementById('bin-avg-export');
   const cpsExportButton = document.getElementById('export-cps');
-  const cpsBinAvgExportButton = document.getElementById('export-bin-avg-cps');
-  const cpsRatioExportButton = document.getElementById('export-cps-ratio');
-  const cpsRatioBinAvgExportButton = document.getElementById('export-bin-avg-cps-ratio');
   const spgToSpectrumFileButton = document.getElementById('spg-range-to-file');
   const spgAsBaseButton = document.getElementById('spg-range-as-base');
+
+  // handlers
   cpsRatioCheckbox.addEventListener('change', async () => onCompareCheckboxChange());
-  cpsExportButton.addEventListener('click', () => exportCps(false, cpsCsvExportRadio.checked));
-  cpsRatioExportButton.addEventListener('click', () => exportCpsRatio(false, cpsCsvExportRadio.checked));
-  cpsBinAvgExportButton.addEventListener('click', () => exportCps(true, cpsCsvExportRadio.checked));
-  cpsRatioBinAvgExportButton.addEventListener('click', () => exportCpsRatio(true, cpsCsvExportRadio.checked));
+  cpsExportButton.addEventListener('click', () => exportCps(cpsRatioCheckbox.checked, binAvgExportCheckbox.checked, cpsCsvExportRadio.checked));
   spgToSpectrumFileButton.addEventListener('click', () => exportSpectrumRange());
   spgAsBaseButton.addEventListener('click', () => spectrumRangeAsBase());
   previewCheckbox.addEventListener('change', async () => await previewEnabledChange());
@@ -76,6 +84,14 @@
   const cpsCanvas = document.getElementById('cps-plot');
   const previewContainer = document.getElementById('preview-container');
   const previewCanvas = document.getElementById('preview-plot');
+
+  if (window.matchMedia('(max-width: 1000px)').matches) {
+    plotContainer.classList.add('cps-hidden');
+    previewContainer.classList.add('cps-hidden');
+    toggleCpsBtn.textContent = 'CPS \u25C0';
+  } else {
+    toggleCpsBtn.textContent = 'CPS \u25B6';
+  }
 
   // hotkeys
   const keyboardState = {
@@ -214,14 +230,12 @@
 
   function showPreview() {
     waterfallState.previewEnabled = true;
-    plotContainer.classList.add('with-preview');
     previewContainer.style.display = 'block';
     previewCanvas.height = 0;
   }
 
   function hidePreview() {
     waterfallState.previewEnabled = false;
-    plotContainer.classList.remove('with-preview');
     previewContainer.style.display = 'none';
   }
 
@@ -528,8 +542,7 @@
 
   async function onCompareCheckboxChange() {
     waterfallState.compareCps = cpsRatioCheckbox.checked;
-    cpsRatioExportButton.disabled = !waterfallState.compareCps;
-    cpsRatioBinAvgExportButton.disabled = !waterfallState.compareCps;
+    cpsExportButton.innerText = waterfallState.compareCps ? 'Export cps ratio' : 'Export cps';
 
     await waterfallPlot.renderChannelSelectionAsync();
     await cpsPlot.renderCpsAsync();
@@ -617,73 +630,22 @@
     }
   }
 
-  function exportCps(binAvg, csv) {
-    const range = waterfallState.channelRange1;
-    if (!range || range.length !== 2) {
-      alert('Error: invalid channel range 1.');
-      return;
-    }
-
-    const energyRange = getEnergyRangeStr(range);
-    const description = originalWaterfallData.baseSpectrum.name + ' CP2S: cps in range ' + energyRange;
-    let data = '';
-    if (csv) {
-      if (binAvg) {
-        data = exports.getCSV(
-          waterfallData.deltas,
-          range,
-          undefined,
-          waterfallState.timeOffsetHours
-        );
-      } else {
-        data = exports.getCSV(
-          originalWaterfallData.deltas,
-          common.rangeToOriginalRange(range),
-          undefined,
-          waterfallState.timeOffsetHours
-        );
-      }
-    } else {
-      if (binAvg) {
-        data = exports.getRctrkData(
-          description,
-          waterfallData.deltas,
-          range,
-          undefined,
-        );
-      } else {
-        data = exports.getRctrkData(
-          description,
-          originalWaterfallData.deltas,
-          common.rangeToOriginalRange(range),
-          undefined
-        );
-      }
-    }
-
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + '-cps';
-    if (csv) {
-      saveFile(filename, 'csv', data, 'text/csv');
-    } else {
-      saveFile(filename, 'rctrk', data, 'text/rctrk');
-      return;
-    }
-  }
-
-  function exportCpsRatio(binAvg, csv) {
+  function exportCps(ratio, binAvg, csv) {
     const range = waterfallState.channelRange1;
     if (!range || range.length !== 2) {
       alert('Error: invalid channel range 1.');
       return;
     }
     const compareRange = waterfallState.channelRange2;
-    if (!compareRange || compareRange.length !== 2) {
+    if (ratio && (!compareRange || compareRange.length !== 2)) {
       alert('Error: invalid channel range 2.');
       return;
     }
     const energyRange = getEnergyRangeStr(range);
-    const compareEnergyRange = getEnergyRangeStr(compareRange);
-    const description = originalWaterfallData.baseSpectrum.name + ' CP2S: cps ratio for ranges ' + energyRange + '/' + compareEnergyRange;
+    const compareEnergyRange = ratio ? getEnergyRangeStr(compareRange) : undefined;
+    const description = ratio
+      ? originalWaterfallData.baseSpectrum.name + ' CP2S: cps ratio for ranges ' + energyRange + '/' + compareEnergyRange
+      : originalWaterfallData.baseSpectrum.name + ' CP2S: cps for range ' + energyRange;
 
     let data = '';
     if (csv) {
@@ -691,14 +653,14 @@
         data = exports.getCSV(
           waterfallData.deltas,
           range,
-          compareRange,
+          ratio ? compareRange : undefined,
           waterfallState.timeOffsetHours
         );
       } else {
         data = exports.getCSV(
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          common.rangeToOriginalRange(compareRange),
+          ratio ? common.rangeToOriginalRange(compareRange) : undefined,
           waterfallState.timeOffsetHours
         );
       }
@@ -708,19 +670,21 @@
           description,
           waterfallData.deltas,
           range,
-          compareRange
+          ratio ? compareRange : undefined
         );
       } else {
         data = exports.getRctrkData(
           description,
           originalWaterfallData.deltas,
           common.rangeToOriginalRange(range),
-          common.rangeToOriginalRange(compareRange)
+          ratio ? common.rangeToOriginalRange(compareRange) : undefined
         );
       }
     }
 
-    let filename = originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange + '-cps-ratio';
+    let filename = ratio
+      ? originalWaterfallData.baseSpectrum.name + '-' + energyRange + compareEnergyRange + '-cps-ratio'
+      : originalWaterfallData.baseSpectrum.name + '-' + energyRange + '-cps';
     if (csv) {
       saveFile(filename, 'csv', data, 'text/csv');
     } else {

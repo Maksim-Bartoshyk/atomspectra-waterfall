@@ -293,11 +293,11 @@
     for (let tsIndex = 0; tsIndex < timestamps.length; tsIndex++) {
       const timestamp = timestamps[tsIndex];
       const previousTimestamp = tsIndex > 0 ? timestamps[tsIndex - 1] : timestamp;
-      const currentDeltaDuration = waterfallData.deltas[tsIndex].duration;
       const previousDeltaDuration = tsIndex > 0 ? waterfallData.deltas[tsIndex - 1].duration : 0;
       const secondsElapsedSinceLastDelta = (timestamp - previousTimestamp) / 1000;
       // time gap usually happens when multiple spectrograms are concatenated
-      const isTimeGap = secondsElapsedSinceLastDelta > previousDeltaDuration + 1;
+      // spectrum binning intensifies time gaps leading to all red time axis
+      const isTimeGap = secondsElapsedSinceLastDelta > previousDeltaDuration + 1 * (1 + waterfallState.spectrumBinning / 10);
 
       // label tick or gap tick
       if (tsIndex % constants.timestampHeight === 0 || isTimeGap) {
