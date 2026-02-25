@@ -220,16 +220,19 @@ input[type="radio"] {
 .plot-container {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   position: relative;
 }
 
 .plot-container .waterfall-container {
+  -webkit-overflow-scrolling: touch;
   display: inline-block;
   height: 100%;
   /* cpsPlotWidth in js + scroll */
   max-width: calc(100% - 320px);
   overflow-x: scroll;
   overflow-y: scroll;
+  position: relative;
 }
 
 .plot-container .cps-container {

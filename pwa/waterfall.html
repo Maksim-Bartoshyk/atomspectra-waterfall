@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png"></link>
 
-  <title>AS Waterfall v2026.02.25.1</title>
+  <title>AS Waterfall v2026.02.25.3</title>
   <style>/* common defaults */
 html {
   height: 100%;
@@ -233,16 +233,19 @@ input[type="radio"] {
 .plot-container {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   position: relative;
 }
 
 .plot-container .waterfall-container {
+  -webkit-overflow-scrolling: touch;
   display: inline-block;
   height: 100%;
   /* cpsPlotWidth in js + scroll */
   max-width: calc(100% - 320px);
   overflow-x: scroll;
   overflow-y: scroll;
+  position: relative;
 }
 
 .plot-container .cps-container {

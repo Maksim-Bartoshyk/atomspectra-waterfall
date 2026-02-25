@@ -1,7 +1,7 @@
 // PWA Service Worker
-// Version format: vYYYYMMDD.n (increment n for same-day releases)
+// Version format: vYYYY.MM.DD.n (increment n for same-day releases)
 // WARN: duplicates version in html title, need to keep in sync manually
-const CACHE_VERSION = 'v20260225.1';
+const CACHE_VERSION = 'v2026.02.25.3';
 const CACHE_NAME = `wf-cache-${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
