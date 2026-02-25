@@ -12,6 +12,7 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: contain;
   padding: 0 12px;
   scrollbar-color: #444 #888;
 }
