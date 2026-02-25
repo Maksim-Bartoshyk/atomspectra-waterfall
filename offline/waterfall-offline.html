@@ -2,7 +2,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AS Waterfall v2026.02.25.0</title>
+  <title>AS Waterfall v2026.02.25.1</title>
   <style>/* common defaults */
 html {
   height: 100%;
@@ -231,8 +231,8 @@ input[type="radio"] {
 .plot-container .waterfall-container {
   display: inline-block;
   height: 100%;
-  max-width: calc(100% - 320px);
   /* cpsPlotWidth in js + scroll */
+  max-width: calc(100% - 320px);
   overflow-x: scroll;
   overflow-y: scroll;
 }
@@ -244,8 +244,8 @@ input[type="radio"] {
   overflow-y: scroll;
   overflow-x: scroll;
   padding-left: 1px;
-  width: 320px;
   /* cpsPlotWidth in js + scroll */
+  width: 320px;
 }
 
 .cps-container .cps-plot {
@@ -253,8 +253,8 @@ input[type="radio"] {
   transform: rotate(90deg);
   /* veeeeeery hacky, need to rewrite this */
   transform-origin: bottom left;
-  top: -300px;
   /* cpsPlotWidth in js */
+  top: -300px;
 }
 
 .horizontal-cursor,
@@ -281,6 +281,7 @@ input[type="radio"] {
 }
 
 .settings-panel-bottom>summary {
+  border-top: 1px dotted;
   cursor: pointer;
   font-weight: bold;
   padding-top: 8px;
