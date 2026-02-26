@@ -44,8 +44,13 @@
   toggleCpsBtn.addEventListener('click', () => {
     plotContainer.classList.toggle('cps-hidden');
     previewContainer.classList.toggle('cps-hidden');
-    toggleCpsBtn.textContent = plotContainer.classList.contains('cps-hidden')
-      ? 'CPS \u25C0' : 'CPS \u25B6';
+    const cpsHidden = plotContainer.classList.contains('cps-hidden');
+    toggleCpsBtn.textContent = cpsHidden ? 'CPS \u25C0' : 'CPS \u25B6';
+    if (!cpsHidden) {
+      const wfContainer = document.getElementById('waterfall-container');
+      const cpsContainer = document.getElementById('cps-container');
+      cpsContainer.scrollTop = wfContainer.scrollTop;
+    }
   });
 
   // bottom section (cps related)
