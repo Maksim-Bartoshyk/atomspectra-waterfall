@@ -9,7 +9,7 @@ Provided AS IS, use at your own risk. This software is not certified as a measur
 # Usage (basic, browser only):
 1. copy spectrogram file from smartphone to computer
 2. download this repository
-3. open ```offline/waterfall-offline.html``` file in browser (Chrome is recommended)
+3. open ```offline/waterfall-offline.html``` file in browser (Chrome is recommended), or link on [GitHub Pages](https://maksim-bartoshyk.github.io/waterfall/waterfall.html) (progressive web app, could be installed as a separate app to home screen of your device)
 4. use file upload control to load spectrogram file 
 5. apply spectrum/channel binning, averaging etc.
 6. use right mouse click on spectrogram image - save image as to save current image
